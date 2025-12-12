@@ -1,32 +1,57 @@
-# Project Context - <PROJECT_NAME>
+# Project Context - Youtube2Text
 
 ## Vision
-Describe the long-term goal for this project. What problem does it solve and why does it matter?
+Build a modular local-first pipeline to turn YouTube channel audio into speaker‑diarized transcripts, stored on disk in structured formats for later analysis and UI browsing.
 
 ## Objectives
-List the primary objectives or deliverables. Include success criteria where possible.
+1. Provide a CLI that accepts a public YouTube channel or playlist URL with optional filters (date, max videos).
+2. Enumerate videos reliably without requiring YouTube API keys.
+3. Download audio-only tracks per video using `yt-dlp`.
+4. Transcribe audio via AssemblyAI with speaker diarization enabled.
+5. Persist results as `.json` plus clean, speaker-labeled `.txt`, with optional `.csv` export.
+6. Ensure idempotency and robust fault handling (skip already processed videos, retry transient failures).
 
 ## Stakeholders
-- Product owner: <Name>
-- Technical owner: <Name>
-- Primary users: <Audience>
-- Additional stakeholders: <List>
+- Product owner: TBD
+- Technical owner: TBD
+- Primary users: Researchers, creators, or teams needing diarized transcripts at scale.
+- Additional stakeholders: TBD
 
 ## Architectural Overview
-Summarize the high-level architecture or system design. Use diagrams (link or reference) if helpful.
+The system is designed as a set of reusable stages coordinated by a CLI orchestrator.
+
+Stages:
+- **InputResolver**: resolves a channel/playlist URL to a list of video IDs and metadata.
+- **AudioExtractor**: downloads and caches audio locally (mp3/wav).
+- **TranscriptionProvider**: interface for ASR backends; initial implementation uses AssemblyAI.
+- **Formatter**: converts diarized transcript JSON to readable `.txt` and optional `.csv`.
+- **Storage**: persists outputs under a stable on-disk layout and performs idempotency checks.
+- **Orchestrator (CLI)**: applies filters, concurrency limits, retries/backoff, and logging.
+
+This separation keeps the pipeline local-first and makes later extensions straightforward:
+- replace AssemblyAI with another provider,
+- add semantic post-processing (summaries/topics),
+- attach a React dashboard that reads stored outputs only.
 
 ## Key Components
 | Component | Purpose | Owner | Notes |
 |-----------|---------|-------|-------|
-| <Example> | <Why it exists> | <Owner> | <Details> |
+| InputResolver | Channel/playlist → video list | TBD | Uses `yt-dlp --flat-playlist`. |
+| AudioExtractor | Video → local audio file | TBD | Wraps `yt-dlp` for audio-only download. |
+| TranscriptionProvider | Audio → diarized transcript | TBD | AssemblyAI v1 implementation first. |
+| Formatter | Transcript → txt/csv | TBD | Speaker-labeled output. |
+| Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_id>/<video_id>.*`. |
+| Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (<YYYY-MM-DD>)
-Provide a snapshot of the project's current state. Highlight completed milestones, ongoing work, and known blockers.
+## Current Status (2025-12-12)
+Documentation scaffold adapted to Youtube2Text scope. No application code has been written yet.
 
 ## Upcoming Milestones
-1. <Milestone description> - <Target date>
-2. <Milestone description> - <Target date>
-3. <Milestone description> - <Target date>
+1. Scaffold Node.js + TypeScript project and CLI skeleton.
+2. Implement YouTube enumeration and audio download modules.
+3. Implement AssemblyAI transcription provider and formatters.
+4. Add idempotency, retry tests, and documentation polish.
 
 ## References
-Link to any external documentation, specifications, or resources relevant to the project.
+- AssemblyAI API Docs: https://www.assemblyai.com/docs/
+- yt-dlp Docs: https://github.com/yt-dlp/yt-dlp

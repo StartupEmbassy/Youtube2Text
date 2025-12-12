@@ -1,170 +1,113 @@
-# LLM-DocKit
+# Youtube2Text
 
-A reusable documentation scaffold for LLM-assisted software projects. This template provides a complete workflow for managing projects where humans collaborate with LLMs (like Claude, ChatGPT, or others), ensuring consistent documentation, version control, and knowledge handoff between sessions.
+Local-first, modular CLI service that:
+1. Enumerates all videos from a public YouTube channel or playlist.
+2. Downloads audio-only tracks using `yt-dlp`.
+3. Transcribes audio with AssemblyAI using speaker diarization.
+4. Stores structured results on disk for later analysis or UI browsing.
 
-## Why LLM-DocKit?
+The goal is to keep each stage separable and replaceable (e.g., swapping AssemblyAI for another ASR provider, adding semantic post-processing, or attaching a web dashboard).
 
-When working with LLMs on software projects, you need:
-- **Clear rules** for how LLMs should work (language, commits, versioning)
-- **Session continuity** so the next LLM knows what happened before
-- **Documentation discipline** that keeps context synchronized
-- **Version management** that prevents breaking changes
-- **Handoff protocol** for multi-LLM or human+LLM collaboration
+## Core Capabilities
 
-LLM-DocKit solves this by providing battle-tested templates and workflows.
+- Channel/playlist enumeration via `yt-dlp --flat-playlist` (no YouTube API key required).
+- Audio-only download in `mp3` or `wav`.
+- AssemblyAI upload + diarized transcription (`speaker_labels: true`).
+- Idempotent processing: skips videos already processed unless forced.
+- Output formats: `.json`, readable `.txt`, optional `.csv`.
+- Fault handling with retries/backoff and per-video error logs.
 
-## Quick Start
+## Architecture (High Level)
 
-### 1. Get the Scaffold
-```bash
-# Fork on GitHub (recommended) or clone directly
-git clone https://github.com/<your-username>/LLM-DocKit.git my-new-project
-cd my-new-project
+Pipeline stages with explicit module boundaries:
+
+- **InputResolver**: resolves a channel/playlist URL to a list of video IDs and metadata.
+- **AudioExtractor**: downloads and caches audio tracks locally.
+- **TranscriptionProvider**: interface for ASR backends. First implementation: AssemblyAI.
+- **Formatter**: converts diarized transcript JSON into `.txt` and optional `.csv` formats.
+- **Storage**: writes outputs and handles idempotency checks.
+- **Orchestrator (CLI)**: coordinates stages with concurrency, filtering, retries, and logging.
+
+Later extensions read from `output/` only (e.g., React dashboard), keeping the pipeline server-agnostic.
+
+## Requirements
+
+- Node.js 18+
+- `yt-dlp` installed and available on PATH
+- AssemblyAI API key
+- Windows/macOS/Linux
+
+## Configuration
+
+Configuration is loaded from:
+
+1. `.env` (required for secrets).
+2. Optional `config.yaml` for non-secret defaults.
+
+`.env` takes precedence for overlapping keys.
+
+Example environment variables:
+
+```
+ASSEMBLYAI_API_KEY=your_key_here
+OUTPUT_DIR=output
+AUDIO_FORMAT=mp3
+LANGUAGE_CODE=en_us
+CONCURRENCY=2
+MAX_VIDEOS=
+AFTER_DATE=
+CSV_ENABLED=false
 ```
 
-### 2. After Cloning - Critical First Steps
+## CLI Usage (Planned)
 
-**Before writing any code**, complete these essential setup tasks:
-
-1. **Replace all placeholders** - Search and replace `<PROJECT_NAME>`, `<CONVERSATION_LANGUAGE>`, and `<YYYY-MM-DD>` throughout all `.md` files (see [HOW_TO_USE.md](HOW_TO_USE.md#2-replace-project-name-placeholders) for commands)
-2. **Remove unused directories** - Delete `src/`, `scripts/`, or `tests/` if you don't need them
-3. **Review .gitignore** - Customize for your tech stack (Python, Node.js, Go, etc.)
-4. **Verify all links work** - Check that file references in documentation point to existing files
-
-**Why this matters**: Skipping these steps means placeholders will leak into your commits and documentation links will break.
-
-### 3. Follow the Setup Guide
-Read **[HOW_TO_USE.md](HOW_TO_USE.md)** for complete instructions.
-
-**5-minute version:**
-1. Update [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) with your project vision
-2. Customize [LLM_START_HERE.md](LLM_START_HERE.md) rules for your workflow
-3. Document your structure in [docs/STRUCTURE.md](docs/STRUCTURE.md)
-4. Start your first LLM session!
-
-### 4. Share with Your LLM
-Before each work session, give your LLM this file: **[LLM_START_HERE.md](LLM_START_HERE.md)**
-
-## What's Included
-
-### Core Documentation
-- **[LLM_START_HERE.md](LLM_START_HERE.md)** - Mandatory reading for all LLMs (rules, workflow, policies)
-- **[HOW_TO_USE.md](HOW_TO_USE.md)** - Setup guide for humans after forking
-- **[docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md)** - Template for project vision, architecture, and status
-- **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Document your repository organization
-- **[docs/VERSIONING_RULES.md](docs/VERSIONING_RULES.md)** - Semantic versioning guidelines
-
-### LLM Handoff System
-- **[docs/llm/HANDOFF.md](docs/llm/HANDOFF.md)** - Current work state and priorities (updated every session)
-- **[docs/llm/HISTORY.md](docs/llm/HISTORY.md)** - Chronological log of all changes (append-only)
-
-### Operations & Runbooks
-- **[docs/operations/](docs/operations/)** - Placeholder for operational procedures, deployment guides, incident response
-
-### Optional Boilerplate
-- **src/** - Source code (remove if not needed)
-- **tests/** - Test suites (remove if not needed)
-- **scripts/** - Utility scripts (remove if not needed)
-- **.github/** - GitHub issue/PR templates (remove if not using GitHub)
-
-## Features
-
-### Multi-LLM Collaboration
-Different LLMs can work on the same project by reading [docs/llm/HANDOFF.md](docs/llm/HANDOFF.md) to understand current state.
-
-### Automatic Documentation
-Every LLM session must update documentation, ensuring nothing is lost between sessions.
-
-### Version Management
-Semantic versioning rules prevent breaking changes and keep components synchronized.
-
-### "Do Not Touch" Zones
-Mark critical code areas that shouldn't be modified without explicit permission.
-
-### Language Flexibility
-Configure conversation language (Spanish, English, etc.) while keeping code/docs in English.
-
-### Commit Message Standards
-Every LLM response includes suggested commit info (title + description) for consistency.
-
-## Typical Workflows
-
-### For Web Applications
 ```
-src/
-  frontend/    # React, Vue, etc.
-  backend/     # API server
-tests/
-docs/
+youtube2text <channel_or_playlist_url> [options]
 ```
 
-### For Infrastructure Projects
-```
-infrastructure/
-  terraform/
-  kubernetes/
-scripts/        # Deployment automation
-docs/
-  operations/   # Critical runbooks
-```
+Options:
 
-### For Python Libraries
-```
-src/
-  package_name/
-tests/
-docs/
-```
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--maxVideos` | number | unset | Process at most N videos. |
+| `--after` | date | unset | Only process videos after YYYY-MM-DD. |
+| `--outDir` | path | `output` | Output root directory. |
+| `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
+| `--language` | string | `en_us` | Passed to AssemblyAI. |
+| `--concurrency` | number | `2` | Parallel videos processed. |
+| `--force` | boolean | false | Reprocess even if outputs exist. |
+| `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |
 
-### For CLI Tools
+## Output Layout
+
+Outputs are organized by channel and video ID:
+
 ```
-cli/           # Renamed from src/
-  commands/
-scripts/       # Build/release
-docs/
+output/<channel_id>/<video_id>.json
+output/<channel_id>/<video_id>.txt
+output/<channel_id>/<video_id>.csv   # if enabled
 ```
 
-See [HOW_TO_USE.md](HOW_TO_USE.md#common-scenarios) for detailed examples.
+Raw audio is stored under:
 
-## Documentation Philosophy
+```
+audio/<channel_id>/<video_id>.<ext>
+```
 
-This scaffold enforces documentation discipline through:
+Failures are recorded per channel in:
 
-1. **Mandatory updates** - LLMs must update HANDOFF and HISTORY after every change
-2. **Single source of truth** - HANDOFF.md contains current state, HISTORY.md contains the full timeline
-3. **Clear rules** - LLM_START_HERE.md defines non-negotiable policies
-4. **Context preservation** - New LLMs (or humans) can quickly understand project state
+```
+output/<channel_id>/_errors.jsonl
+```
 
-## Real-World Example
+## Idempotency & Retries
 
-This scaffold was extracted from [PiHA-Deployer](https://github.com/cdchushig/PiHA-Deployer), a home automation infrastructure project. After successfully using this workflow across multiple LLM sessions (Claude, ChatGPT, Codex), the structure was generalized into LLM-DocKit.
+- A video is considered processed if `<video_id>.json` exists under the channel directory.
+- Reprocessing requires `--force`.
+- Download and transcription retries are handled independently with exponential backoff.
 
-## Who Should Use This?
+## Roadmap
 
-- Developers working with LLM assistants (Claude, ChatGPT, etc.)
-- Teams collaborating with multiple LLMs on the same project
-- Projects requiring strict documentation discipline
-- Long-running projects where context must be preserved across sessions
-- Solo developers who want better documentation habits
-
-## Getting Help
-
-- Read the [complete setup guide](HOW_TO_USE.md)
-- [Report issues](https://github.com/cdchushig/LLM-DocKit/issues)
-- [Suggest improvements](https://github.com/cdchushig/LLM-DocKit/pulls)
-- Check the [PiHA-Deployer example](https://github.com/cdchushig/PiHA-Deployer)
-
-## Contributing
-
-This scaffold is meant to be forked and adapted. If you develop improvements that could benefit others:
-1. Fork this repository
-2. Make your enhancements
-3. Submit a pull request with a clear description
-
-## License
-
-Released under the MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-**Ready to start?** Read [HOW_TO_USE.md](HOW_TO_USE.md) and launch your first LLM-assisted project!
+- Alternative `TranscriptionProvider` implementations.
+- Semantic post-processing: summarization, topic clustering.
+- React dashboard to browse and interact with local outputs.

@@ -1,8 +1,8 @@
-# LLM Start Guide - <PROJECT_NAME>
+# LLM Start Guide - Youtube2Text
 
 ## Read This First (Mandatory)
 
-Welcome to <PROJECT_NAME>. Before you contribute, review and adapt the sections below to match the project requirements. Replace angle-bracket placeholders (<...>) with real values and share this file with every LLM agent.
+Welcome to Youtube2Text. Before you contribute, review and adapt the sections below to match the project requirements. Replace angle-bracket placeholders (<...>) with real values and share this file with every LLM agent.
 
 Recommended reading order:
 1. This file (rules, workflows, and current expectations)
@@ -14,7 +14,7 @@ Recommended reading order:
 
 ### Language Policy
 - All code and documentation: English (update if your project needs a different language)
-- Conversation with the user: <CONVERSATION_LANGUAGE>
+- Conversation with the user: Spanish
 - Comments in code: English
 - File names: English
 
@@ -47,9 +47,9 @@ Recommended reading order:
 ## Current Focus (Snapshot)
 
 Source of truth: docs/llm/HANDOFF.md.
-- Last Updated: <YYYY-MM-DD - Author>
-- Working on: <Feature or task>
-- Status: <Short status summary>
+- Last Updated: 2025-12-12 - GPT-5.2
+- Working on: Documentation adaptation to Youtube2Text scope
+- Status: Scaffold aligned; code not started yet
 
 Keep this section synchronized with the "Current Status" block in docs/llm/HANDOFF.md.
 

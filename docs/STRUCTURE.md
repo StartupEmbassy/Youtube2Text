@@ -1,6 +1,6 @@
 # Repository Structure Guide
 
-Use this template to document how the repository is organized. Update the table below once your folders and files are in place.
+This document describes the intended repository layout for Youtube2Text.
 
 ## Top-Level Layout
 `
@@ -8,10 +8,12 @@ Use this template to document how the repository is organized. Update the table 
 +- README.md
 +- LLM_START_HERE.md
 +- docs/
-+- src/ (optional)
-+- scripts/ (optional)
-+- tests/ (optional)
-+- .github/ (optional)
++- src/
++- scripts/
++- tests/
++- output/          # generated
++- cache/           # generated (audio)
++- .github/
 +- ...
 `
 
@@ -21,16 +23,34 @@ Use this template to document how the repository is organized. Update the table 
 | docs/ | Central documentation, policies, and runbooks | Required |
 | docs/llm/ | Handoff and history for LLM contributors | Required |
 | docs/operations/ | Runbooks and operational procedures | Recommended |
-| src/ | Application or library source code | Optional |
-| scripts/ | Utility scripts or tooling | Optional |
-| tests/ | Automated tests | Optional |
+| src/ | Application source code | Required |
+| scripts/ | Utility scripts (dev, release, ops) | Optional |
+| tests/ | Automated tests | Recommended |
+| output/ | Pipeline results by channel/video | Generated |
+| cache/ | Downloaded audio artifacts | Generated |
 | .github/ | Issue/PR templates and workflows | Optional |
 
 ## Custom Modules or Packages
-Document any additional folders specific to your project. Explain how they relate to the architecture in docs/PROJECT_CONTEXT.md.
+
+Planned `src/` modules (subject to refinement during implementation):
+
+- `src/cli/` — CLI entrypoints and orchestration.
+- `src/config/` — configuration loading from `.env` and optional `config.yaml`.
+- `src/youtube/` — video enumeration and audio download wrappers around `yt-dlp`.
+- `src/transcription/` — provider interface and AssemblyAI implementation.
+- `src/formatters/` — `.txt` and optional `.csv` generation from transcript JSON.
+- `src/storage/` — output layout, idempotency checks, and persistence helpers.
+- `src/retry/` — shared retry/backoff utilities.
 
 ## Naming Conventions
-Outline conventions for file names, branches, environment variables, or other project-wide patterns.
+
+- Use YouTube `channel_id` and `video_id` as canonical identifiers.
+- Output files: `<video_id>.json`, `<video_id>.txt`, `<video_id>.csv`.
+- Generated directories (`output/`, `cache/`) should not be committed.
+- Environment variables are uppercase with underscores (e.g., `ASSEMBLYAI_API_KEY`).
 
 ## Onboarding Notes
-Provide tips for new contributors (human or LLM) on where to start, which directories to explore first, and any caveats about legacy code or experimental features.
+
+1. Read `README.md` for the project overview and pipeline intent.
+2. Review `docs/PROJECT_CONTEXT.md` for architecture and milestones.
+3. Check `docs/llm/HANDOFF.md` for current work state before coding.
