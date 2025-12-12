@@ -8,7 +8,8 @@ export async function downloadAudio(
   videoUrl: string,
   outputPath: string,
   audioFormat: "mp3" | "wav",
-  retries: number
+  retries: number,
+  ytDlpCommand = "yt-dlp"
 ): Promise<string> {
   await ensureDir(dirname(outputPath));
   const targetDir = dirname(outputPath);
@@ -32,7 +33,7 @@ export async function downloadAudio(
         template,
         videoUrl,
       ];
-      const result = await execCommand("yt-dlp", args);
+      const result = await execCommand(ytDlpCommand, args);
       if (result.exitCode !== 0) {
         throw new Error(result.stderr || result.stdout);
       }
@@ -42,4 +43,3 @@ export async function downloadAudio(
 
   return outputPath;
 }
-

@@ -28,10 +28,13 @@ function inferChannelId(listing: YtDlpListing, inputUrl: string): string {
   );
 }
 
-export async function enumerateVideos(inputUrl: string): Promise<YoutubeListing> {
+export async function enumerateVideos(
+  inputUrl: string,
+  ytDlpCommand = "yt-dlp"
+): Promise<YoutubeListing> {
   logInfo(`Enumerating videos from ${inputUrl} ...`);
   const args = ["--flat-playlist", "--dump-single-json", inputUrl];
-  const result = await execCommand("yt-dlp", args);
+  const result = await execCommand(ytDlpCommand, args);
   if (result.exitCode !== 0) {
     throw new Error(`yt-dlp failed: ${result.stderr}`);
   }
@@ -55,4 +58,3 @@ export async function enumerateVideos(inputUrl: string): Promise<YoutubeListing>
 
   return { channelId, channelTitle, videos };
 }
-

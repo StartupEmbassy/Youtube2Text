@@ -26,6 +26,10 @@ List the files touched or relevant to the current work stream.
 - runs.yaml.example
 - config.yaml.example
 - runs.yml
+- src/utils/deps.ts
+- src/youtube/enumerate.ts
+- src/youtube/download.ts
+- src/pipeline/run.ts
 - README.md
 - docs/PROJECT_CONTEXT.md
 - docs/llm/HANDOFF.md

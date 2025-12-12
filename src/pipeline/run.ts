@@ -20,8 +20,8 @@ export async function runPipeline(
   config: AppConfig,
   options: { force: boolean }
 ) {
-  await validateYtDlpInstalled();
-  const listing = await enumerateVideos(inputUrl);
+  const ytDlpCommand = await validateYtDlpInstalled();
+  const listing = await enumerateVideos(inputUrl, ytDlpCommand);
   const filteredVideos = listing.videos
     .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
     .slice(0, config.maxVideos ?? listing.videos.length);
@@ -52,7 +52,8 @@ export async function runPipeline(
             video.url,
             paths.audioPath,
             config.audioFormat,
-            config.downloadRetries
+            config.downloadRetries,
+            ytDlpCommand
           );
 
           const transcript = await provider.transcribe(audioPath, {

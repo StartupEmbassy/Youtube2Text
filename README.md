@@ -42,6 +42,19 @@ Later extensions read from `output/` only (e.g., React dashboard), keeping the p
 For local development, Youtube2Text relies on a system-installed `yt-dlp`.
 When deploying to a server or container, ensure `yt-dlp` is installed in that environment as well (planned approach: Docker image that bundles Node.js + `yt-dlp`).
 
+### Troubleshooting yt-dlp on Windows
+
+If you installed `yt-dlp` via `winget`, PowerShell can sometimes resolve it via an alias while child processes (like Node.js) cannot.
+If Youtube2Text reports “yt-dlp not found” but `yt-dlp --version` works in your shell, restart the shell or ensure the real `yt-dlp.exe` path is on PATH.
+The pipeline also attempts to resolve the executable via PowerShell automatically.
+
+If VSCode's integrated terminal still cannot find it, set an explicit path:
+
+```powershell
+$env:YT_DLP_PATH="C:\path\to\yt-dlp.exe"
+npm run dev
+```
+
 ## Configuration
 
 Configuration is loaded from:
