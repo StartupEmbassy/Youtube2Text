@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { readFile } from "node:fs/promises";
 
 const API_BASE = "https://api.assemblyai.com/v2";
 
@@ -26,11 +26,11 @@ export async function uploadFile(
   apiKey: string,
   audioPath: string
 ): Promise<{ upload_url: string }> {
-  const stream = createReadStream(audioPath);
+  const buffer = await readFile(audioPath);
   const response = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     headers: { Authorization: apiKey },
-    body: stream as unknown as BodyInit,
+    body: buffer,
   });
   if (!response.ok) {
     const text = await response.text();
@@ -38,4 +38,3 @@ export async function uploadFile(
   }
   return (await response.json()) as { upload_url: string };
 }
-

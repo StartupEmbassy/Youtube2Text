@@ -1,0 +1,17 @@
+# Copy to runs.yaml (ignored by git) and configure your channels.
+# YAML uses spaces only, no tabs.
+
+runs:
+  - url: "https://www.youtube.com/@somechannel"
+    maxVideos: 10
+    after: "2024-01-01"
+    concurrency: 2
+    csvEnabled: false
+
+  - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
+    maxVideos: 5
+    after: "2023-06-01"
+    outDir: "output_custom"
+    audioDir: "audio_custom"
+    csvEnabled: true
+    force: false

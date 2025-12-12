@@ -13,12 +13,14 @@ import { logErrorRecord } from "../storage/errors.js";
 import { isAfterDate } from "../utils/date.js";
 import { logInfo, logWarn } from "../utils/logger.js";
 import { AppConfig } from "../config/schema.js";
+import { validateYtDlpInstalled } from "../utils/deps.js";
 
 export async function runPipeline(
   inputUrl: string,
   config: AppConfig,
   options: { force: boolean }
 ) {
+  await validateYtDlpInstalled();
   const listing = await enumerateVideos(inputUrl);
   const filteredVideos = listing.videos
     .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
@@ -94,4 +96,3 @@ export async function runPipeline(
     )
   );
 }
-

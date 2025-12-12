@@ -43,6 +43,7 @@ Configuration is loaded from:
 
 1. `.env` (required for secrets).
 2. Optional `config.yaml` for non-secret defaults.
+3. Optional `runs.yaml` for convenient multi-run execution.
 
 `.env` takes precedence for overlapping keys.
 
@@ -59,10 +60,16 @@ AFTER_DATE=
 CSV_ENABLED=false
 ```
 
-## CLI Usage (Planned)
+Example files:
+
+- `.env.example` — template of supported env vars (copy to `.env`).
+- `config.yaml.example` — optional non-secret defaults (copy to `config.yaml`).
+- `runs.yaml.example` — optional batch runs template (copy to `runs.yaml` or `runs.yml`).
+
+## CLI Usage
 
 ```
-youtube2text <channel_or_playlist_url> [options]
+youtube2text [channel_or_playlist_url] [options]
 ```
 
 Options:
@@ -77,6 +84,44 @@ Options:
 | `--concurrency` | number | `2` | Parallel videos processed. |
 | `--force` | boolean | false | Reprocess even if outputs exist. |
 | `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |
+
+### runs.yaml (optional)
+
+If you run the CLI **without** providing a URL, and a `runs.yaml` (or `runs.yml`) file exists in the project root, Youtube2Text will execute each run in sequence.
+
+YAML must use spaces (no tabs). You can use either:
+
+- Object form (recommended):
+  ```yaml
+  runs:
+    - url: "https://..."
+  ```
+- Root array form:
+  ```yaml
+  - url: "https://..."
+  - url: "https://..."
+  ```
+
+Example `runs.yaml`:
+
+```yaml
+runs:
+  - url: "https://www.youtube.com/@somechannel"
+    maxVideos: 10
+    after: "2024-01-01"
+    concurrency: 2
+    csvEnabled: false
+
+  - url: "https://www.youtube.com/playlist?list=PLxxxx"
+    maxVideos: 5
+    after: "2023-06-01"
+    outDir: "output_alt"
+    audioDir: "audio_alt"
+    csvEnabled: true
+    force: false
+```
+
+Fields in `runs.yaml` override defaults from `config.yaml`/`.env` for that specific run.
 
 ## Output Layout
 

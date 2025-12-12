@@ -19,6 +19,10 @@
 *.pem
 credentials.json
 
+# Local run definitions (may contain private URLs)
+runs.yaml
+runs.yml
+
 # Logs
 logs/
 *.log
@@ -93,6 +97,13 @@ temp/
 coverage/
 .nyc_output/
 test-results/
+
+# Youtube2Text generated outputs
+output/
+audio/
+
+# Optional local config (non-secret defaults)
+config.yaml
 
 # IDE specific
 .vscode/settings.json

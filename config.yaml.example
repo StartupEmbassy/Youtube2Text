@@ -1,0 +1,14 @@
+# Alternative to .env for non-secret configuration.
+# Copy to config.yaml if needed (optional).
+
+outputDir: output
+audioDir: audio
+audioFormat: mp3
+languageCode: en_us
+concurrency: 2
+downloadRetries: 2
+transcriptionRetries: 2
+pollIntervalMs: 5000
+maxPollMinutes: 60
+csvEnabled: false
+
