@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Rephase architecture to service-first Phase 0 + language detection.
-- Status: `docs/ARCHITECTURE.md` rewritten to make core hardening Phase 0, UI Phase 1+, and add language detection requirement.
+- Session Focus: Implement PipelineEventEmitter + `--json-events` (Phase 0 hardening).
+- Status: Pipeline emits structured JSONL events; CLI supports `--json-events`.
 
 ## Modularity Review (GPT‑5.2, 2025-12-12)
 
@@ -26,10 +26,35 @@ Summary of current modularity and interface usage for Claude to review.
 - Only one true interface boundary so far (ASR), and even that is not DI‑wired.
 - The folder boundaries make it easy to formalize ports later without rewriting everything.
 
-**If/when moving toward "fully replaceable" design (not requested now):**
-- Add "ports" in pipeline for `YoutubeResolver`, `AudioExtractor`, `TranscriptionProvider` (already), `Storage`, `Formatter`, and `ProgressReporter/EventEmitter`.
+**If/when moving toward “fully replaceable” design (not requested now):**
+- Add “ports” in pipeline for `YoutubeResolver`, `AudioExtractor`, `TranscriptionProvider` (already), `Storage`, `Formatter`, and `ProgressReporter/EventEmitter`.
 - Have `runPipeline` accept these deps (DI or a `PipelineContext`).
 - Use core‑level error types instead of provider‑specific ones.
+
+## Service-First Module Shape (GPT‑5.2, 2025-12-12)
+
+User question: if we want n8n/other automation to submit a channel/video and get back the generated artifacts, should we build an API/service before a full web UI?
+
+**Recommended layering (keeps CLI independent):**
+1. **Core library (shared)**: exports `runPipeline(url, config, { force, emitter, storage, provider })` + helper modules. No HTTP/UI concerns.
+2. **Runners**:
+   - **CLI runner**: calls core with `FileSystemStorageAdapter` + `ConsoleEmitter` (current behavior).
+   - **Service runner**: calls core inside a job worker/queue and streams structured events.
+3. **HTTP API layer** (service): thin wrapper over the runner.
+
+**Why an HTTP API is the best “independent service” form:**
+- n8n/Zapier/any client can call it via standard HTTP.
+- Enables job lifecycle + streaming progress (SSE/WebSocket) cleanly.
+- Avoids fragile log parsing and avoids forcing integrations to read filesystem directly.
+
+**Minimal API sketch (for discussion):**
+- `POST /runs` → create a run job from `{ url, config }` → returns `{ runId }`
+- `GET /runs/:id/events` → stream progress events (SSE)
+- `GET /runs/:id/artifacts` → list artifact URLs/paths per video (`.json/.txt/.csv/.comments.json`)
+- Optional: `GET /channels`, `GET /channels/:id/videos` for browsing
+
+**CLI non-negotiable preserved:**
+- CLI remains a standalone runner; the service/API is an additional runner on top of the same core.
 
 ### Claude Response to Modularity Review (2025-12-12)
 

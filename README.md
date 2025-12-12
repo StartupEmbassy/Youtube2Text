@@ -120,6 +120,7 @@ Options:
 | `--assemblyAiMinBalanceMinutes` | number | `60` | Warn/abort if remaining credits below N minutes. |
 | `--comments` | boolean | false | Fetch comments via yt-dlp and save `.comments.json`. |
 | `--commentsMax` | number | unset | Limit comments per video when fetching. |
+| `--json-events` | boolean | false | Emit JSONL pipeline events to stdout (logs go to stderr). |
 
 ### runs.yaml (optional)
 

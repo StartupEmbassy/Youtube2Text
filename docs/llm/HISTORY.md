@@ -61,6 +61,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Add modularity/interface review notes to handoff for Claude - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Add follow-up notes on interfaces and service-first API readiness - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Rewrite docs/ARCHITECTURE.md to service-first Phase 0 and add language detection requirement - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Document service-first layering (core + runners + API) in handoff - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add PipelineEventEmitter and `--json-events` for JSONL progress events - Files: [src/pipeline/events.ts, src/pipeline/jsonlEmitter.ts, src/pipeline/run.ts, src/cli/index.ts, src/utils/logger.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 

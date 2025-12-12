@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { loadConfig, loadRunsFile } from "../config/index.js";
 import { logError } from "../utils/logger.js";
 import { runPipeline } from "../pipeline/run.js";
+import { JsonLinesEventEmitter } from "../pipeline/jsonlEmitter.js";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -47,6 +48,7 @@ program
     "Limit comments per video when fetching",
     (v) => Number(v)
   )
+  .option("--json-events", "Emit JSONL pipeline events to stdout")
   .option("--force", "Reprocess even if outputs exist")
   .parse(process.argv);
 
@@ -56,6 +58,8 @@ async function main() {
   const inputUrl = program.args[0] as string | undefined;
   const baseConfig = loadConfig();
   const opts = program.opts<CliOptions>();
+  const emitter = opts.jsonEvents ? new JsonLinesEventEmitter() : undefined;
+  if (opts.jsonEvents) process.env.Y2T_JSON_EVENTS = "1";
 
   if (inputUrl) {
     const config = {
@@ -87,7 +91,10 @@ async function main() {
       commentsMax: opts.commentsMax ?? baseConfig.commentsMax,
     };
 
-    await runPipeline(inputUrl, config, { force: Boolean(opts.force) });
+    await runPipeline(inputUrl, config, {
+      force: Boolean(opts.force),
+      emitter,
+    });
     return;
   }
 
@@ -119,7 +126,10 @@ async function main() {
       commentsMax: run.commentsMax ?? baseConfig.commentsMax,
     };
 
-    await runPipeline(run.url, config, { force: Boolean(run.force) });
+    await runPipeline(run.url, config, {
+      force: Boolean(run.force),
+      emitter,
+    });
   }
 }
 

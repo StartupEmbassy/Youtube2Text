@@ -3,6 +3,10 @@ const NO_COLOR =
   process.env.NO_COLOR === "true" ||
   process.env.FORCE_COLOR === "0";
 
+function infoToStderr(): boolean {
+  return process.env.Y2T_JSON_EVENTS === "1";
+}
+
 function color(code: string, text: string): string {
   if (NO_COLOR) return text;
   return `\x1b[${code}m${text}\x1b[0m`;
@@ -33,7 +37,8 @@ const STAGE_STYLES: Record<string, StageStyle> = {
 };
 
 export function logInfo(message: string) {
-  process.stdout.write(`${cyan("[info]")} ${message}\n`);
+  const out = infoToStderr() ? process.stderr : process.stdout;
+  out.write(`${cyan("[info]")} ${message}\n`);
 }
 
 export function logWarn(message: string) {
@@ -51,5 +56,6 @@ export function logStep(stage: string, message: string) {
     ? `[${style.icon} ${key}]`
     : `[${key}]`;
   const prefix = style ? style.colorize(prefixText) : dim(prefixText);
-  process.stdout.write(`${prefix} ${message}\n`);
+  const out = infoToStderr() ? process.stderr : process.stdout;
+  out.write(`${prefix} ${message}\n`);
 }

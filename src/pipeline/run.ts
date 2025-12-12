@@ -21,6 +21,7 @@ import { logInfo, logWarn, logStep } from "../utils/logger.js";
 import { AppConfig } from "../config/schema.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
 import { InsufficientCreditsError } from "../transcription/assemblyai/errors.js";
+import { PipelineEventEmitter, PipelineStage } from "./events.js";
 
 type AssemblyAiAccountResponse = Record<string, unknown> & {
   credit_balance?: number;
@@ -50,10 +51,27 @@ function getCreditsMinutesRemaining(
 export async function runPipeline(
   inputUrl: string,
   config: AppConfig,
-  options: { force: boolean }
+  options: { force: boolean; emitter?: PipelineEventEmitter }
 ) {
   const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
   let stopAll = false;
+  const emitter = options.emitter;
+  const nowIso = () => new Date().toISOString();
+  const emitStage = (
+    stage: PipelineStage,
+    videoId: string,
+    index: number,
+    total: number
+  ) => {
+    emitter?.emit({
+      type: "video:stage",
+      videoId,
+      stage,
+      index,
+      total,
+      timestamp: nowIso(),
+    });
+  };
   if (config.assemblyAiCreditsCheck !== "none") {
     try {
       const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
@@ -123,6 +141,9 @@ export async function runPipeline(
   const totalVideos = videoJobs.length;
   let completedVideos = 0;
   const alreadyProcessedByIndex: boolean[] = [];
+  let succeeded = 0;
+  let failed = 0;
+  let skipped = 0;
 
   if (!options.force) {
     const processedFlags = await Promise.all(
@@ -130,6 +151,7 @@ export async function runPipeline(
     );
     alreadyProcessedByIndex.push(...processedFlags);
     completedVideos = processedFlags.filter(Boolean).length;
+    skipped = completedVideos;
   } else {
     alreadyProcessedByIndex.push(
       ...new Array(videoJobs.length).fill(false)
@@ -141,125 +163,227 @@ export async function runPipeline(
     `Channel ${listing.channelId}: ${completedVideos}/${totalVideos} videos already processed (${totalVideos - completedVideos} remaining)`
   );
 
+  emitter?.emit({
+    type: "run:start",
+    inputUrl,
+    channelId: listing.channelId,
+    channelTitle: listing.channelTitle,
+    totalVideos,
+    alreadyProcessed: completedVideos,
+    remaining: totalVideos - completedVideos,
+    timestamp: nowIso(),
+  });
+
   const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
   const limit = pLimit(config.concurrency);
 
-  await Promise.all(
-    videoJobs.map(({ video, paths, index }) =>
-      limit(async () => {
-        if (stopAll) {
-          logWarn(
-            `Skipping due to prior fatal error: Video ${index}/${totalVideos} (${video.id})`
-          );
-          return;
-        }
-
-        const markFinished = (label: string) => {
-          completedVideos += 1;
-          const remaining = totalVideos - completedVideos;
-          logStep(
-            "progress",
-            `Video ${index}/${totalVideos} ${label}: ${completedVideos}/${totalVideos} videos completed (${remaining} remaining)`
-          );
-        };
-
-        try {
-          if (!options.force && alreadyProcessedByIndex[index - 1]) {
-            logStep(
-              "skip",
-              `Video ${index}/${totalVideos} already processed: ${video.id} (${completedVideos}/${totalVideos} completed)`
+  try {
+    await Promise.all(
+      videoJobs.map(({ video, paths, index }) =>
+        limit(async () => {
+          if (stopAll) {
+            skipped += 1;
+            const remaining = totalVideos - completedVideos;
+            logWarn(
+              `Skipping due to prior fatal error: Video ${index}/${totalVideos} (${video.id})`
             );
+            emitter?.emit({
+              type: "video:skip",
+              videoId: video.id,
+              reason: "stopped",
+              index,
+              total: totalVideos,
+              completed: completedVideos,
+              remaining,
+              timestamp: nowIso(),
+            });
             return;
           }
 
-          const audioPath = await downloadAudio(
-            video.url,
-            paths.audioPath,
-            config.audioFormat,
-            config.downloadRetries,
-            ytDlpCommand
-          );
-
-          const transcript = await provider.transcribe(audioPath, {
-            languageCode: config.languageCode,
-            pollIntervalMs: config.pollIntervalMs,
-            maxPollMinutes: config.maxPollMinutes,
-            retries: config.transcriptionRetries,
-          });
-
-          const description =
-            video.description ??
-            (await fetchVideoDescription(video.url, ytDlpCommand));
-
-          if (config.commentsEnabled) {
-            try {
-              if (options.force || !(await isProcessed(paths.commentsPath))) {
-                const comments = await fetchVideoComments(
-                  video.url,
-                  ytDlpCommand,
-                  config.commentsMax
-                );
-                if (comments) {
-                  await saveVideoCommentsJson(
-                    paths.commentsPath,
-                    comments
-                  );
-                }
-              }
-            } catch (error) {
-              const message =
-                error instanceof Error ? error.message : String(error);
-              logWarn(
-                `Comments fetch failed for ${video.id}: ${message}`
-              );
+          const markFinished = (
+            label: "done" | "failed",
+            errorMessage?: string
+          ) => {
+            completedVideos += 1;
+            if (label === "done") succeeded += 1;
+            if (label === "failed") failed += 1;
+            const remaining = totalVideos - completedVideos;
+            logStep(
+              "progress",
+              `Video ${index}/${totalVideos} ${label}: ${completedVideos}/${totalVideos} videos completed (${remaining} remaining)`
+            );
+            if (label === "done") {
+              emitter?.emit({
+                type: "video:done",
+                videoId: video.id,
+                index,
+                total: totalVideos,
+                completed: completedVideos,
+                remaining,
+                timestamp: nowIso(),
+              });
             }
-          }
+            if (label === "failed") {
+              emitter?.emit({
+                type: "video:error",
+                videoId: video.id,
+                error: errorMessage ?? "Unknown error",
+                stage: "transcribe",
+                index,
+                total: totalVideos,
+                completed: completedVideos,
+                remaining,
+                timestamp: nowIso(),
+              });
+            }
+          };
 
-          await saveTranscriptJson(paths.jsonPath, transcript);
-          await saveTranscriptTxt(
-            paths.txtPath,
-            formatTxt(transcript, {
-              channelId: listing.channelId,
-              channelTitle: listing.channelTitle,
+          try {
+            if (!options.force && alreadyProcessedByIndex[index - 1]) {
+              const remaining = totalVideos - completedVideos;
+              logStep(
+                "skip",
+                `Video ${index}/${totalVideos} already processed: ${video.id} (${completedVideos}/${totalVideos} completed)`
+              );
+              emitter?.emit({
+                type: "video:skip",
+                videoId: video.id,
+                reason: "already_processed",
+                index,
+                total: totalVideos,
+                completed: completedVideos,
+                remaining,
+                timestamp: nowIso(),
+              });
+              return;
+            }
+
+            emitter?.emit({
+              type: "video:start",
+              videoId: video.id,
               title: video.title,
               url: video.url,
-              uploadDate: video.uploadDate,
-              description,
-            })
-          );
+              index,
+              total: totalVideos,
+              timestamp: nowIso(),
+            });
 
-          if (config.csvEnabled) {
-            await saveTranscriptCsv(
-              paths.csvPath,
-              formatCsv(transcript)
+            emitStage("download", video.id, index, totalVideos);
+            const audioPath = await downloadAudio(
+              video.url,
+              paths.audioPath,
+              config.audioFormat,
+              config.downloadRetries,
+              ytDlpCommand
             );
-          }
 
-          logStep("done", `Video ${index}/${totalVideos} done: ${video.id}`);
-          markFinished("done");
-        } catch (error) {
-          if (error instanceof InsufficientCreditsError) {
-            stopAll = true;
+            emitStage("transcribe", video.id, index, totalVideos);
+            const transcript = await provider.transcribe(audioPath, {
+              languageCode: config.languageCode,
+              pollIntervalMs: config.pollIntervalMs,
+              maxPollMinutes: config.maxPollMinutes,
+              retries: config.transcriptionRetries,
+            });
+
+            const description =
+              video.description ??
+              (await fetchVideoDescription(video.url, ytDlpCommand));
+
+            if (config.commentsEnabled) {
+              try {
+                if (
+                  options.force ||
+                  !(await isProcessed(paths.commentsPath))
+                ) {
+                  emitStage("comments", video.id, index, totalVideos);
+                  const comments = await fetchVideoComments(
+                    video.url,
+                    ytDlpCommand,
+                    config.commentsMax
+                  );
+                  if (comments) {
+                    await saveVideoCommentsJson(
+                      paths.commentsPath,
+                      comments
+                    );
+                  }
+                }
+              } catch (error) {
+                const message =
+                  error instanceof Error ? error.message : String(error);
+                logWarn(
+                  `Comments fetch failed for ${video.id}: ${message}`
+                );
+              }
+            }
+
+            emitStage("save", video.id, index, totalVideos);
+            await saveTranscriptJson(paths.jsonPath, transcript);
+            await saveTranscriptTxt(
+              paths.txtPath,
+              formatTxt(transcript, {
+                channelId: listing.channelId,
+                channelTitle: listing.channelTitle,
+                title: video.title,
+                url: video.url,
+                uploadDate: video.uploadDate,
+                description,
+              })
+            );
+
+            emitStage("format", video.id, index, totalVideos);
+            if (config.csvEnabled) {
+              await saveTranscriptCsv(
+                paths.csvPath,
+                formatCsv(transcript)
+              );
+            }
+
+            logStep("done", `Video ${index}/${totalVideos} done: ${video.id}`);
+            markFinished("done");
+          } catch (error) {
+            if (error instanceof InsufficientCreditsError) {
+              stopAll = true;
+              logWarn(
+                `Stopping run: AssemblyAI credits exhausted while processing Video ${index}/${totalVideos} (${video.id})`
+              );
+              throw error;
+            }
+            const message =
+              error instanceof Error ? error.message : String(error);
             logWarn(
-              `Stopping run: AssemblyAI credits exhausted while processing Video ${index}/${totalVideos} (${video.id})`
+              `Failed Video ${index}/${totalVideos} (${video.id}): ${message}`
             );
-            throw error;
+            await logErrorRecord(paths.errorLogPath, {
+              videoId: video.id,
+              videoUrl: video.url,
+              stage: "transcribe",
+              message,
+              timestamp: new Date().toISOString(),
+            });
+            markFinished("failed", message);
           }
-          const message =
-            error instanceof Error ? error.message : String(error);
-          logWarn(
-            `Failed Video ${index}/${totalVideos} (${video.id}): ${message}`
-          );
-          await logErrorRecord(paths.errorLogPath, {
-            videoId: video.id,
-            videoUrl: video.url,
-            stage: "transcribe",
-            message,
-            timestamp: new Date().toISOString(),
-          });
-          markFinished("failed");
-        }
-      })
-    )
-  );
+        })
+      )
+    );
+
+    emitter?.emit({
+      type: "run:done",
+      channelId: listing.channelId,
+      total: totalVideos,
+      succeeded,
+      failed,
+      skipped,
+      timestamp: nowIso(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    emitter?.emit({
+      type: "run:error",
+      channelId: listing.channelId,
+      error: message,
+      timestamp: nowIso(),
+    });
+    throw error;
+  }
 }
