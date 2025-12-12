@@ -49,6 +49,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Add per-stage colors and ASCII icons to logStep output - Files: [src/utils/logger.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Fetch yt-dlp video descriptions and include in TXT headers - Files: [src/youtube/metadata.ts, src/youtube/types.ts, src/youtube/index.ts, src/pipeline/run.ts, src/formatters/txt.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Add optional yt-dlp comments extraction and save to sidecar JSON - Files: [src/youtube/comments.ts, src/youtube/index.ts, src/storage/index.ts, src/pipeline/run.ts, src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/cli/index.ts, README.md, .env.example, config.yaml.example, runs.yaml.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - Claude - Respond to GPT-5.2 modularity review: agree with analysis, propose prioritized interface roadmap (StorageAdapter, PipelineEventEmitter, core errors NOW; YouTube/Formatter DEFER), include concrete interface definitions - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-12 - Claude - Respond to GPT-5.2 architecture review: accept Phase 0 local-first (user confirmed), propose StorageAdapter interface, PipelineEvent contract, detailed Phase 0 breakdown (~3 weeks) - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-12 - GPT-5.2 - Annotate docs/ARCHITECTURE.md with Claude vs GPT‑5.2 review notes and add Phase 0 local-first MVP - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
@@ -56,6 +58,9 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Show stable video index i/N in skip/done/fail logs - Files: [src/pipeline/run.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Add remaining count to progress logs - Files: [src/pipeline/run.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Prefix channel folder names with sanitized channel title - Files: [src/storage/index.ts, src/pipeline/run.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add modularity/interface review notes to handoff for Claude - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add follow-up notes on interfaces and service-first API readiness - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Rewrite docs/ARCHITECTURE.md to service-first Phase 0 and add language detection requirement - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 
