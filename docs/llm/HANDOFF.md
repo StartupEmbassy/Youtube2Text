@@ -26,6 +26,8 @@ List the files touched or relevant to the current work stream.
 - runs.yaml.example
 - config.yaml.example
 - runs.yml
+- README.md
+- docs/PROJECT_CONTEXT.md
 - docs/llm/HANDOFF.md
 - docs/llm/HISTORY.md
 

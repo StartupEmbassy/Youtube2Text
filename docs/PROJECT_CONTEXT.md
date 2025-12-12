@@ -32,6 +32,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 - replace AssemblyAI with another provider,
 - add semantic post-processing (summaries/topics),
 - attach a React dashboard that reads stored outputs only.
+- package the pipeline for deployment (planned: Docker image that includes `yt-dlp`).
 
 ## Key Components
 | Component | Purpose | Owner | Notes |

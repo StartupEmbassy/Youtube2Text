@@ -33,9 +33,14 @@ Later extensions read from `output/` only (e.g., React dashboard), keeping the p
 ## Requirements
 
 - Node.js 18+
-- `yt-dlp` installed and available on PATH
+- `yt-dlp` installed and available on PATH (system dependency)
 - AssemblyAI API key
 - Windows/macOS/Linux
+
+### Production Note
+
+For local development, Youtube2Text relies on a system-installed `yt-dlp`.
+When deploying to a server or container, ensure `yt-dlp` is installed in that environment as well (planned approach: Docker image that bundles Node.js + `yt-dlp`).
 
 ## Configuration
 
