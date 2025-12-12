@@ -38,13 +38,23 @@ function wrapText(text: string, width: number): string[] {
 
 export function formatTxt(
   transcript: TranscriptJson,
-  meta: { title: string; url: string; uploadDate?: string },
+  meta: {
+    title: string;
+    url: string;
+    uploadDate?: string;
+    channelId?: string;
+    channelTitle?: string;
+  },
   options?: { timestamps?: boolean; wrapWidth?: number }
 ): string {
   const timestamps = options?.timestamps ?? true;
   const wrapWidth = options?.wrapWidth ?? 100;
 
   const headerLines = [
+    meta.channelTitle || meta.channelId
+      ? `Channel: ${meta.channelTitle ?? meta.channelId}`
+      : undefined,
+    meta.channelId ? `Channel ID: ${meta.channelId}` : undefined,
     `Title: ${meta.title}`,
     `URL: ${meta.url}`,
     meta.uploadDate ? `Date: ${meta.uploadDate}` : undefined,

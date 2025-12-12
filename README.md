@@ -14,7 +14,7 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Audio-only download in `mp3` or `wav`.
 - AssemblyAI upload + diarized transcription (`speaker_labels: true`).
 - Idempotent processing: skips videos already processed unless forced.
-- Output formats: `.json`, readable `.txt` (speaker labels + timestamps, wrapped for readability), optional `.csv`.
+- Output formats: `.json`, readable `.txt` (channel + title header, speaker labels + timestamps, wrapped for readability), optional `.csv`.
 - Fault handling with retries/backoff and per-video error logs.
 
 ## Architecture (High Level)

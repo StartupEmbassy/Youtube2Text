@@ -147,6 +147,8 @@ export async function runPipeline(
           await saveTranscriptTxt(
             paths.txtPath,
             formatTxt(transcript, {
+              channelId: listing.channelId,
+              channelTitle: listing.channelTitle,
               title: video.title,
               url: video.url,
               uploadDate: video.uploadDate,

@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Add insufficient-credits fallback and improve CLI logs.
-- Status: Pipeline stops on credits exhaustion; logs now colored/prefixed.
+- Session Focus: Add channel metadata to TXT headers.
+- Status: TXT formatter now includes channel name/ID.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.

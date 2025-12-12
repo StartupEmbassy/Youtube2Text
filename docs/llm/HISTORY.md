@@ -42,6 +42,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Add AssemblyAI credits preflight suggestion to handoff - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Implement filenameStyle (id/id_title/title_id) and AssemblyAI credits preflight config/CLI - Files: [src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/cli/index.ts, src/storage/index.ts, src/utils/fs.ts, src/transcription/assemblyai/client.ts, src/transcription/assemblyai/index.ts, src/pipeline/run.ts, README.md, .env.example, config.yaml.example, runs.yaml.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Stop pipeline on AssemblyAI insufficient credits; add colored/prefixed logs - Files: [src/transcription/assemblyai/errors.ts, src/transcription/assemblyai/http.ts, src/pipeline/run.ts, src/utils/logger.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Include channel info in TXT output headers - Files: [src/formatters/txt.ts, src/pipeline/run.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 
