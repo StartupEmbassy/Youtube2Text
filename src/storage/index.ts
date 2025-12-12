@@ -1,5 +1,11 @@
 import { join } from "node:path";
-import { fileExists, sanitizeFilename, writeJson, writeText } from "../utils/fs.js";
+import type { AppConfig } from "../config/schema.js";
+import {
+  fileExists,
+  sanitizeFilename,
+  writeJson,
+  writeText,
+} from "../utils/fs.js";
 import { TranscriptJson } from "../transcription/types.js";
 
 export type OutputPaths = {
@@ -14,10 +20,14 @@ export function getOutputPaths(
   channelId: string,
   videoId: string,
   videoTitle: string,
-  dirs: { outputDir: string; audioDir: string; audioFormat: string }
+  dirs: { outputDir: string; audioDir: string; audioFormat: string },
+  options?: { filenameStyle?: AppConfig["filenameStyle"] }
 ): OutputPaths {
   const titleSlug = sanitizeFilename(videoTitle, { maxLength: 60 });
-  const baseName = `${titleSlug}__${videoId}`;
+  const style = options?.filenameStyle ?? "title_id";
+  let baseName = videoId;
+  if (style === "id_title") baseName = `${videoId}__${titleSlug}`;
+  if (style === "title_id") baseName = `${titleSlug}__${videoId}`;
   return {
     jsonPath: join(dirs.outputDir, channelId, `${baseName}.json`),
     txtPath: join(dirs.outputDir, channelId, `${baseName}.txt`),

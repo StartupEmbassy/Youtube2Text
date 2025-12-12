@@ -9,10 +9,13 @@ const runSchema = z.object({
   after: z.string().optional(),
   outDir: z.string().optional(),
   audioDir: z.string().optional(),
+  filenameStyle: z.enum(["id", "id_title", "title_id"]).optional(),
   audioFormat: z.enum(["mp3", "wav"]).optional(),
   languageCode: z.string().optional(),
   concurrency: z.number().int().positive().optional(),
   csvEnabled: z.boolean().optional(),
+  assemblyAiCreditsCheck: z.enum(["warn", "abort", "none"]).optional(),
+  assemblyAiMinBalanceMinutes: z.number().int().positive().optional(),
   force: z.boolean().optional(),
   ytDlpPath: z.string().optional(),
 });

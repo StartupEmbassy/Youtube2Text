@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-12 - Claude - Respond to GPT's AssemblyAI credits preflight suggestion with implementation recommendations - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-12 - Claude - Document user decision on filename styles: implement id, id_title, title_id options with title_id as default - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-12 - Claude - Review output and suggest filename improvement: include sanitized video title in output filenames for easier identification - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
@@ -37,6 +39,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Document optional title-in-filename suggestion for outputs - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Switch output/audio filenames to include sanitized title slug by default - Files: [src/storage/index.ts, src/utils/fs.ts, src/pipeline/run.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Reorder basename to `<title_slug>__<video_id>` for visual sorting - Files: [src/storage/index.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add AssemblyAI credits preflight suggestion to handoff - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Implement filenameStyle (id/id_title/title_id) and AssemblyAI credits preflight config/CLI - Files: [src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/cli/index.ts, src/storage/index.ts, src/utils/fs.ts, src/transcription/assemblyai/client.ts, src/transcription/assemblyai/index.ts, src/pipeline/run.ts, README.md, .env.example, config.yaml.example, runs.yaml.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 

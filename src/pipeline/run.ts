@@ -15,12 +15,80 @@ import { logInfo, logWarn } from "../utils/logger.js";
 import { AppConfig } from "../config/schema.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
 
+type AssemblyAiAccountResponse = Record<string, unknown> & {
+  credit_balance?: number;
+  audio_minutes_remaining?: number;
+  minutes_remaining?: number;
+  audio_seconds_remaining?: number;
+};
+
+function getCreditsMinutesRemaining(
+  account: AssemblyAiAccountResponse
+): number | undefined {
+  if (typeof account.audio_minutes_remaining === "number") {
+    return account.audio_minutes_remaining;
+  }
+  if (typeof account.minutes_remaining === "number") {
+    return account.minutes_remaining;
+  }
+  if (typeof account.audio_seconds_remaining === "number") {
+    return account.audio_seconds_remaining / 60;
+  }
+  if (typeof account.credit_balance === "number") {
+    return account.credit_balance;
+  }
+  return undefined;
+}
+
 export async function runPipeline(
   inputUrl: string,
   config: AppConfig,
   options: { force: boolean }
 ) {
   const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
+  if (config.assemblyAiCreditsCheck !== "none") {
+    try {
+      const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
+      const account = (await provider.getAccount()) as AssemblyAiAccountResponse;
+      const minutesRemaining = getCreditsMinutesRemaining(account);
+      if (minutesRemaining !== undefined) {
+        logInfo(
+          `AssemblyAI balance: ~${minutesRemaining.toFixed(
+            1
+          )} minutes remaining`
+        );
+        if (
+          minutesRemaining < config.assemblyAiMinBalanceMinutes &&
+          config.assemblyAiCreditsCheck === "abort"
+        ) {
+          throw new Error(
+            `AssemblyAI credits below threshold (${config.assemblyAiMinBalanceMinutes} min). Aborting run.`
+          );
+        }
+        if (
+          minutesRemaining < config.assemblyAiMinBalanceMinutes &&
+          config.assemblyAiCreditsCheck === "warn"
+        ) {
+          logWarn(
+            `Low AssemblyAI credits: ~${minutesRemaining.toFixed(
+              1
+            )} min remaining (< ${config.assemblyAiMinBalanceMinutes} min)`
+          );
+        }
+      } else {
+        logWarn(
+          "AssemblyAI account balance unavailable; continuing without credits check."
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error);
+      logWarn(
+        `AssemblyAI credits check failed (${message}); continuing.`
+      );
+    }
+  }
+
   const listing = await enumerateVideos(inputUrl, ytDlpCommand);
   const filteredVideos = listing.videos
     .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
@@ -36,11 +104,17 @@ export async function runPipeline(
   await Promise.all(
     filteredVideos.map((video) =>
       limit(async () => {
-        const paths = getOutputPaths(listing.channelId, video.id, video.title, {
-          outputDir: config.outputDir,
-          audioDir: config.audioDir,
-          audioFormat: config.audioFormat,
-        });
+        const paths = getOutputPaths(
+          listing.channelId,
+          video.id,
+          video.title,
+          {
+            outputDir: config.outputDir,
+            audioDir: config.audioDir,
+            audioFormat: config.audioFormat,
+          },
+          { filenameStyle: config.filenameStyle }
+        );
 
         try {
           if (!options.force && (await isProcessed(paths.jsonPath))) {

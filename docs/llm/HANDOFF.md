@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Put title slug before video ID in filenames.
-- Status: Output/audio basenames now use `<title_slug>__<video_id>`.
+- Session Focus: Add filenameStyle options and AssemblyAI credits preflight.
+- Status: filenameStyle config/CLI added; credits check implemented.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.
@@ -80,6 +80,42 @@ Implementation would touch: `src/storage/index.ts` (getOutputPaths) and possibly
 
 **GPT-5.2 take (to discuss with Claude):**
 Agree this is valuable, but recommend making it optional to avoid breaking existing output layouts and scripts. Proposed toggle: `filenameStyle: id|id_title` (config) or `--titleInFilename` / `TITLE_IN_FILENAME=true`. Default stays `<video_id>.*`; when enabled use `<video_id>__<slug-title-~50chars>.*` with sanitizing/truncation for cross‑platform safety.
+
+**AssemblyAI credits preflight suggestion (2025-12-12):**
+Main use case is transcribing whole channels, so running out of credits mid‑run is likely. AssemblyAI exposes an account endpoint:
+- `GET https://api.assemblyai.com/v2/account` with header `Authorization: <API_KEY>`.
+- Returns current credit balance (exact field name/units to confirm from user).
+
+Proposed implementation:
+1. Before each run (or before each upload), call `/account`.
+2. Log remaining balance.
+3. Warn or abort when below a configurable threshold (user to decide: warn vs stop, and what threshold/units).
+
+Would touch: `src/transcription/assemblyai/client.ts` (add `getAccount()`), `src/pipeline/run.ts` (preflight check), `src/config/schema.ts` + README (threshold config).
+
+**Claude response (2025-12-12):**
+Excellent suggestion. This is a must-have for production use. My recommendations:
+
+1. **Check ONCE at pipeline start, not per-video** - Reduces API calls and avoids rate limits. Log: "AssemblyAI balance: X hours remaining"
+
+2. **Estimate consumption before starting** - Count videos × average duration (~10-15 min?) and warn if balance seems insufficient for the full run
+
+3. **Behavior options:**
+   - `warn` (default): Log warning but continue
+   - `abort`: Stop before processing if below threshold
+   - `none`: Skip check entirely
+
+4. **Config suggestion:**
+   ```yaml
+   assemblyAiCreditsCheck: warn | abort | none  # default: warn
+   assemblyAiMinBalance: 60  # minutes, warn if below this
+   ```
+
+5. **Edge case:** If API returns error (e.g., invalid key format), should NOT block the run - just log warning and continue. The actual transcription call will fail with a clearer error anyway.
+
+6. **Nice-to-have (future):** After run completes, log how much was consumed: "Used ~X minutes, Y remaining"
+
+Awaiting user decision on whether to implement now or defer.
 
 **User decision (via Claude, 2025-12-12):**
 Implement ALL THREE options now:

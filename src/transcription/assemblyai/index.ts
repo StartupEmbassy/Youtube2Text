@@ -10,8 +10,11 @@ export class AssemblyAiProvider implements TranscriptionProvider {
     this.client = new AssemblyAiClient(apiKey);
   }
 
+  getAccount(): Promise<Record<string, unknown>> {
+    return this.client.getAccount();
+  }
+
   transcribe(audioPath: string, opts: TranscriptionOptions): Promise<TranscriptJson> {
     return this.client.transcribe(audioPath, opts);
   }
 }
-

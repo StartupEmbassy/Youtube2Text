@@ -18,16 +18,29 @@ const program = new Command();
 program
   .name("youtube2text")
   .version(pkg.version)
-  .argument("[url]", "YouTube channel or playlist URL")
+  .argument("[url]", "YouTube channel, playlist, or video URL")
   .option("--maxVideos <n>", "Maximum videos to process", (v) => Number(v))
   .option("--after <date>", "Only videos after YYYY-MM-DD")
   .option("--outDir <path>", "Output directory")
   .option("--audioDir <path>", "Audio directory")
+  .option(
+    "--filenameStyle <style>",
+    "Output filename style: id | id_title | title_id"
+  )
   .option("--audioFormat <fmt>", "mp3 or wav")
   .option("--language <code>", "AssemblyAI language code")
   .option("--concurrency <n>", "Parallel videos", (v) => Number(v))
   .option("--csv", "Enable CSV output")
   .option("--ytDlpPath <path>", "Explicit yt-dlp.exe path override")
+  .option(
+    "--assemblyAiCreditsCheck <mode>",
+    "AssemblyAI credits check: warn | abort | none"
+  )
+  .option(
+    "--assemblyAiMinBalanceMinutes <n>",
+    "Warn/abort if remaining credits below N minutes",
+    (v) => Number(v)
+  )
   .option("--force", "Reprocess even if outputs exist")
   .parse(process.argv);
 
@@ -43,6 +56,11 @@ async function main() {
       ...baseConfig,
       outputDir: opts.outDir ?? baseConfig.outputDir,
       audioDir: opts.audioDir ?? baseConfig.audioDir,
+      filenameStyle:
+        (opts.filenameStyle as
+          | "id"
+          | "id_title"
+          | "title_id") ?? baseConfig.filenameStyle,
       audioFormat:
         (opts.audioFormat as "mp3" | "wav") ?? baseConfig.audioFormat,
       languageCode: opts.language ?? baseConfig.languageCode,
@@ -51,6 +69,14 @@ async function main() {
       afterDate: opts.after ?? baseConfig.afterDate,
       csvEnabled: opts.csv ?? baseConfig.csvEnabled,
       ytDlpPath: opts.ytDlpPath ?? baseConfig.ytDlpPath,
+      assemblyAiCreditsCheck:
+        (opts.assemblyAiCreditsCheck as
+          | "warn"
+          | "abort"
+          | "none") ?? baseConfig.assemblyAiCreditsCheck,
+      assemblyAiMinBalanceMinutes:
+        opts.assemblyAiMinBalanceMinutes ??
+        baseConfig.assemblyAiMinBalanceMinutes,
     };
 
     await runPipeline(inputUrl, config, { force: Boolean(opts.force) });
@@ -68,6 +94,7 @@ async function main() {
       ...baseConfig,
       outputDir: run.outDir ?? baseConfig.outputDir,
       audioDir: run.audioDir ?? baseConfig.audioDir,
+      filenameStyle: run.filenameStyle ?? baseConfig.filenameStyle,
       audioFormat: run.audioFormat ?? baseConfig.audioFormat,
       languageCode: run.languageCode ?? baseConfig.languageCode,
       concurrency: run.concurrency ?? baseConfig.concurrency,
@@ -75,6 +102,11 @@ async function main() {
       afterDate: run.after ?? baseConfig.afterDate,
       csvEnabled: run.csvEnabled ?? baseConfig.csvEnabled,
       ytDlpPath: run.ytDlpPath ?? baseConfig.ytDlpPath,
+      assemblyAiCreditsCheck:
+        run.assemblyAiCreditsCheck ?? baseConfig.assemblyAiCreditsCheck,
+      assemblyAiMinBalanceMinutes:
+        run.assemblyAiMinBalanceMinutes ??
+        baseConfig.assemblyAiMinBalanceMinutes,
     };
 
     await runPipeline(run.url, config, { force: Boolean(run.force) });

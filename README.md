@@ -76,12 +76,16 @@ Example environment variables:
 ```
 ASSEMBLYAI_API_KEY=your_key_here
 OUTPUT_DIR=output
+AUDIO_DIR=audio
+FILENAME_STYLE=title_id   # id | id_title | title_id
 AUDIO_FORMAT=mp3
 LANGUAGE_CODE=en_us
 CONCURRENCY=2
 MAX_VIDEOS=
 AFTER_DATE=
 CSV_ENABLED=false
+ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
+ASSEMBLYAI_MIN_BALANCE_MINUTES=60
 ```
 
 Example files:
@@ -103,11 +107,14 @@ Options:
 | `--maxVideos` | number | unset | Process at most N videos. |
 | `--after` | date | unset | Only process videos after YYYY-MM-DD. |
 | `--outDir` | path | `output` | Output root directory. |
+| `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
 | `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
 | `--language` | string | `en_us` | Passed to AssemblyAI. |
 | `--concurrency` | number | `2` | Parallel videos processed. |
 | `--force` | boolean | false | Reprocess even if outputs exist. |
 | `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |
+| `--assemblyAiCreditsCheck` | `warn|abort|none` | `warn` | Preflight AssemblyAI credits check mode. |
+| `--assemblyAiMinBalanceMinutes` | number | `60` | Warn/abort if remaining credits below N minutes. |
 
 ### runs.yaml (optional)
 
@@ -149,18 +156,18 @@ Fields in `runs.yaml` override defaults from `config.yaml`/`.env` for that speci
 
 ## Output Layout
 
-Outputs are organized by channel and video ID plus a sanitized title slug:
+Outputs are organized by channel. Filenames depend on `filenameStyle` (default `title_id`):
 
 ```
-output/<channel_id>/<title_slug>__<video_id>.json
-output/<channel_id>/<title_slug>__<video_id>.txt
-output/<channel_id>/<title_slug>__<video_id>.csv   # if enabled
+output/<channel_id>/<title_slug>__<video_id>.json   # default title_id
+output/<channel_id>/<video_id>.json                # filenameStyle=id
+output/<channel_id>/<video_id>__<title_slug>.json  # filenameStyle=id_title
 ```
 
 Raw audio is stored under:
 
 ```
-audio/<channel_id>/<title_slug>__<video_id>.<ext>
+audio/<channel_id>/<title_slug>__<video_id>.<ext>  # default title_id
 ```
 
 Failures are recorded per channel in:
@@ -171,7 +178,7 @@ output/<channel_id>/_errors.jsonl
 
 ## Idempotency & Retries
 
-- A video is considered processed if `<video_id>.json` exists under the channel directory.
+- A video is considered processed if the expected JSON file exists under the current `filenameStyle`.
 - Reprocessing requires `--force`.
 - Download and transcription retries are handled independently with exponential backoff.
 

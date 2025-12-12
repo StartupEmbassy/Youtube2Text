@@ -8,6 +8,14 @@ type CreateResponse = { id: string; status: string };
 export class AssemblyAiClient {
   constructor(private apiKey: string) {}
 
+  async getAccount(): Promise<Record<string, unknown>> {
+    return await requestJson<Record<string, unknown>>(
+      this.apiKey,
+      "/account",
+      { method: "GET" }
+    );
+  }
+
   async uploadAudio(audioPath: string): Promise<string> {
     const data = await uploadFile(this.apiKey, audioPath);
     return data.upload_url;

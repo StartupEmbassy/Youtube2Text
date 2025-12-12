@@ -7,6 +7,9 @@ runs:
     after: "2024-01-01"
     concurrency: 2
     csvEnabled: false
+    filenameStyle: title_id
+    assemblyAiCreditsCheck: warn
+    assemblyAiMinBalanceMinutes: 60
     ytDlpPath:
 
   - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
@@ -15,5 +18,8 @@ runs:
     outDir: "output_custom"
     audioDir: "audio_custom"
     csvEnabled: true
+    filenameStyle: id_title
+    assemblyAiCreditsCheck: warn
+    assemblyAiMinBalanceMinutes: 60
     force: false
     ytDlpPath:

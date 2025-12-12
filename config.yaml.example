@@ -3,6 +3,7 @@
 
 outputDir: output
 audioDir: audio
+filenameStyle: title_id   # id | id_title | title_id
 audioFormat: mp3
 languageCode: en_us
 concurrency: 2
@@ -11,4 +12,6 @@ transcriptionRetries: 2
 pollIntervalMs: 5000
 maxPollMinutes: 60
 csvEnabled: false
+assemblyAiCreditsCheck: warn   # warn | abort | none
+assemblyAiMinBalanceMinutes: 60
 ytDlpPath:

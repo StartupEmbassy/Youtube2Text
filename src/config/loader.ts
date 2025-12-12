@@ -19,12 +19,17 @@ function loadEnvConfig(): PartialConfig {
     assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
     outputDir: env.OUTPUT_DIR,
     audioDir: env.AUDIO_DIR,
+    filenameStyle: env.FILENAME_STYLE,
     audioFormat: env.AUDIO_FORMAT,
     languageCode: env.LANGUAGE_CODE,
     concurrency: env.CONCURRENCY ? Number(env.CONCURRENCY) : undefined,
     maxVideos: env.MAX_VIDEOS ? Number(env.MAX_VIDEOS) : undefined,
     afterDate: env.AFTER_DATE,
     csvEnabled: env.CSV_ENABLED === "true",
+    assemblyAiCreditsCheck: env.ASSEMBLYAI_CREDITS_CHECK,
+    assemblyAiMinBalanceMinutes: env.ASSEMBLYAI_MIN_BALANCE_MINUTES
+      ? Number(env.ASSEMBLYAI_MIN_BALANCE_MINUTES)
+      : undefined,
     pollIntervalMs: env.POLL_INTERVAL_MS
       ? Number(env.POLL_INTERVAL_MS)
       : undefined,
