@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Add video title slug to output filenames.
-- Status: Output/audio basenames now include sanitized title.
+- Session Focus: Put title slug before video ID in filenames.
+- Status: Output/audio basenames now use `<title_slug>__<video_id>`.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.

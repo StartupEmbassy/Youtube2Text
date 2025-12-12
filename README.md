@@ -152,15 +152,15 @@ Fields in `runs.yaml` override defaults from `config.yaml`/`.env` for that speci
 Outputs are organized by channel and video ID plus a sanitized title slug:
 
 ```
-output/<channel_id>/<video_id>__<title_slug>.json
-output/<channel_id>/<video_id>__<title_slug>.txt
-output/<channel_id>/<video_id>__<title_slug>.csv   # if enabled
+output/<channel_id>/<title_slug>__<video_id>.json
+output/<channel_id>/<title_slug>__<video_id>.txt
+output/<channel_id>/<title_slug>__<video_id>.csv   # if enabled
 ```
 
 Raw audio is stored under:
 
 ```
-audio/<channel_id>/<video_id>__<title_slug>.<ext>
+audio/<channel_id>/<title_slug>__<video_id>.<ext>
 ```
 
 Failures are recorded per channel in:

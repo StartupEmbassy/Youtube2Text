@@ -17,7 +17,7 @@ export function getOutputPaths(
   dirs: { outputDir: string; audioDir: string; audioFormat: string }
 ): OutputPaths {
   const titleSlug = sanitizeFilename(videoTitle, { maxLength: 60 });
-  const baseName = `${videoId}__${titleSlug}`;
+  const baseName = `${titleSlug}__${videoId}`;
   return {
     jsonPath: join(dirs.outputDir, channelId, `${baseName}.json`),
     txtPath: join(dirs.outputDir, channelId, `${baseName}.txt`),
