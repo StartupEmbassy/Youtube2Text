@@ -4,7 +4,7 @@
 Build a modular local-first pipeline to turn YouTube channel audio into speaker‑diarized transcripts, stored on disk in structured formats for later analysis and UI browsing.
 
 ## Objectives
-1. Provide a CLI that accepts a public YouTube channel or playlist URL with optional filters (date, max videos).
+1. Provide a CLI that accepts a public YouTube channel, playlist, or video URL with optional filters (date, max videos).
 2. Enumerate videos reliably without requiring YouTube API keys.
 3. Download audio-only tracks per video using `yt-dlp`.
 4. Transcribe audio via AssemblyAI with speaker diarization enabled.

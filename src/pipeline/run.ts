@@ -20,7 +20,7 @@ export async function runPipeline(
   config: AppConfig,
   options: { force: boolean }
 ) {
-  const ytDlpCommand = await validateYtDlpInstalled();
+  const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
   const listing = await enumerateVideos(inputUrl, ytDlpCommand);
   const filteredVideos = listing.videos
     .filter((v) => isAfterDate(v.uploadDate, config.afterDate))

@@ -6,9 +6,14 @@ async function tryCommand(cmd: string): Promise<boolean> {
   return res.exitCode === 0;
 }
 
-export async function resolveYtDlpCommand(): Promise<string> {
+export async function resolveYtDlpCommand(
+  explicitPath?: string
+): Promise<string> {
   const envPath =
-    process.env.YT_DLP_PATH || process.env.YTDLP_PATH || undefined;
+    explicitPath ||
+    process.env.YT_DLP_PATH ||
+    process.env.YTDLP_PATH ||
+    undefined;
   if (envPath) {
     try {
       if (await fileExists(envPath) && (await tryCommand(envPath))) {
@@ -78,6 +83,8 @@ export async function resolveYtDlpCommand(): Promise<string> {
   );
 }
 
-export async function validateYtDlpInstalled(): Promise<string> {
-  return resolveYtDlpCommand();
+export async function validateYtDlpInstalled(
+  explicitPath?: string
+): Promise<string> {
+  return resolveYtDlpCommand(explicitPath);
 }

@@ -1,7 +1,7 @@
 # Youtube2Text
 
 Local-first, modular CLI service that:
-1. Enumerates all videos from a public YouTube channel or playlist.
+1. Enumerates videos from a public YouTube channel, playlist, or a single video URL.
 2. Downloads audio-only tracks using `yt-dlp`.
 3. Transcribes audio with AssemblyAI using speaker diarization.
 4. Stores structured results on disk for later analysis or UI browsing.
@@ -55,6 +55,12 @@ $env:YT_DLP_PATH="C:\path\to\yt-dlp.exe"
 npm run dev
 ```
 
+You can also pass an explicit path via CLI or `runs.yaml`:
+
+```powershell
+npm run dev -- --ytDlpPath "C:\Users\cdela\AppData\Local\Microsoft\WinGet\Links\yt-dlp.exe"
+```
+
 ## Configuration
 
 Configuration is loaded from:
@@ -87,7 +93,7 @@ Example files:
 ## CLI Usage
 
 ```
-youtube2text [channel_or_playlist_url] [options]
+youtube2text [channel_or_playlist_or_video_url] [options]
 ```
 
 Options:
@@ -105,7 +111,7 @@ Options:
 
 ### runs.yaml (optional)
 
-If you run the CLI **without** providing a URL, and a `runs.yaml` (or `runs.yml`) file exists in the project root, Youtube2Text will execute each run in sequence.
+If you run the CLI **without** providing a URL, and a `runs.yaml` (or `runs.yml`) file exists in the project root, Youtube2Text will execute each run in sequence. Each run `url` can be a channel, playlist, or individual video.
 
 YAML must use spaces (no tabs). You can use either:
 

@@ -36,7 +36,8 @@ function loadEnvConfig(): PartialConfig {
       : undefined,
     transcriptionRetries: env.TRANSCRIPTION_RETRIES
       ? Number(env.TRANSCRIPTION_RETRIES)
-      : undefined
+      : undefined,
+    ytDlpPath: env.YT_DLP_PATH || env.YTDLP_PATH
   };
 }
 
@@ -46,4 +47,3 @@ export function loadConfig(configPath = "config.yaml"): AppConfig {
   const merged = { ...yamlConfig, ...envConfig };
   return configSchema.parse(merged);
 }
-

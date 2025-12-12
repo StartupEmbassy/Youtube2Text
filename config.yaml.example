@@ -11,4 +11,4 @@ transcriptionRetries: 2
 pollIntervalMs: 5000
 maxPollMinutes: 60
 csvEnabled: false
-
+ytDlpPath:

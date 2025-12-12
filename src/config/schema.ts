@@ -13,8 +13,8 @@ export const configSchema = z.object({
   pollIntervalMs: z.number().int().positive().default(5000),
   maxPollMinutes: z.number().int().positive().default(60),
   downloadRetries: z.number().int().nonnegative().default(2),
-  transcriptionRetries: z.number().int().nonnegative().default(2)
+  transcriptionRetries: z.number().int().nonnegative().default(2),
+  ytDlpPath: z.string().optional()
 });
 
 export type AppConfig = z.infer<typeof configSchema>;
-

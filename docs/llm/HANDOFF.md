@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Harden MVP 1 per user/Claude review (examples, deps checks, upload robustness, CLI polish).
-- Status: Must-fix and recommended items implemented; nice-to-haves deferred.
+- Session Focus: Support individual YouTube video URLs in runs.yaml/CLI.
+- Status: Single-video enumeration fallback implemented.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.
@@ -14,6 +14,14 @@ List the files touched or relevant to the current work stream.
 - tsconfig.json
 - src/cli/index.ts
 - src/pipeline/run.ts
+- src/config/schema.ts
+- src/config/loader.ts
+- src/config/runs.ts
+- src/cli/index.ts
+- README.md
+- .env.example
+- runs.yaml.example
+- config.yaml.example
 - src/youtube/*
 - src/transcription/*
 - src/storage/*
@@ -29,8 +37,10 @@ List the files touched or relevant to the current work stream.
 - src/utils/deps.ts
 - src/youtube/enumerate.ts
 - src/youtube/download.ts
+- src/youtube/enumerate.ts
 - src/pipeline/run.ts
 - README.md
+- docs/PROJECT_CONTEXT.md
 - docs/PROJECT_CONTEXT.md
 - docs/llm/HANDOFF.md
 - docs/llm/HISTORY.md

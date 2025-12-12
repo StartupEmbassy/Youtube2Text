@@ -27,6 +27,7 @@ program
   .option("--language <code>", "AssemblyAI language code")
   .option("--concurrency <n>", "Parallel videos", (v) => Number(v))
   .option("--csv", "Enable CSV output")
+  .option("--ytDlpPath <path>", "Explicit yt-dlp.exe path override")
   .option("--force", "Reprocess even if outputs exist")
   .parse(process.argv);
 
@@ -49,6 +50,7 @@ async function main() {
       maxVideos: opts.maxVideos ?? baseConfig.maxVideos,
       afterDate: opts.after ?? baseConfig.afterDate,
       csvEnabled: opts.csv ?? baseConfig.csvEnabled,
+      ytDlpPath: opts.ytDlpPath ?? baseConfig.ytDlpPath,
     };
 
     await runPipeline(inputUrl, config, { force: Boolean(opts.force) });
@@ -72,6 +74,7 @@ async function main() {
       maxVideos: run.maxVideos ?? baseConfig.maxVideos,
       afterDate: run.after ?? baseConfig.afterDate,
       csvEnabled: run.csvEnabled ?? baseConfig.csvEnabled,
+      ytDlpPath: run.ytDlpPath ?? baseConfig.ytDlpPath,
     };
 
     await runPipeline(run.url, config, { force: Boolean(run.force) });

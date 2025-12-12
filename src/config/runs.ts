@@ -14,6 +14,7 @@ const runSchema = z.object({
   concurrency: z.number().int().positive().optional(),
   csvEnabled: z.boolean().optional(),
   force: z.boolean().optional(),
+  ytDlpPath: z.string().optional(),
 });
 
 const runsFileSchema = z.union([

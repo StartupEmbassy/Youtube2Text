@@ -16,6 +16,9 @@ type YtDlpListing = {
   uploader_id?: string;
   title?: string;
   uploader?: string;
+  webpage_url?: string;
+  url?: string;
+  upload_date?: string;
   entries?: YtDlpEntry[];
 };
 
@@ -43,7 +46,7 @@ export async function enumerateVideos(
   const channelId = inferChannelId(listing, inputUrl);
   const channelTitle = listing.uploader || listing.title;
 
-  const videos: YoutubeVideo[] =
+  let videos: YoutubeVideo[] =
     listing.entries
       ?.filter((e) => e.id)
       .map((e) => ({
@@ -55,6 +58,21 @@ export async function enumerateVideos(
           `https://www.youtube.com/watch?v=${e.id}`,
         uploadDate: e.upload_date,
       })) ?? [];
+
+  if (videos.length === 0 && listing.id) {
+    videos = [
+      {
+        id: listing.id,
+        title: listing.title || listing.id || "Untitled",
+        url:
+          listing.webpage_url ||
+          listing.url ||
+          inputUrl ||
+          `https://www.youtube.com/watch?v=${listing.id}`,
+        uploadDate: listing.upload_date,
+      },
+    ];
+  }
 
   return { channelId, channelTitle, videos };
 }

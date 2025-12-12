@@ -7,6 +7,7 @@ runs:
     after: "2024-01-01"
     concurrency: 2
     csvEnabled: false
+    ytDlpPath:
 
   - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
     maxVideos: 5
@@ -15,3 +16,4 @@ runs:
     audioDir: "audio_custom"
     csvEnabled: true
     force: false
+    ytDlpPath:
