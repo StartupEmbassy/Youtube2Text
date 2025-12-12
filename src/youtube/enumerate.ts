@@ -1,5 +1,5 @@
 import { execCommand } from "../utils/exec.js";
-import { logInfo } from "../utils/logger.js";
+import { logStep } from "../utils/logger.js";
 import { YoutubeListing, YoutubeVideo } from "./types.js";
 
 type YtDlpEntry = {
@@ -35,7 +35,7 @@ export async function enumerateVideos(
   inputUrl: string,
   ytDlpCommand = "yt-dlp"
 ): Promise<YoutubeListing> {
-  logInfo(`Enumerating videos from ${inputUrl} ...`);
+  logStep("enumerate", `Enumerating videos from ${inputUrl} ...`);
   const args = ["--flat-playlist", "--dump-single-json", inputUrl];
   const result = await execCommand(ytDlpCommand, args);
   if (result.exitCode !== 0) {

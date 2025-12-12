@@ -11,7 +11,7 @@ import {
 } from "../storage/index.js";
 import { logErrorRecord } from "../storage/errors.js";
 import { isAfterDate } from "../utils/date.js";
-import { logInfo, logWarn } from "../utils/logger.js";
+import { logInfo, logWarn, logStep } from "../utils/logger.js";
 import { AppConfig } from "../config/schema.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
 import { InsufficientCreditsError } from "../transcription/assemblyai/errors.js";
@@ -54,7 +54,8 @@ export async function runPipeline(
       const account = (await provider.getAccount()) as AssemblyAiAccountResponse;
       const minutesRemaining = getCreditsMinutesRemaining(account);
       if (minutesRemaining !== undefined) {
-        logInfo(
+        logStep(
+          "credits",
           `AssemblyAI balance: ~${minutesRemaining.toFixed(
             1
           )} minutes remaining`
@@ -123,8 +124,8 @@ export async function runPipeline(
         );
 
         try {
-          if (!options.force && (await isProcessed(paths.jsonPath))) {
-            logInfo(`Skipping already processed: ${video.id}`);
+        if (!options.force && (await isProcessed(paths.jsonPath))) {
+            logStep("skip", `Already processed: ${video.id}`);
             return;
           }
 
@@ -162,7 +163,7 @@ export async function runPipeline(
             );
           }
 
-          logInfo(`Done: ${video.id}`);
+          logStep("done", `Done: ${video.id}`);
         } catch (error) {
           if (error instanceof InsufficientCreditsError) {
             stopAll = true;

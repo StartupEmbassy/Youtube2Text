@@ -1,5 +1,5 @@
 import { retry } from "../../utils/retry.js";
-import { logInfo } from "../../utils/logger.js";
+import { logStep } from "../../utils/logger.js";
 import { TranscriptJson, TranscriptionOptions } from "../types.js";
 import { requestJson, uploadFile } from "./http.js";
 
@@ -51,7 +51,7 @@ export class AssemblyAiClient {
   ): Promise<TranscriptJson> {
     return await retry(
       async () => {
-        logInfo(`Uploading to AssemblyAI: ${audioPath}`);
+        logStep("upload", `Uploading to AssemblyAI: ${audioPath}`);
         const uploadUrl = await this.uploadAudio(audioPath);
         const created = await this.createTranscript(
           uploadUrl,
@@ -60,7 +60,7 @@ export class AssemblyAiClient {
         const deadline =
           Date.now() + opts.maxPollMinutes * 60 * 1000;
 
-        logInfo(`Transcription started: ${created.id}`);
+        logStep("transcribe", `Transcription started: ${created.id}`);
 
         while (Date.now() < deadline) {
           const current = await this.getTranscript(created.id);

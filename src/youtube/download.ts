@@ -2,7 +2,7 @@ import { basename, dirname, join } from "node:path";
 import { execCommand } from "../utils/exec.js";
 import { ensureDir, fileExists } from "../utils/fs.js";
 import { retry } from "../utils/retry.js";
-import { logInfo } from "../utils/logger.js";
+import { logStep } from "../utils/logger.js";
 
 export async function downloadAudio(
   videoUrl: string,
@@ -22,7 +22,7 @@ export async function downloadAudio(
 
   await retry(
     async () => {
-      logInfo(`Downloading audio: ${videoUrl}`);
+      logStep("download", `Downloading audio: ${videoUrl}`);
       const args = [
         "-f",
         "ba",
