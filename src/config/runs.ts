@@ -16,6 +16,8 @@ const runSchema = z.object({
   csvEnabled: z.boolean().optional(),
   assemblyAiCreditsCheck: z.enum(["warn", "abort", "none"]).optional(),
   assemblyAiMinBalanceMinutes: z.number().int().positive().optional(),
+  commentsEnabled: z.boolean().optional(),
+  commentsMax: z.number().int().positive().optional(),
   force: z.boolean().optional(),
   ytDlpPath: z.string().optional(),
 });

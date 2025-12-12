@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Use logStep for stage-based CLI output.
-- Status: Enumerate/download/upload/transcribe/done now logged as steps.
+- Session Focus: Add optional yt-dlp comments extraction.
+- Status: commentsEnabled/commentsMax added; comments saved to `.comments.json` non-fatally.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.

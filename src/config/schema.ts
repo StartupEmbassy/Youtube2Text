@@ -15,6 +15,8 @@ export const configSchema = z.object({
     .enum(["warn", "abort", "none"])
     .default("warn"),
   assemblyAiMinBalanceMinutes: z.number().int().positive().default(60),
+  commentsEnabled: z.boolean().default(false),
+  commentsMax: z.number().int().positive().optional(),
   pollIntervalMs: z.number().int().positive().default(5000),
   maxPollMinutes: z.number().int().positive().default(60),
   downloadRetries: z.number().int().nonnegative().default(2),

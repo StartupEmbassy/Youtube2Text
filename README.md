@@ -14,7 +14,8 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Audio-only download in `mp3` or `wav`.
 - AssemblyAI upload + diarized transcription (`speaker_labels: true`).
 - Idempotent processing: skips videos already processed unless forced.
-- Output formats: `.json`, readable `.txt` (channel + title header, speaker labels + timestamps, wrapped for readability), optional `.csv`.
+- Output formats: `.json`, readable `.txt` (channel + title + description header, speaker labels + timestamps, wrapped for readability), optional `.csv`.
+- Optional per-video comments dump via `yt-dlp` into `.comments.json`.
 - Fault handling with retries/backoff and per-video error logs.
 
 ## Architecture (High Level)
@@ -86,6 +87,8 @@ AFTER_DATE=
 CSV_ENABLED=false
 ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
 ASSEMBLYAI_MIN_BALANCE_MINUTES=60
+COMMENTS_ENABLED=false
+COMMENTS_MAX=
 ```
 
 Example files:
@@ -115,6 +118,8 @@ Options:
 | `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |
 | `--assemblyAiCreditsCheck` | `warn|abort|none` | `warn` | Preflight AssemblyAI credits check mode. |
 | `--assemblyAiMinBalanceMinutes` | number | `60` | Warn/abort if remaining credits below N minutes. |
+| `--comments` | boolean | false | Fetch comments via yt-dlp and save `.comments.json`. |
+| `--commentsMax` | number | unset | Limit comments per video when fetching. |
 
 ### runs.yaml (optional)
 
@@ -162,6 +167,7 @@ Outputs are organized by channel. Filenames depend on `filenameStyle` (default `
 output/<channel_id>/<title_slug>__<video_id>.json   # default title_id
 output/<channel_id>/<video_id>.json                # filenameStyle=id
 output/<channel_id>/<video_id>__<title_slug>.json  # filenameStyle=id_title
+output/<channel_id>/<basename>.comments.json       # if comments enabled
 ```
 
 Raw audio is stored under:

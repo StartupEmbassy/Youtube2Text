@@ -10,6 +10,8 @@ runs:
     filenameStyle: title_id
     assemblyAiCreditsCheck: warn
     assemblyAiMinBalanceMinutes: 60
+    commentsEnabled: false
+    commentsMax:
     ytDlpPath:
 
   - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
@@ -21,5 +23,7 @@ runs:
     filenameStyle: id_title
     assemblyAiCreditsCheck: warn
     assemblyAiMinBalanceMinutes: 60
+    commentsEnabled: true
+    commentsMax: 200
     force: false
     ytDlpPath:

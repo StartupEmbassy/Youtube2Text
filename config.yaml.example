@@ -14,4 +14,6 @@ maxPollMinutes: 60
 csvEnabled: false
 assemblyAiCreditsCheck: warn   # warn | abort | none
 assemblyAiMinBalanceMinutes: 60
+commentsEnabled: false
+commentsMax:
 ytDlpPath:

@@ -44,6 +44,9 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Stop pipeline on AssemblyAI insufficient credits; add colored/prefixed logs - Files: [src/transcription/assemblyai/errors.ts, src/transcription/assemblyai/http.ts, src/pipeline/run.ts, src/utils/logger.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Include channel info in TXT output headers - Files: [src/formatters/txt.ts, src/pipeline/run.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Switch key pipeline logs to logStep for clearer CLI output - Files: [src/youtube/enumerate.ts, src/youtube/download.ts, src/transcription/assemblyai/client.ts, src/pipeline/run.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add per-stage colors and ASCII icons to logStep output - Files: [src/utils/logger.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Fetch yt-dlp video descriptions and include in TXT headers - Files: [src/youtube/metadata.ts, src/youtube/types.ts, src/youtube/index.ts, src/pipeline/run.ts, src/formatters/txt.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add optional yt-dlp comments extraction and save to sidecar JSON - Files: [src/youtube/comments.ts, src/youtube/index.ts, src/storage/index.ts, src/pipeline/run.ts, src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/cli/index.ts, README.md, .env.example, config.yaml.example, runs.yaml.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 

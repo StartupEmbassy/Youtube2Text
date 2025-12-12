@@ -41,6 +41,12 @@ program
     "Warn/abort if remaining credits below N minutes",
     (v) => Number(v)
   )
+  .option("--comments", "Fetch video comments via yt-dlp")
+  .option(
+    "--commentsMax <n>",
+    "Limit comments per video when fetching",
+    (v) => Number(v)
+  )
   .option("--force", "Reprocess even if outputs exist")
   .parse(process.argv);
 
@@ -77,6 +83,8 @@ async function main() {
       assemblyAiMinBalanceMinutes:
         opts.assemblyAiMinBalanceMinutes ??
         baseConfig.assemblyAiMinBalanceMinutes,
+      commentsEnabled: opts.comments ?? baseConfig.commentsEnabled,
+      commentsMax: opts.commentsMax ?? baseConfig.commentsMax,
     };
 
     await runPipeline(inputUrl, config, { force: Boolean(opts.force) });
@@ -107,6 +115,8 @@ async function main() {
       assemblyAiMinBalanceMinutes:
         run.assemblyAiMinBalanceMinutes ??
         baseConfig.assemblyAiMinBalanceMinutes,
+      commentsEnabled: run.commentsEnabled ?? baseConfig.commentsEnabled,
+      commentsMax: run.commentsMax ?? baseConfig.commentsMax,
     };
 
     await runPipeline(run.url, config, { force: Boolean(run.force) });

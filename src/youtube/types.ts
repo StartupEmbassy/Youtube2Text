@@ -3,6 +3,7 @@ export type YoutubeVideo = {
   title: string;
   url: string;
   uploadDate?: string;
+  description?: string;
 };
 
 export type YoutubeListing = {
@@ -10,4 +11,3 @@ export type YoutubeListing = {
   channelTitle?: string;
   videos: YoutubeVideo[];
 };
-

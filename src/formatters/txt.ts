@@ -36,6 +36,22 @@ function wrapText(text: string, width: number): string[] {
   return lines;
 }
 
+function formatHeaderBlock(
+  label: string,
+  text: string | undefined,
+  wrapWidth: number
+): string[] {
+  if (!text) return [];
+  const wrapped = wrapText(text, wrapWidth);
+  if (wrapped.length === 0) return [];
+  const lines: string[] = [];
+  lines.push(`${label}: ${wrapped[0]}`);
+  for (const line of wrapped.slice(1)) {
+    lines.push(`  ${line}`);
+  }
+  return lines;
+}
+
 export function formatTxt(
   transcript: TranscriptJson,
   meta: {
@@ -44,6 +60,7 @@ export function formatTxt(
     uploadDate?: string;
     channelId?: string;
     channelTitle?: string;
+    description?: string;
   },
   options?: { timestamps?: boolean; wrapWidth?: number }
 ): string {
@@ -55,7 +72,8 @@ export function formatTxt(
       ? `Channel: ${meta.channelTitle ?? meta.channelId}`
       : undefined,
     meta.channelId ? `Channel ID: ${meta.channelId}` : undefined,
-    `Title: ${meta.title}`,
+    ...formatHeaderBlock("Title", meta.title, wrapWidth),
+    ...formatHeaderBlock("Description", meta.description, wrapWidth),
     `URL: ${meta.url}`,
     meta.uploadDate ? `Date: ${meta.uploadDate}` : undefined,
     "---",

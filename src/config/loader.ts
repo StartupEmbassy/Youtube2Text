@@ -30,6 +30,8 @@ function loadEnvConfig(): PartialConfig {
     assemblyAiMinBalanceMinutes: env.ASSEMBLYAI_MIN_BALANCE_MINUTES
       ? Number(env.ASSEMBLYAI_MIN_BALANCE_MINUTES)
       : undefined,
+    commentsEnabled: env.COMMENTS_ENABLED === "true",
+    commentsMax: env.COMMENTS_MAX ? Number(env.COMMENTS_MAX) : undefined,
     pollIntervalMs: env.POLL_INTERVAL_MS
       ? Number(env.POLL_INTERVAL_MS)
       : undefined,

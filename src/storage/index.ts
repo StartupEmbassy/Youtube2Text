@@ -12,6 +12,7 @@ export type OutputPaths = {
   jsonPath: string;
   txtPath: string;
   csvPath: string;
+  commentsPath: string;
   errorLogPath: string;
   audioPath: string;
 };
@@ -32,6 +33,7 @@ export function getOutputPaths(
     jsonPath: join(dirs.outputDir, channelId, `${baseName}.json`),
     txtPath: join(dirs.outputDir, channelId, `${baseName}.txt`),
     csvPath: join(dirs.outputDir, channelId, `${baseName}.csv`),
+    commentsPath: join(dirs.outputDir, channelId, `${baseName}.comments.json`),
     errorLogPath: join(dirs.outputDir, channelId, `_errors.jsonl`),
     audioPath: join(dirs.audioDir, channelId, `${baseName}.${dirs.audioFormat}`),
   };
@@ -54,4 +56,8 @@ export async function saveTranscriptTxt(path: string, text: string) {
 
 export async function saveTranscriptCsv(path: string, csv: string) {
   await writeText(path, csv);
+}
+
+export async function saveVideoCommentsJson(path: string, comments: unknown[]) {
+  await writeJson(path, { comments });
 }

@@ -1,5 +1,10 @@
 import pLimit from "p-limit";
-import { enumerateVideos, downloadAudio } from "../youtube/index.js";
+import {
+  enumerateVideos,
+  downloadAudio,
+  fetchVideoDescription,
+  fetchVideoComments,
+} from "../youtube/index.js";
 import { AssemblyAiProvider } from "../transcription/index.js";
 import { formatTxt, formatCsv } from "../formatters/index.js";
 import {
@@ -8,6 +13,7 @@ import {
   saveTranscriptCsv,
   saveTranscriptJson,
   saveTranscriptTxt,
+  saveVideoCommentsJson,
 } from "../storage/index.js";
 import { logErrorRecord } from "../storage/errors.js";
 import { isAfterDate } from "../utils/date.js";
@@ -144,6 +150,34 @@ export async function runPipeline(
             retries: config.transcriptionRetries,
           });
 
+          const description =
+            video.description ??
+            (await fetchVideoDescription(video.url, ytDlpCommand));
+
+          if (config.commentsEnabled) {
+            try {
+              if (options.force || !(await isProcessed(paths.commentsPath))) {
+                const comments = await fetchVideoComments(
+                  video.url,
+                  ytDlpCommand,
+                  config.commentsMax
+                );
+                if (comments) {
+                  await saveVideoCommentsJson(
+                    paths.commentsPath,
+                    comments
+                  );
+                }
+              }
+            } catch (error) {
+              const message =
+                error instanceof Error ? error.message : String(error);
+              logWarn(
+                `Comments fetch failed for ${video.id}: ${message}`
+              );
+            }
+          }
+
           await saveTranscriptJson(paths.jsonPath, transcript);
           await saveTranscriptTxt(
             paths.txtPath,
@@ -153,6 +187,7 @@ export async function runPipeline(
               title: video.title,
               url: video.url,
               uploadDate: video.uploadDate,
+              description,
             })
           );
 
