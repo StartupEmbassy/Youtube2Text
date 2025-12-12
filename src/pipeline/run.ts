@@ -14,13 +14,15 @@ import {
   saveTranscriptJson,
   saveTranscriptTxt,
   saveVideoCommentsJson,
+  saveVideoMetaJson,
+  saveChannelMetaJson,
 } from "../storage/index.js";
 import { logErrorRecord } from "../storage/errors.js";
 import { isAfterDate } from "../utils/date.js";
 import { logInfo, logWarn, logStep } from "../utils/logger.js";
 import { AppConfig } from "../config/schema.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
-import { InsufficientCreditsError } from "../transcription/assemblyai/errors.js";
+import { InsufficientCreditsError } from "../transcription/errors.js";
 import { PipelineEventEmitter, PipelineStage } from "./events.js";
 
 type AssemblyAiAccountResponse = Record<string, unknown> & {
@@ -174,6 +176,18 @@ export async function runPipeline(
     timestamp: nowIso(),
   });
 
+  if (totalVideos > 0) {
+    const channelMetaPath = videoJobs[0]?.paths.channelMetaPath;
+    if (channelMetaPath) {
+      await saveChannelMetaJson(channelMetaPath, {
+        channelId: listing.channelId,
+        channelTitle: listing.channelTitle,
+        inputUrl,
+        updatedAt: nowIso(),
+      });
+    }
+  }
+
   const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
   const limit = pLimit(config.concurrency);
 
@@ -319,6 +333,19 @@ export async function runPipeline(
 
             emitStage("save", video.id, index, totalVideos);
             await saveTranscriptJson(paths.jsonPath, transcript);
+            await saveVideoMetaJson(paths.metaPath, {
+              videoId: video.id,
+              title: video.title,
+              url: video.url,
+              uploadDate: video.uploadDate,
+              description,
+              channelId: listing.channelId,
+              channelTitle: listing.channelTitle,
+              filenameStyle: config.filenameStyle,
+              audioFormat: config.audioFormat,
+              languageCode: config.languageCode,
+              createdAt: nowIso(),
+            });
             await saveTranscriptTxt(
               paths.txtPath,
               formatTxt(transcript, {

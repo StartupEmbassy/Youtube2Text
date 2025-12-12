@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Implement PipelineEventEmitter + `--json-events` (Phase 0 hardening).
-- Status: Pipeline emits structured JSONL events; CLI supports `--json-events`.
+- Session Focus: Add StorageAdapter for Phase 1 web reads and unify core errors.
+- Status: FileSystemStorageAdapter added; pipeline writes `_channel.json` and `.meta.json`; InsufficientCreditsError moved to core.
 
 ## Modularity Review (GPT‑5.2, 2025-12-12)
 

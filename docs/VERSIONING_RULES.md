@@ -7,8 +7,7 @@ Use Semantic Versioning (SemVer): MAJOR.MINOR.PATCH.
 Document where version identifiers live in your project (e.g., VERSION="x.y.z" at the top of scripts, package.json, or pyproject.toml).
 
 Current version sources:
-- <File or module>: <Version>
-- <File or module>: <Version>
+- package.json: 0.1.0
 
 ## Version Bump Guidelines
 

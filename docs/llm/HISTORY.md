@@ -63,6 +63,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Rewrite docs/ARCHITECTURE.md to service-first Phase 0 and add language detection requirement - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Document service-first layering (core + runners + API) in handoff - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Add PipelineEventEmitter and `--json-events` for JSONL progress events - Files: [src/pipeline/events.ts, src/pipeline/jsonlEmitter.ts, src/pipeline/run.ts, src/cli/index.ts, src/utils/logger.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add StorageAdapter + FS implementation for reading outputs; add channel/video meta sidecars; unify core credits error - Files: [src/storage/adapter.ts, src/storage/fsAdapter.ts, src/storage/naming.ts, src/storage/index.ts, src/pipeline/run.ts, src/transcription/errors.ts, src/transcription/assemblyai/http.ts, README.md, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 

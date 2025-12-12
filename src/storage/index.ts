@@ -2,20 +2,53 @@ import { join } from "node:path";
 import type { AppConfig } from "../config/schema.js";
 import {
   fileExists,
-  sanitizeFilename,
   writeJson,
   writeText,
 } from "../utils/fs.js";
 import { TranscriptJson } from "../transcription/types.js";
+import { makeChannelDirName, makeVideoBaseName } from "./naming.js";
+export type { StorageAdapter, ChannelInfo, VideoInfo } from "./adapter.js";
+export { FileSystemStorageAdapter } from "./fsAdapter.js";
+export { makeChannelDirName, makeVideoBaseName } from "./naming.js";
 
 export type OutputPaths = {
   jsonPath: string;
   txtPath: string;
   csvPath: string;
   commentsPath: string;
+  metaPath: string;
+  channelMetaPath: string;
   errorLogPath: string;
   audioPath: string;
 };
+
+export type ChannelMeta = {
+  channelId: string;
+  channelTitle?: string;
+  inputUrl?: string;
+  updatedAt: string;
+};
+
+export type VideoMeta = {
+  videoId: string;
+  title: string;
+  url: string;
+  uploadDate?: string;
+  description?: string;
+  channelId: string;
+  channelTitle?: string;
+  filenameStyle: AppConfig["filenameStyle"];
+  audioFormat: string;
+  languageCode?: string;
+  createdAt: string;
+};
+
+export function getChannelDirName(
+  channelId: string,
+  channelTitle?: string
+): string {
+  return makeChannelDirName(channelId, channelTitle);
+}
 
 export function getOutputPaths(
   channelId: string,
@@ -25,17 +58,9 @@ export function getOutputPaths(
   dirs: { outputDir: string; audioDir: string; audioFormat: string },
   options?: { filenameStyle?: AppConfig["filenameStyle"] }
 ): OutputPaths {
-  const channelSlug = channelTitle
-    ? sanitizeFilename(channelTitle, { maxLength: 60 })
-    : undefined;
-  const channelDirName = channelSlug
-    ? `${channelSlug}__${channelId}`
-    : channelId;
-  const titleSlug = sanitizeFilename(videoTitle, { maxLength: 60 });
   const style = options?.filenameStyle ?? "title_id";
-  let baseName = videoId;
-  if (style === "id_title") baseName = `${videoId}__${titleSlug}`;
-  if (style === "title_id") baseName = `${titleSlug}__${videoId}`;
+  const channelDirName = makeChannelDirName(channelId, channelTitle);
+  const baseName = makeVideoBaseName(videoId, videoTitle, style);
   return {
     jsonPath: join(dirs.outputDir, channelDirName, `${baseName}.json`),
     txtPath: join(dirs.outputDir, channelDirName, `${baseName}.txt`),
@@ -45,6 +70,8 @@ export function getOutputPaths(
       channelDirName,
       `${baseName}.comments.json`
     ),
+    metaPath: join(dirs.outputDir, channelDirName, `${baseName}.meta.json`),
+    channelMetaPath: join(dirs.outputDir, channelDirName, `_channel.json`),
     errorLogPath: join(dirs.outputDir, channelDirName, `_errors.jsonl`),
     audioPath: join(
       dirs.audioDir,
@@ -75,4 +102,12 @@ export async function saveTranscriptCsv(path: string, csv: string) {
 
 export async function saveVideoCommentsJson(path: string, comments: unknown[]) {
   await writeJson(path, { comments });
+}
+
+export async function saveVideoMetaJson(path: string, meta: VideoMeta) {
+  await writeJson(path, meta);
+}
+
+export async function saveChannelMetaJson(path: string, meta: ChannelMeta) {
+  await writeJson(path, meta);
 }

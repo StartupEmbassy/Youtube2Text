@@ -16,6 +16,7 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Idempotent processing: skips videos already processed unless forced.
 - Output formats: `.json`, readable `.txt` (channel + title + description header, speaker labels + timestamps, wrapped for readability), optional `.csv`.
 - Optional per-video comments dump via `yt-dlp` into `.comments.json`.
+- Optional per-video metadata sidecar `.meta.json` for browsing/indexing.
 - Fault handling with retries/backoff and per-video error logs.
 
 ## Architecture (High Level)
@@ -169,6 +170,8 @@ output/<channel_title_slug>__<channel_id>/<title_slug>__<video_id>.json   # defa
 output/<channel_title_slug>__<channel_id>/<video_id>.json                # filenameStyle=id
 output/<channel_title_slug>__<channel_id>/<video_id>__<title_slug>.json  # filenameStyle=id_title
 output/<channel_title_slug>__<channel_id>/<basename>.comments.json       # if comments enabled
+output/<channel_title_slug>__<channel_id>/<basename>.meta.json           # per-video metadata
+output/<channel_title_slug>__<channel_id>/_channel.json                  # per-channel metadata
 ```
 
 Raw audio is stored under:

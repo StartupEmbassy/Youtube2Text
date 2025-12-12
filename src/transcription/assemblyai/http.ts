@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { InsufficientCreditsError } from "./errors.js";
+import { InsufficientCreditsError } from "../errors.js";
 
 const API_BASE = "https://api.assemblyai.com/v2";
 
