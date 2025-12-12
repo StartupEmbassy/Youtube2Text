@@ -14,6 +14,7 @@ import { isAfterDate } from "../utils/date.js";
 import { logInfo, logWarn } from "../utils/logger.js";
 import { AppConfig } from "../config/schema.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
+import { InsufficientCreditsError } from "../transcription/assemblyai/errors.js";
 
 type AssemblyAiAccountResponse = Record<string, unknown> & {
   credit_balance?: number;
@@ -46,6 +47,7 @@ export async function runPipeline(
   options: { force: boolean }
 ) {
   const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
+  let stopAll = false;
   if (config.assemblyAiCreditsCheck !== "none") {
     try {
       const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
@@ -104,6 +106,10 @@ export async function runPipeline(
   await Promise.all(
     filteredVideos.map((video) =>
       limit(async () => {
+        if (stopAll) {
+          logWarn(`Skipping due to prior fatal error: ${video.id}`);
+          return;
+        }
         const paths = getOutputPaths(
           listing.channelId,
           video.id,
@@ -156,6 +162,13 @@ export async function runPipeline(
 
           logInfo(`Done: ${video.id}`);
         } catch (error) {
+          if (error instanceof InsufficientCreditsError) {
+            stopAll = true;
+            logWarn(
+              `Stopping run: AssemblyAI credits exhausted while processing ${video.id}`
+            );
+            throw error;
+          }
           const message =
             error instanceof Error ? error.message : String(error);
           logWarn(`Failed ${video.id}: ${message}`);
