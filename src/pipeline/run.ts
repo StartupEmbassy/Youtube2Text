@@ -103,35 +103,72 @@ export async function runPipeline(
     .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
     .slice(0, config.maxVideos ?? listing.videos.length);
 
-  logInfo(
-    `Channel ${listing.channelId} (${filteredVideos.length} videos to process)`
+  const videoJobs = filteredVideos.map((video, index) => ({
+    video,
+    index: index + 1,
+    paths: getOutputPaths(
+      listing.channelId,
+      listing.channelTitle,
+      video.id,
+      video.title,
+      {
+        outputDir: config.outputDir,
+        audioDir: config.audioDir,
+        audioFormat: config.audioFormat,
+      },
+      { filenameStyle: config.filenameStyle }
+    ),
+  }));
+
+  const totalVideos = videoJobs.length;
+  let completedVideos = 0;
+  const alreadyProcessedByIndex: boolean[] = [];
+
+  if (!options.force) {
+    const processedFlags = await Promise.all(
+      videoJobs.map((j) => isProcessed(j.paths.jsonPath))
+    );
+    alreadyProcessedByIndex.push(...processedFlags);
+    completedVideos = processedFlags.filter(Boolean).length;
+  } else {
+    alreadyProcessedByIndex.push(
+      ...new Array(videoJobs.length).fill(false)
+    );
+  }
+
+  logStep(
+    "progress",
+    `Channel ${listing.channelId}: ${completedVideos}/${totalVideos} videos already processed (${totalVideos - completedVideos} remaining)`
   );
 
   const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
   const limit = pLimit(config.concurrency);
 
   await Promise.all(
-    filteredVideos.map((video) =>
+    videoJobs.map(({ video, paths, index }) =>
       limit(async () => {
         if (stopAll) {
-          logWarn(`Skipping due to prior fatal error: ${video.id}`);
+          logWarn(
+            `Skipping due to prior fatal error: Video ${index}/${totalVideos} (${video.id})`
+          );
           return;
         }
-        const paths = getOutputPaths(
-          listing.channelId,
-          video.id,
-          video.title,
-          {
-            outputDir: config.outputDir,
-            audioDir: config.audioDir,
-            audioFormat: config.audioFormat,
-          },
-          { filenameStyle: config.filenameStyle }
-        );
+
+        const markFinished = (label: string) => {
+          completedVideos += 1;
+          const remaining = totalVideos - completedVideos;
+          logStep(
+            "progress",
+            `Video ${index}/${totalVideos} ${label}: ${completedVideos}/${totalVideos} videos completed (${remaining} remaining)`
+          );
+        };
 
         try {
-        if (!options.force && (await isProcessed(paths.jsonPath))) {
-            logStep("skip", `Already processed: ${video.id}`);
+          if (!options.force && alreadyProcessedByIndex[index - 1]) {
+            logStep(
+              "skip",
+              `Video ${index}/${totalVideos} already processed: ${video.id} (${completedVideos}/${totalVideos} completed)`
+            );
             return;
           }
 
@@ -198,18 +235,21 @@ export async function runPipeline(
             );
           }
 
-          logStep("done", `Done: ${video.id}`);
+          logStep("done", `Video ${index}/${totalVideos} done: ${video.id}`);
+          markFinished("done");
         } catch (error) {
           if (error instanceof InsufficientCreditsError) {
             stopAll = true;
             logWarn(
-              `Stopping run: AssemblyAI credits exhausted while processing ${video.id}`
+              `Stopping run: AssemblyAI credits exhausted while processing Video ${index}/${totalVideos} (${video.id})`
             );
             throw error;
           }
           const message =
             error instanceof Error ? error.message : String(error);
-          logWarn(`Failed ${video.id}: ${message}`);
+          logWarn(
+            `Failed Video ${index}/${totalVideos} (${video.id}): ${message}`
+          );
           await logErrorRecord(paths.errorLogPath, {
             videoId: video.id,
             videoUrl: video.url,
@@ -217,6 +257,7 @@ export async function runPipeline(
             message,
             timestamp: new Date().toISOString(),
           });
+          markFinished("failed");
         }
       })
     )

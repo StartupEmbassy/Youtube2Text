@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Add optional yt-dlp comments extraction.
-- Status: commentsEnabled/commentsMax added; comments saved to `.comments.json` non-fatally.
+- Session Focus: Include channel title in folder names.
+- Status: Output/audio channel folders now use `<channel_title_slug>__<channel_id>`.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.
@@ -51,9 +51,15 @@ Document relevant version identifiers if they changed or need monitoring.
 - package.json: 0.1.0
 
 ## Top Priorities
-1. Run the CLI on a real channel to validate end-to-end behavior.
-2. Add small unit tests for formatters/config and refine error stage reporting.
-3. Consider webhook mode or resume strategy improvements.
+1. **Web Platform Phase 0**: Begin local-first MVP per `docs/ARCHITECTURE.md`:
+   - 0.1: Create `web/` Next.js project with shadcn/ui
+   - 0.2: Implement `LocalStorageAdapter` and channel library UI
+   - 0.3: Video viewer with audio player and transcript sync
+   - 0.4: Pipeline runner with `--json-events` and SSE streaming
+   - 0.5: Per-video chat and Markdown export
+2. **CLI Enhancement**: Add `--json-events` flag for structured pipeline events (required for Phase 0.4).
+3. Run the CLI on a real channel to validate end-to-end behavior.
+4. Add small unit tests for formatters/config and refine error stage reporting.
 
 ## Do Not Touch
 Identify areas that should remain unchanged without explicit approval from the user.
@@ -64,6 +70,8 @@ Capture unresolved questions or assumptions that need confirmation.
 - Confirm preferred default AssemblyAI language/model settings.
 - Decide whether to keep audio indefinitely or add a cleanup flag.
 - Deferred: parallel execution of runs (root-array YAML now supported).
+- **User decision needed:** Is channel-level chat (RAG) a Phase 0 must-have or can it wait for Phase 2? (Claude recommends Phase 2, GPT suggests earlier)
+- **User decision needed:** Preferred LLM provider for Phase 0 chat - OpenRouter, direct OpenAI/Anthropic, or configurable from start?
 
 ## Suggestions from Claude (2025-12-12)
 **Output file naming improvement:**

@@ -161,19 +161,19 @@ Fields in `runs.yaml` override defaults from `config.yaml`/`.env` for that speci
 
 ## Output Layout
 
-Outputs are organized by channel. Filenames depend on `filenameStyle` (default `title_id`):
+Outputs are organized by channel folder named `<channel_title_slug>__<channel_id>` when available. Filenames depend on `filenameStyle` (default `title_id`):
 
 ```
-output/<channel_id>/<title_slug>__<video_id>.json   # default title_id
-output/<channel_id>/<video_id>.json                # filenameStyle=id
-output/<channel_id>/<video_id>__<title_slug>.json  # filenameStyle=id_title
-output/<channel_id>/<basename>.comments.json       # if comments enabled
+output/<channel_title_slug>__<channel_id>/<title_slug>__<video_id>.json   # default title_id
+output/<channel_title_slug>__<channel_id>/<video_id>.json                # filenameStyle=id
+output/<channel_title_slug>__<channel_id>/<video_id>__<title_slug>.json  # filenameStyle=id_title
+output/<channel_title_slug>__<channel_id>/<basename>.comments.json       # if comments enabled
 ```
 
 Raw audio is stored under:
 
 ```
-audio/<channel_id>/<title_slug>__<video_id>.<ext>  # default title_id
+audio/<channel_title_slug>__<channel_id>/<title_slug>__<video_id>.<ext>  # default title_id
 ```
 
 Failures are recorded per channel in:

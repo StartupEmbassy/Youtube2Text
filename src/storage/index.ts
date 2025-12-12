@@ -19,23 +19,38 @@ export type OutputPaths = {
 
 export function getOutputPaths(
   channelId: string,
+  channelTitle: string | undefined,
   videoId: string,
   videoTitle: string,
   dirs: { outputDir: string; audioDir: string; audioFormat: string },
   options?: { filenameStyle?: AppConfig["filenameStyle"] }
 ): OutputPaths {
+  const channelSlug = channelTitle
+    ? sanitizeFilename(channelTitle, { maxLength: 60 })
+    : undefined;
+  const channelDirName = channelSlug
+    ? `${channelSlug}__${channelId}`
+    : channelId;
   const titleSlug = sanitizeFilename(videoTitle, { maxLength: 60 });
   const style = options?.filenameStyle ?? "title_id";
   let baseName = videoId;
   if (style === "id_title") baseName = `${videoId}__${titleSlug}`;
   if (style === "title_id") baseName = `${titleSlug}__${videoId}`;
   return {
-    jsonPath: join(dirs.outputDir, channelId, `${baseName}.json`),
-    txtPath: join(dirs.outputDir, channelId, `${baseName}.txt`),
-    csvPath: join(dirs.outputDir, channelId, `${baseName}.csv`),
-    commentsPath: join(dirs.outputDir, channelId, `${baseName}.comments.json`),
-    errorLogPath: join(dirs.outputDir, channelId, `_errors.jsonl`),
-    audioPath: join(dirs.audioDir, channelId, `${baseName}.${dirs.audioFormat}`),
+    jsonPath: join(dirs.outputDir, channelDirName, `${baseName}.json`),
+    txtPath: join(dirs.outputDir, channelDirName, `${baseName}.txt`),
+    csvPath: join(dirs.outputDir, channelDirName, `${baseName}.csv`),
+    commentsPath: join(
+      dirs.outputDir,
+      channelDirName,
+      `${baseName}.comments.json`
+    ),
+    errorLogPath: join(dirs.outputDir, channelDirName, `_errors.jsonl`),
+    audioPath: join(
+      dirs.audioDir,
+      channelDirName,
+      `${baseName}.${dirs.audioFormat}`
+    ),
   };
 }
 
