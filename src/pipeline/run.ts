@@ -36,7 +36,7 @@ export async function runPipeline(
   await Promise.all(
     filteredVideos.map((video) =>
       limit(async () => {
-        const paths = getOutputPaths(listing.channelId, video.id, {
+        const paths = getOutputPaths(listing.channelId, video.id, video.title, {
           outputDir: config.outputDir,
           audioDir: config.audioDir,
           audioFormat: config.audioFormat,

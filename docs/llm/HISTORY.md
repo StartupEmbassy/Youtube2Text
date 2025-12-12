@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-12 - Claude - Document user decision on filename styles: implement id, id_title, title_id options with title_id as default - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-12 - Claude - Review output and suggest filename improvement: include sanitized video title in output filenames for easier identification - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-12 - GPT-5.2 - Add optional runs.yaml for multi-run execution, update CLI/README, and fix TS build narrowing - Files: [README.md, src/cli/index.ts, src/config/runs.ts, src/config/index.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-12 - GPT-5.2 - Ignore runs.yaml/yml in git and accept runs.yml fallback; clarify YAML structure in README - Files: [.gitignore, README.md, src/config/runs.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
@@ -29,6 +33,9 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-12 - GPT-5.2 - Adapt project documentation to Youtube2Text scope - Files: [README.md, LLM_START_HERE.md, docs/PROJECT_CONTEXT.md, docs/STRUCTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-12 - GPT-5.2 - Added support for individual YouTube video URLs (fallback enumeration) - Files: [src/youtube/enumerate.ts, README.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Add timestamps and line wrapping to TXT output - Files: [src/formatters/txt.ts, README.md, src/pipeline/run.ts, docs/llm/HANDOFF.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Document optional title-in-filename suggestion for outputs - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Switch output/audio filenames to include sanitized title slug by default - Files: [src/storage/index.ts, src/utils/fs.ts, src/pipeline/run.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 

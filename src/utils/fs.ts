@@ -1,6 +1,27 @@
 import { createWriteStream, promises as fs } from "node:fs";
 import { dirname } from "node:path";
 
+export function sanitizeFilename(
+  input: string,
+  options?: { maxLength?: number }
+): string {
+  const maxLength = options?.maxLength ?? 60;
+  const normalized = input
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const slug = normalized
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, " ")
+    .replace(/[^\w\s-]+/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-_.]+|[-_.]+$/g, "")
+    .slice(0, maxLength);
+
+  return slug.length > 0 ? slug : "untitled";
+}
+
 export async function ensureDir(path: string) {
   await fs.mkdir(path, { recursive: true });
 }
@@ -40,4 +61,3 @@ export function streamToFile(
     writer.on("error", reject);
   });
 }
-

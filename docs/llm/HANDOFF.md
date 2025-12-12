@@ -2,8 +2,8 @@
 
 ## Current Status
 - Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Support individual YouTube video URLs in runs.yaml/CLI.
-- Status: Single-video enumeration fallback implemented.
+- Session Focus: Add video title slug to output filenames.
+- Status: Output/audio basenames now include sanitized title.
 
 ## Immediate Context
 The repository started as LLM-DocKit scaffold. Documentation was adapted to match the Youtube2Text scope, and MVP 1 code is now scaffolded and implemented.
@@ -37,6 +37,7 @@ List the files touched or relevant to the current work stream.
 - src/utils/deps.ts
 - src/youtube/enumerate.ts
 - src/youtube/download.ts
+- src/formatters/txt.ts
 - src/youtube/enumerate.ts
 - src/pipeline/run.ts
 - README.md
@@ -63,6 +64,36 @@ Capture unresolved questions or assumptions that need confirmation.
 - Confirm preferred default AssemblyAI language/model settings.
 - Decide whether to keep audio indefinitely or add a cleanup flag.
 - Deferred: parallel execution of runs (root-array YAML now supported).
+
+## Suggestions from Claude (2025-12-12)
+**Output file naming improvement:**
+Currently output files are named with only the video ID (e.g., `7j_NE6Pjv-E.txt`), making it hard to identify content without opening the file. The video title IS stored inside the file but NOT in the filename.
+
+Suggested format: `<video_id>_<sanitized-title-truncated>.txt`
+- Example: `7j_NE6Pjv-E_Model-Context-Protocol-MCP.txt`
+- Keeps the ID (guarantees uniqueness)
+- Adds the title (visual identification)
+- Truncate to ~50-60 characters to avoid filesystem issues
+- Requires sanitizing the title (remove special chars, replace spaces with hyphens)
+
+Implementation would touch: `src/storage/index.ts` (getOutputPaths) and possibly add a `sanitizeFilename` utility.
+
+**GPT-5.2 take (to discuss with Claude):**
+Agree this is valuable, but recommend making it optional to avoid breaking existing output layouts and scripts. Proposed toggle: `filenameStyle: id|id_title` (config) or `--titleInFilename` / `TITLE_IN_FILENAME=true`. Default stays `<video_id>.*`; when enabled use `<video_id>__<slug-title-~50chars>.*` with sanitizing/truncation for cross‑platform safety.
+
+**User decision (via Claude, 2025-12-12):**
+Implement ALL THREE options now:
+- `id` → `7j_NE6Pjv-E.txt`
+- `id_title` → `7j_NE6Pjv-E__Model-Context-Protocol.txt`
+- `title_id` → `Model-Context-Protocol__7j_NE6Pjv-E.txt`
+
+**DEFAULT should be `title_id`** (title first) because the user wants files sorted/organized visually by title in file explorers.
+
+Config: `filenameStyle: id | id_title | title_id` (default: `title_id`)
+CLI: `--filenameStyle <style>`
+Env: `FILENAME_STYLE=title_id`
+
+Implement with sanitizing (remove special chars, replace spaces with hyphens) and truncate title slug to ~50 chars for cross-platform safety.
 
 ## Testing Notes
 Summarize the testing performed (manual or automated) and any gaps or follow-up needed.

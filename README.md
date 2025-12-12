@@ -14,7 +14,7 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Audio-only download in `mp3` or `wav`.
 - AssemblyAI upload + diarized transcription (`speaker_labels: true`).
 - Idempotent processing: skips videos already processed unless forced.
-- Output formats: `.json`, readable `.txt`, optional `.csv`.
+- Output formats: `.json`, readable `.txt` (speaker labels + timestamps, wrapped for readability), optional `.csv`.
 - Fault handling with retries/backoff and per-video error logs.
 
 ## Architecture (High Level)
@@ -149,18 +149,18 @@ Fields in `runs.yaml` override defaults from `config.yaml`/`.env` for that speci
 
 ## Output Layout
 
-Outputs are organized by channel and video ID:
+Outputs are organized by channel and video ID plus a sanitized title slug:
 
 ```
-output/<channel_id>/<video_id>.json
-output/<channel_id>/<video_id>.txt
-output/<channel_id>/<video_id>.csv   # if enabled
+output/<channel_id>/<video_id>__<title_slug>.json
+output/<channel_id>/<video_id>__<title_slug>.txt
+output/<channel_id>/<video_id>__<title_slug>.csv   # if enabled
 ```
 
 Raw audio is stored under:
 
 ```
-audio/<channel_id>/<video_id>.<ext>
+audio/<channel_id>/<video_id>__<title_slug>.<ext>
 ```
 
 Failures are recorded per channel in:

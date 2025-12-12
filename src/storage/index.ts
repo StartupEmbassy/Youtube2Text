@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { fileExists, writeJson, writeText } from "../utils/fs.js";
+import { fileExists, sanitizeFilename, writeJson, writeText } from "../utils/fs.js";
 import { TranscriptJson } from "../transcription/types.js";
 
 export type OutputPaths = {
@@ -13,14 +13,17 @@ export type OutputPaths = {
 export function getOutputPaths(
   channelId: string,
   videoId: string,
+  videoTitle: string,
   dirs: { outputDir: string; audioDir: string; audioFormat: string }
 ): OutputPaths {
+  const titleSlug = sanitizeFilename(videoTitle, { maxLength: 60 });
+  const baseName = `${videoId}__${titleSlug}`;
   return {
-    jsonPath: join(dirs.outputDir, channelId, `${videoId}.json`),
-    txtPath: join(dirs.outputDir, channelId, `${videoId}.txt`),
-    csvPath: join(dirs.outputDir, channelId, `${videoId}.csv`),
+    jsonPath: join(dirs.outputDir, channelId, `${baseName}.json`),
+    txtPath: join(dirs.outputDir, channelId, `${baseName}.txt`),
+    csvPath: join(dirs.outputDir, channelId, `${baseName}.csv`),
     errorLogPath: join(dirs.outputDir, channelId, `_errors.jsonl`),
-    audioPath: join(dirs.audioDir, channelId, `${videoId}.${dirs.audioFormat}`),
+    audioPath: join(dirs.audioDir, channelId, `${baseName}.${dirs.audioFormat}`),
   };
 }
 
@@ -42,4 +45,3 @@ export async function saveTranscriptTxt(path: string, text: string) {
 export async function saveTranscriptCsv(path: string, csv: string) {
   await writeText(path, csv);
 }
-
