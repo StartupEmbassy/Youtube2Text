@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Web UI responsiveness: wrap long event lines to avoid horizontal scroll and make run detail grid responsive (single column on small screens) - Files: [web/app/globals.css, web/app/runs/[runId]/RunEvents.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - GPT-5.2 - Small UI cleanup from Claude feedback: remove redundant per-route error.tsx files (keep global error boundary) and remove unnecessary router.refresh() after navigating to a newly created run - Files: [web/app/CreateRunForm.tsx, web/app/library/error.tsx, web/app/runs/[runId]/error.tsx, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Phase 1 Step 1: add Next.js error boundaries for API-down UX (global + per-route) and improve run creation UX by navigating to the created run detail page; update roadmap/handoff ordering - Files: [web/app/error.tsx, web/app/library/error.tsx, web/app/runs/[runId]/error.tsx, web/app/CreateRunForm.tsx, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

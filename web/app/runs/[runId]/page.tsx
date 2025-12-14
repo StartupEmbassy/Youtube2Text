@@ -34,7 +34,7 @@ export default async function RunPage({ params }: { params: { runId: string } })
         <div>{runData.run.status}</div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
+      <div className="grid" style={{ alignItems: "start" }}>
         <div className="card">
           <div className="row" style={{ marginBottom: 10 }}>
             <strong>Artifacts</strong>
@@ -53,4 +53,3 @@ export default async function RunPage({ params }: { params: { runId: string } })
     </div>
   );
 }
-

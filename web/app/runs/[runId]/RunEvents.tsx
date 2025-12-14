@@ -57,7 +57,9 @@ export function RunEvents({ apiBaseUrl, runId }: Props) {
           {connected ? "connected" : "disconnected"}
         </span>
       </div>
-      <pre>{events.map((e) => `${e.id} ${e.type} ${JSON.stringify(e.data)}`).join("\n")}</pre>
+      <pre className="preWrap">
+        {events.map((e) => `${e.id} ${e.type} ${JSON.stringify(e.data)}`).join("\n")}
+      </pre>
     </div>
   );
 }
