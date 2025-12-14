@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -11,6 +11,22 @@ servers:
   - url: http://127.0.0.1:8787
 security: []
 paths:
+  /events:
+    get:
+      summary: Stream global events (SSE)
+      description: |
+        Server-Sent Events stream for global run updates. Event names include:
+        - run:created
+        - run:updated
+        Data is JSON matching the GlobalRunEvent schema.
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
   /health:
     get:
       summary: Health check
@@ -416,3 +432,15 @@ components:
       properties:
         run: { $ref: "#/components/schemas/RunRecord" }
         artifacts: { $ref: "#/components/schemas/RunArtifacts" }
+
+    GlobalRunEventType:
+      type: string
+      enum: [run:created, run:updated]
+
+    GlobalRunEvent:
+      type: object
+      required: [type, run, timestamp]
+      properties:
+        type: { $ref: "#/components/schemas/GlobalRunEventType" }
+        run: { $ref: "#/components/schemas/RunRecord" }
+        timestamp: { type: string }

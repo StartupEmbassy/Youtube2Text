@@ -1,13 +1,11 @@
-import type { PipelineEvent } from "../pipeline/events.js";
-
-export type BufferedEvent = {
+export type BufferedEvent<T> = {
   id: number;
-  event: PipelineEvent;
+  event: T;
 };
 
-export class EventBuffer {
+export class EventBuffer<T> {
   private nextId = 1;
-  private events: BufferedEvent[] = [];
+  private events: BufferedEvent<T>[] = [];
 
   constructor(private maxEvents: number) {}
 
@@ -15,8 +13,8 @@ export class EventBuffer {
     this.nextId = Math.max(1, Math.floor(nextId));
   }
 
-  append(event: PipelineEvent): BufferedEvent {
-    const buffered: BufferedEvent = { id: this.nextId++, event };
+  append(event: T): BufferedEvent<T> {
+    const buffered: BufferedEvent<T> = { id: this.nextId++, event };
     this.events.push(buffered);
     if (this.events.length > this.maxEvents) {
       this.events.splice(0, this.events.length - this.maxEvents);
@@ -24,8 +22,8 @@ export class EventBuffer {
     return buffered;
   }
 
-  appendWithId(id: number, event: PipelineEvent): BufferedEvent {
-    const buffered: BufferedEvent = { id, event };
+  appendWithId(id: number, event: T): BufferedEvent<T> {
+    const buffered: BufferedEvent<T> = { id, event };
     this.nextId = Math.max(this.nextId, id + 1);
     this.events.push(buffered);
     if (this.events.length > this.maxEvents) {
@@ -34,7 +32,7 @@ export class EventBuffer {
     return buffered;
   }
 
-  listAfter(lastSeenId: number): BufferedEvent[] {
+  listAfter(lastSeenId: number): BufferedEvent<T>[] {
     if (lastSeenId <= 0) return this.events.slice();
     const startIndex = this.events.findIndex((e) => e.id > lastSeenId);
     if (startIndex === -1) return [];

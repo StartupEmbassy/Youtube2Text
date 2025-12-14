@@ -293,6 +293,37 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         return;
       }
 
+      if (req.method === "GET" && seg.length === 1 && seg[0] === "events") {
+        initSse(res);
+        const lastSeenId = getLastEventId(req);
+        for (const buffered of manager.listGlobalEventsAfter(lastSeenId)) {
+          writeSseEvent(res, {
+            id: buffered.id,
+            event: buffered.event.type,
+            data: buffered.event,
+          });
+        }
+
+        const unsubscribe = manager.subscribeGlobal((buffered) => {
+          writeSseEvent(res, {
+            id: buffered.id,
+            event: buffered.event.type,
+            data: buffered.event,
+          });
+        });
+
+        const heartbeat = setInterval(() => {
+          res.write(": ping\n\n");
+        }, 15000);
+
+        req.on("close", () => {
+          clearInterval(heartbeat);
+          unsubscribe();
+        });
+
+        return;
+      }
+
       return notFound(res);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

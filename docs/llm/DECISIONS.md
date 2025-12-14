@@ -204,3 +204,12 @@ Operational rule:
 
 Reference:
 - See `docs/operations/API_CONTRACT.md` for the planned workflow and scripts.
+
+## D-012 - Global SSE stream for a "live" UI (Phase 1)
+
+Decision:
+- Add a global SSE endpoint (`GET /events`) that emits `run:created` and `run:updated` events so the runs list can update without manual refresh.
+
+Rationale:
+- Makes the admin UI feel "alive" without polling.
+- Keeps per-run SSE (`/runs/:id/events`) for detailed progress while providing a lightweight app-wide stream for status changes.

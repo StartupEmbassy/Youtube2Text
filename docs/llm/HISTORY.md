@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Phase 1 Step 3: add global SSE endpoint `GET /events` emitting run create/update events, update Next.js runs list to subscribe and update live, extend OpenAPI schema, add unit test for global events, and bump version to 0.3.0 - Files: [src/api/runManager.ts, src/api/server.ts, openapi.yaml, web/lib/apiTypes.gen.ts, web/lib/types.ts, web/app/RunsLive.tsx, web/app/page.tsx, tests/apiGlobalEvents.test.ts, tests/all.test.ts, README.md, package.json, package-lock.json, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.2.0 -> 0.3.0)
+
 2025-12-14 - GPT-5.2 - Phase 1 Step 2: implement OpenAPI contract + generated frontend types + contract-check workflow (OpenAPI spec at repo root, generated types in web/, validate+generate+diff check scripts); bump version to 0.2.0 per VERSIONING_RULES - Files: [openapi.yaml, web/lib/apiTypes.gen.ts, web/lib/types.ts, web/app/CreateRunForm.tsx, scripts/apiContractCheck.mjs, package.json, package-lock.json, docs/operations/API_CONTRACT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.1.0 -> 0.2.0)
 
 2025-12-14 - GPT-5.2 - Web UI UX: change run detail layout to always stack Events below Artifacts (no side-by-side columns) and wrap Artifacts JSON to avoid horizontal scroll - Files: [web/app/runs/[runId]/page.tsx, docs/llm/HISTORY.md] - Version impact: no

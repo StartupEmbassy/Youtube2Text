@@ -4,6 +4,48 @@
  */
 
 export interface paths {
+    "/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream global events (SSE)
+         * @description Server-Sent Events stream for global run updates. Event names include:
+         *     - run:created
+         *     - run:updated
+         *     Data is JSON matching the GlobalRunEvent schema.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description SSE stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -563,6 +605,13 @@ export interface components {
         RunArtifactsResponse: {
             run: components["schemas"]["RunRecord"];
             artifacts: components["schemas"]["RunArtifacts"];
+        };
+        /** @enum {string} */
+        GlobalRunEventType: "run:created" | "run:updated";
+        GlobalRunEvent: {
+            type: components["schemas"]["GlobalRunEventType"];
+            run: components["schemas"]["RunRecord"];
+            timestamp: string;
         };
     };
     responses: never;

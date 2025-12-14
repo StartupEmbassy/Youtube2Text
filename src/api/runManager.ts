@@ -34,6 +34,18 @@ export type RunRecord = {
   stats?: { succeeded: number; failed: number; skipped: number; total: number };
 };
 
+export type GlobalEvent =
+  | {
+      type: "run:created";
+      run: RunRecord;
+      timestamp: string;
+    }
+  | {
+      type: "run:updated";
+      run: RunRecord;
+      timestamp: string;
+    };
+
 export type RunCreateRequest = {
   url: string;
   force?: boolean;
@@ -48,10 +60,14 @@ export type RunManagerOptions = {
 
 export class RunManager {
   private runs = new Map<string, RunRecord>();
-  private buffers = new Map<string, EventBuffer>();
+  private buffers = new Map<string, EventBuffer<PipelineEvent>>();
   private listeners = new Map<
     string,
     Set<(buffered: { id: number; event: PipelineEvent }) => void>
+  >();
+  private globalBuffer: EventBuffer<GlobalEvent>;
+  private globalListeners = new Set<
+    (buffered: { id: number; event: GlobalEvent }) => void
   >();
   private persistence?: RunPersistence;
   private persistChain: Promise<void> = Promise.resolve();
@@ -60,6 +76,9 @@ export class RunManager {
     private baseConfig: AppConfig,
     private options: RunManagerOptions
   ) {
+    this.globalBuffer = new EventBuffer<GlobalEvent>(
+      Math.max(200, options.maxBufferedEventsPerRun)
+    );
     if (options.persistRuns) {
       const dir = options.persistDir ?? join(baseConfig.outputDir, "_runs");
       this.persistence = createRunPersistence(dir);
@@ -72,7 +91,7 @@ export class RunManager {
     const persisted = await loadPersistedRuns(this.persistence);
     for (const record of persisted) {
       this.runs.set(record.runId, record);
-      const buffer = new EventBuffer(this.options.maxBufferedEventsPerRun);
+      const buffer = new EventBuffer<PipelineEvent>(this.options.maxBufferedEventsPerRun);
       const events = await loadPersistedEventsTail(
         this.persistence,
         record.runId,
@@ -103,9 +122,10 @@ export class RunManager {
       createdAt: new Date().toISOString(),
     };
     this.runs.set(runId, record);
-    this.buffers.set(runId, new EventBuffer(this.options.maxBufferedEventsPerRun));
+    this.buffers.set(runId, new EventBuffer<PipelineEvent>(this.options.maxBufferedEventsPerRun));
     this.listeners.set(runId, new Set());
     this.persistRun(record);
+    this.emitGlobal({ type: "run:created", run: record, timestamp: new Date().toISOString() });
     return record;
   }
 
@@ -127,6 +147,17 @@ export class RunManager {
     if (!set) throw new Error("Unknown run");
     set.add(handler);
     return () => set.delete(handler);
+  }
+
+  subscribeGlobal(
+    handler: (buffered: { id: number; event: GlobalEvent }) => void
+  ): () => void {
+    this.globalListeners.add(handler);
+    return () => this.globalListeners.delete(handler);
+  }
+
+  listGlobalEventsAfter(lastSeenId: number) {
+    return this.globalBuffer.listAfter(lastSeenId);
   }
 
   listEventsAfter(runId: string, lastSeenId: number) {
@@ -169,6 +200,7 @@ export class RunManager {
     run.status = "running";
     run.startedAt = new Date().toISOString();
     this.persistRun(run);
+    this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
 
     void runPipeline(req.url, config, { force: Boolean(req.force), emitter })
       .then(() => {
@@ -178,6 +210,11 @@ export class RunManager {
           updated.status = "done";
           updated.finishedAt = new Date().toISOString();
           this.persistRun(updated);
+          this.emitGlobal({
+            type: "run:updated",
+            run: updated,
+            timestamp: new Date().toISOString(),
+          });
         }
       })
       .catch((error) => {
@@ -187,6 +224,11 @@ export class RunManager {
         updated.finishedAt = new Date().toISOString();
         updated.error = error instanceof Error ? error.message : String(error);
         this.persistRun(updated);
+        this.emitGlobal({
+          type: "run:updated",
+          run: updated,
+          timestamp: new Date().toISOString(),
+        });
       });
   }
 
@@ -203,6 +245,7 @@ export class RunManager {
         run.channelTitle = event.channelTitle;
         run.channelDirName = makeChannelDirName(event.channelId, event.channelTitle);
         this.persistRun(run);
+        this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
       }
       if (event.type === "run:done") {
         run.stats = {
@@ -212,10 +255,12 @@ export class RunManager {
           total: event.total,
         };
         this.persistRun(run);
+        this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
       }
       if (event.type === "run:error") {
         run.error = event.error;
         this.persistRun(run);
+        this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
       }
     }
 
@@ -230,6 +275,11 @@ export class RunManager {
     delete copy.assemblyAiApiKey;
     const parsed = configSchema.partial().safeParse(copy);
     return parsed.success ? parsed.data : {};
+  }
+
+  private emitGlobal(event: GlobalEvent) {
+    const buffered = this.globalBuffer.append(event);
+    for (const handler of this.globalListeners) handler(buffered);
   }
 
   private enqueuePersist(task: () => Promise<void>) {

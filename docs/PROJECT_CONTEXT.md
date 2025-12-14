@@ -64,7 +64,7 @@ Completed:
 - Docker image + docker compose for the API runner
 
 In progress:
-- Phase 1: local-first web UI (Next.js) (reads `output/` via API, consumes SSE/JSON events)
+- Phase 1: local-first web UI (Next.js) (reads `output/` via API, consumes SSE/JSON events; runs list uses global SSE `/events`)
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE

@@ -29,8 +29,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Phase 1 Next Steps (Do In Order)
 1. UI error handling when API is down (Next.js error boundaries + user feedback) - DONE
 2. API contract: OpenAPI + generated TS types/client + contract-check workflow to prevent drift - DONE (see `docs/operations/API_CONTRACT.md`)
-3. SSE global (planned): optional global event stream so the app feels "live" (fits after contract-check)
-4. Follow-ups: types dedup, styling consistency, improve SSE UX
+3. SSE global: add global event stream so the runs list is "live" - DONE
+4. Follow-ups: styling consistency, improve SSE UX, and consider removing the `web/lib/types.ts` facade if desired
 
 ## Phase 0 Notes (implemented)
 - yt-dlp errors are classified (access vs transient vs unavailable) and only retryable failures are retried.

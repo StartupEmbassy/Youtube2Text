@@ -166,6 +166,7 @@ Persistence (default enabled):
 
 Endpoints:
 - `GET /health`
+- `GET /events` (SSE global stream for run updates)
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "config": { ... } }`
 - `GET /runs`
 - `GET /runs/:id`
@@ -223,6 +224,7 @@ npm run test:docker-smoke
 
 This repo includes an admin UI built with Next.js. It reads existing outputs via the API and streams run progress via SSE. It does not replace the CLI.
 It can also start runs via the API (`POST /runs`).
+The runs list auto-updates via the global SSE stream (`GET /events`).
 
 Run locally (two terminals):
 

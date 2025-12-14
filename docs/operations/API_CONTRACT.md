@@ -20,7 +20,7 @@ Scripts (root `package.json`):
 - `npm run api:types:generate`
   - generates TS types (and optionally a client) into `web/`
 - `npm run api:contract:check`
-  - runs validate + generate, then fails if git shows any diffs
+  - runs validate + generate, then fails if regeneration changes the generated types file
 
 CI/discipline rule:
 - Any PR/change that modifies an endpoint MUST update `openapi.*` and keep `npm run api:contract:check` passing.
@@ -29,7 +29,7 @@ CI/discipline rule:
 
 The key is the "check" command that:
 1) regenerates the artifacts from the spec
-2) asserts the repo is still clean (no uncommitted diffs)
+2) asserts regeneration does not change the generated types file
 
 So if someone changes the code but forgets to update the spec, the check will fail.
 
@@ -48,6 +48,8 @@ Run:
 Start by covering what exists today (Phase 1):
 - Health:
   - `GET /health`
+- Events:
+  - `GET /events` (SSE global run updates)
 - Runs:
   - `GET /runs`
   - `POST /runs`

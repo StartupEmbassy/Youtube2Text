@@ -7,6 +7,7 @@ export type RunGetResponse = components["schemas"]["RunGetResponse"];
 export type RunCreateRequest = components["schemas"]["RunCreateRequest"];
 export type RunCreateResponse = components["schemas"]["RunCreateResponse"];
 export type RunArtifactsResponse = components["schemas"]["RunArtifactsResponse"];
+export type GlobalRunEvent = components["schemas"]["GlobalRunEvent"];
 
 export type ChannelInfo = components["schemas"]["ChannelInfo"];
 export type ChannelsResponse = components["schemas"]["ChannelsResponse"];
