@@ -58,9 +58,15 @@ function loadEnvConfig(): PartialConfig {
   };
 }
 
+function filterUndefined(obj: PartialConfig): PartialConfig {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  );
+}
+
 export function loadConfig(configPath = "config.yaml"): AppConfig {
   const yamlConfig = loadYamlConfig(resolve(configPath));
-  const envConfig = loadEnvConfig();
+  const envConfig = filterUndefined(loadEnvConfig());
   const merged = { ...yamlConfig, ...envConfig };
   return configSchema.parse(merged);
 }

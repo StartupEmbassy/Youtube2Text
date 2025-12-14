@@ -47,9 +47,9 @@ Recommended reading order:
 ## Current Focus (Snapshot)
 
 Source of truth: docs/llm/HANDOFF.md.
-- Last Updated: 2025-12-12 - GPT-5.2
-- Working on: Documentation adaptation to Youtube2Text scope
-- Status: Scaffold aligned; code not started yet
+- Last Updated: 2025-12-14 - Claude
+- Working on: Language detection bug fixes and validation
+- Status: MVP CLI complete. Language detection fixed. 11 unit tests passing. E2E validated with Spanish video.
 
 Keep this section synchronized with the "Current Status" block in docs/llm/HANDOFF.md.
 

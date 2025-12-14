@@ -1,9 +1,9 @@
 # LLM Work Handoff
 
 ## Current Status
-- Last Updated: 2025-12-12 - GPT-5.2
-- Session Focus: Phase 0 reliability (language + yt-dlp extra args).
-- Status: Added `languageDetection` (auto/manual) and `ytDlpExtraArgs` default to avoid yt-dlp JS runtime issues.
+- Last Updated: 2025-12-14 - Claude
+- Session Focus: Fix language detection bugs found during real-world testing.
+- Status: Language detection now works correctly. Tested with Spanish video - detected `es` from `language` field. All 11 unit tests pass.
 
 ## Language Detection Options (GPT‑5.2, 2025-12-12)
 
@@ -96,7 +96,56 @@ Agree with Claude’s “no new deps” priority chain for Phase 0/1:
 - Then `yt-dlp` `subtitles` language keys
 - Else fall back to default `languageCode`
 
-Small addition: when we fall back (no detection), log explicitly: “language undetected → using default X” to make quality issues diagnosable.
+Small addition: when we fall back (no detection), log explicitly: "language undetected → using default X" to make quality issues diagnosable.
+
+### Claude Language Detection Fix (2025-12-14)
+
+**Problem discovered during testing:**
+GPT's initial implementation picked the first key from `automatic_captions`, which returns ALL languages YouTube can generate (alphabetically: `ab`, `aa`, `af`...). A Spanish video was being detected as `ab` (Abkhazian) → AssemblyAI error 400.
+
+**Root cause:** YouTube's `automatic_captions` contains every possible auto-generated language, not just the video's actual language.
+
+**Solution implemented:**
+
+1. **New priority chain (corrected):**
+   ```
+   1. metadata.language field (most reliable - video's declared language)
+   2. subtitles (manually uploaded)
+   3. automatic_captions (filtered to AssemblyAI-supported only)
+   4. Fallback to config default
+   ```
+
+2. **AssemblyAI language whitelist:** Only these codes are accepted:
+   ```typescript
+   const ASSEMBLYAI_SUPPORTED = new Set([
+     "en", "en_au", "en_uk", "en_us", "es", "fr", "de", "it", "pt",
+     "nl", "hi", "ja", "zh", "fi", "ko", "pl", "ru", "tr", "uk", "vi"
+   ]);
+   ```
+
+3. **Bug fix in `src/config/loader.ts`:** Added `filterUndefined()` to prevent env config from overwriting yaml config with `undefined` values.
+
+**Files changed:**
+- `src/youtube/language.ts` - New priority chain, whitelist filtering
+- `src/config/loader.ts` - `filterUndefined()` helper
+- `tests/language.test.ts` - Updated tests (now 11 total)
+- `tests/fixtures/test-videos.md` - Multilingual test video URLs
+
+**Validation:**
+```bash
+npx tsx src/cli/index.ts --maxVideos 1 "https://www.youtube.com/watch?v=cYb0Mb_pI_8"
+# Output: [language] Detected: es (language)
+# Result: Video transcribed successfully in Spanish
+```
+
+**Test videos available** in `tests/fixtures/test-videos.md`:
+| Language | Code | Video URL |
+|----------|------|-----------|
+| Spanish | es | https://www.youtube.com/watch?v=cYb0Mb_pI_8 |
+| English | en_us | https://www.youtube.com/watch?v=dQw4w9WgXcQ |
+| French | fr | https://www.youtube.com/shorts/007P3HSf5vg |
+| German | de | https://www.youtube.com/shorts/NDsa8eSdEXo |
+| Chinese | zh | https://www.youtube.com/watch?v=GBbgCupe6hg |
 
 ## Containerization / Deployment Notes (GPT‑5.2, 2025-12-14)
 
@@ -418,39 +467,23 @@ The repository started as LLM-DocKit scaffold. Documentation was adapted to matc
 
 ## Active Files
 List the files touched or relevant to the current work stream.
-- package.json
-- tsconfig.json
-- src/cli/index.ts
-- src/pipeline/run.ts
-- src/config/schema.ts
-- src/config/loader.ts
-- src/config/runs.ts
-- src/cli/index.ts
-- README.md
-- .env.example
-- runs.yaml.example
-- config.yaml.example
-- src/youtube/*
-- src/transcription/*
-- src/storage/*
-- src/formatters/*
-- src/utils/*
-- src/config/runs.ts
-- .gitignore
-- README.md
-- .env.example
-- runs.yaml.example
-- config.yaml.example
-- runs.yml
-- src/utils/deps.ts
-- src/youtube/enumerate.ts
-- src/youtube/download.ts
-- src/formatters/txt.ts
-- src/youtube/enumerate.ts
-- src/pipeline/run.ts
-- README.md
-- docs/PROJECT_CONTEXT.md
-- docs/PROJECT_CONTEXT.md
+
+**Core modules:**
+- src/youtube/language.ts - Language detection with AssemblyAI whitelist
+- src/config/loader.ts - Config loading with filterUndefined fix
+- src/pipeline/run.ts - Pipeline orchestration
+
+**Tests:**
+- tests/language.test.ts - Language detection tests (7 tests)
+- tests/naming.test.ts - Filename naming tests (3 tests)
+- tests/txtFormatter.test.ts - TXT output tests (1 test)
+- tests/fixtures/test-videos.md - Multilingual test video URLs
+
+**Config:**
+- config.yaml - User config (ytDlpExtraArgs override)
+- src/config/schema.ts - Zod schema with defaults
+
+**Documentation:**
 - docs/llm/HANDOFF.md
 - docs/llm/HISTORY.md
 
@@ -459,15 +492,16 @@ Document relevant version identifiers if they changed or need monitoring.
 - package.json: 0.1.0
 
 ## Top Priorities
-1. **Web Platform Phase 0**: Begin local-first MVP per `docs/ARCHITECTURE.md`:
+1. ✅ **Language detection** - DONE (Claude, 2025-12-14). Uses `language` field, filters to AssemblyAI-supported codes.
+2. ✅ **Unit tests** - DONE (GPT + Claude). 11 tests for naming, language, txtFormatter.
+3. ✅ **E2E validation** - DONE. Spanish video transcribed successfully.
+4. **yt-dlp PO Token issue**: Android client now requires PO Token (YouTube Dec 2024 change). Current workaround: set `ytDlpExtraArgs: []` to use fallback clients. Long-term: investigate mweb/tv clients or PO Token generation.
+5. **Web Platform Phase 0**: Begin local-first MVP per `docs/ARCHITECTURE.md`:
    - 0.1: Create `web/` Next.js project with shadcn/ui
    - 0.2: Implement `LocalStorageAdapter` and channel library UI
    - 0.3: Video viewer with audio player and transcript sync
    - 0.4: Pipeline runner with `--json-events` and SSE streaming
    - 0.5: Per-video chat and Markdown export
-2. **CLI Enhancement**: Add `--json-events` flag for structured pipeline events (required for Phase 0.4).
-3. Run the CLI on a real channel to validate end-to-end behavior.
-4. Add small unit tests for formatters/config and refine error stage reporting.
 
 ## Do Not Touch
 Identify areas that should remain unchanged without explicit approval from the user.
@@ -549,7 +583,11 @@ Implement with sanitizing (remove special chars, replace spaces with hyphens) an
 
 ## Testing Notes
 Summarize the testing performed (manual or automated) and any gaps or follow-up needed.
-- `npm install` and `npm run build` succeeded. No runtime E2E test run yet.
+- `npm install` and `npm run build` succeeded.
+- `npm test` runs 11 unit tests (naming, language, txtFormatter) - all pass.
+- **E2E validated:** Spanish video `cYb0Mb_pI_8` transcribed successfully with correct language detection (`es`).
+- **yt-dlp note:** Default `ytDlpExtraArgs` with android client requires PO Token (YouTube change Dec 2024). Set `ytDlpExtraArgs: []` in config.yaml to use fallback clients.
+- **Test fixtures:** See `tests/fixtures/test-videos.md` for multilingual test URLs.
 
 ---
 

@@ -44,14 +44,28 @@ This separation keeps the pipeline local-first and makes later extensions straig
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_id>/<video_id>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (2025-12-12)
-Documentation scaffold adapted to Youtube2Text scope. No application code has been written yet.
+## Current Status (2025-12-14)
+MVP CLI fully functional. Language detection working correctly with AssemblyAI integration.
+
+**Completed:**
+- ✅ Node.js + TypeScript CLI with Commander
+- ✅ YouTube enumeration via yt-dlp (channels, playlists, single videos)
+- ✅ Audio download with retry logic
+- ✅ AssemblyAI transcription with speaker diarization
+- ✅ Output formatters (JSON, TXT with timestamps, CSV)
+- ✅ Language auto-detection from video metadata
+- ✅ Unit tests (11 tests passing)
+- ✅ E2E validation with multilingual videos
+
+**In Progress:**
+- Web Platform Phase 0 (local-first MVP)
 
 ## Upcoming Milestones
-1. Scaffold Node.js + TypeScript project and CLI skeleton.
-2. Implement YouTube enumeration and audio download modules.
-3. Implement AssemblyAI transcription provider and formatters.
-4. Add idempotency, retry tests, and documentation polish.
+1. ~~Scaffold Node.js + TypeScript project and CLI skeleton.~~ ✅ DONE
+2. ~~Implement YouTube enumeration and audio download modules.~~ ✅ DONE
+3. ~~Implement AssemblyAI transcription provider and formatters.~~ ✅ DONE
+4. ~~Add idempotency, retry tests, and documentation polish.~~ ✅ DONE
+5. Begin Web Platform Phase 0 (Next.js local-first UI)
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/

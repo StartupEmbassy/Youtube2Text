@@ -40,4 +40,3 @@ export function parseVideoIdFromBaseName(baseName: string): string {
   const parts = baseName.split("__");
   return (parts.length >= 2 ? parts[parts.length - 1] : baseName) as string;
 }
-

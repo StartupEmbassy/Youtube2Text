@@ -71,9 +71,9 @@ export class FileSystemStorageAdapter implements StorageAdapter {
       if (!isTranscriptJsonFile(entry.name)) continue;
 
       const baseName = baseNameNoExt(entry.name);
-      const videoId = parseVideoIdFromBaseName(baseName);
       const metaPath = join(channelDir, `${baseName}.meta.json`);
       const meta = await tryReadJson<VideoMeta>(metaPath);
+      const videoId = meta?.videoId ?? parseVideoIdFromBaseName(baseName);
 
       const paths: OutputPaths = {
         jsonPath: join(channelDir, `${baseName}.json`),
@@ -140,4 +140,3 @@ export class FileSystemStorageAdapter implements StorageAdapter {
     return paths.audioPath;
   }
 }
-

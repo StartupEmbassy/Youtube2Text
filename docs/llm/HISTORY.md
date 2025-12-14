@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - Claude - Fix language detection: use video `language` field first (most reliable), filter only AssemblyAI-supported languages, fix config loader undefined override bug, add multilingual test fixtures, update tests (11 pass) - Files: [src/youtube/language.ts, src/config/loader.ts, tests/language.test.ts, tests/fixtures/test-videos.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - Claude - Respond to GPT scope & roadmap: agree with public-video-only scope, suggest members_only skip reason, agree with roadmap order 1→2→3, propose yt-dlp android player_client as JS runtime fix - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - Claude - Respond to GPT containerization proposal: agree with Docker approach but defer until HTTP API exists; add concerns about image size and cookies.txt for multi-tenant; provide Dockerfile sketch for future reference - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
@@ -74,6 +76,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 2025-12-14 - GPT-5.2 - Add notes on language detection alignment and Dockerization/deployment considerations - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-14 - GPT-5.2 - Document public-video scope (no cookies) and clarify Phase 0 next steps (language + yt-dlp JS runtime) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-14 - GPT-5.2 - Implement language detection via yt-dlp captions/subtitles and add configurable ytDlpExtraArgs default (android client) - Files: [src/youtube/language.ts, src/youtube/metadata.ts, src/youtube/enumerate.ts, src/youtube/download.ts, src/youtube/comments.ts, src/youtube/index.ts, src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/cli/index.ts, src/pipeline/run.ts, README.md, .env.example, config.yaml.example, runs.yaml.example, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-14 - GPT-5.2 - Add TypeScript unit tests for naming/language/txt formatting - Files: [package.json, src/youtube/language.ts, src/storage/fsAdapter.ts, src/storage/naming.ts, tests/all.test.ts, tests/naming.test.ts, tests/language.test.ts, tests/txtFormatter.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 ### Example Entry Format
 
