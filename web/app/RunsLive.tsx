@@ -13,7 +13,31 @@ function youtubeThumb(videoId: string): string {
   return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
 }
 
+function tryExtractVideoId(urlString: string | undefined): string | undefined {
+  if (!urlString) return undefined;
+  let url: URL;
+  try {
+    url = new URL(urlString);
+  } catch {
+    return undefined;
+  }
+  const host = url.hostname.replace(/^www\./, "");
+  if (host === "youtu.be") {
+    const id = url.pathname.replace(/^\//, "").trim();
+    return id.length > 0 ? id : undefined;
+  }
+  if (host !== "youtube.com" && host !== "m.youtube.com") return undefined;
+  if (url.pathname === "/watch") {
+    const id = url.searchParams.get("v") ?? "";
+    return id.trim().length > 0 ? id.trim() : undefined;
+  }
+  const m = url.pathname.match(/^\/shorts\/([^/]+)/);
+  if (m?.[1]) return m[1];
+  return undefined;
+}
+
 function displayTitle(run: RunRecord): string {
+  if (run.previewTitle && run.previewTitle.trim().length > 0) return run.previewTitle;
   if (run.channelTitle && run.channelTitle.trim().length > 0) return run.channelTitle;
   if (run.inputUrl && run.inputUrl.trim().length > 0) return run.inputUrl;
   return "Run";
@@ -77,10 +101,10 @@ export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
       <div className="grid">
         {runs.map((run) => (
           <div key={run.runId} className="card">
-            {run.previewVideoId && (
+            {(run.previewVideoId || tryExtractVideoId(run.inputUrl)) && (
               <Link href={`/runs/${run.runId}`} className="thumb mb10">
                 <img
-                  src={youtubeThumb(run.previewVideoId)}
+                  src={youtubeThumb(run.previewVideoId ?? (tryExtractVideoId(run.inputUrl) as string))}
                   alt={run.previewTitle ?? "Video thumbnail"}
                   loading="lazy"
                 />

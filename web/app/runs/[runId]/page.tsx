@@ -10,6 +10,45 @@ function youtubeThumb(videoId: string): string {
   return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
 }
 
+function tryExtractVideoId(urlString: string | undefined): string | undefined {
+  if (!urlString) return undefined;
+  let url: URL;
+  try {
+    url = new URL(urlString);
+  } catch {
+    return undefined;
+  }
+  const host = url.hostname.replace(/^www\./, "");
+  if (host === "youtu.be") {
+    const id = url.pathname.replace(/^\//, "").trim();
+    return id.length > 0 ? id : undefined;
+  }
+  if (host !== "youtube.com" && host !== "m.youtube.com") return undefined;
+  if (url.pathname === "/watch") {
+    const id = url.searchParams.get("v") ?? "";
+    return id.trim().length > 0 ? id.trim() : undefined;
+  }
+  const m = url.pathname.match(/^\/shorts\/([^/]+)/);
+  if (m?.[1]) return m[1];
+  return undefined;
+}
+
+function getFirstArtifactVideo(artifacts: unknown): { videoId?: string; title?: string } | undefined {
+  const videos = (artifacts as any)?.videos;
+  if (!Array.isArray(videos) || videos.length === 0) return undefined;
+  const first = videos[0] as any;
+  if (!first || typeof first !== "object") return undefined;
+  return {
+    videoId: typeof first.videoId === "string" ? first.videoId : undefined,
+    title:
+      typeof first.title === "string"
+        ? first.title
+        : typeof first?.meta?.title === "string"
+          ? first.meta.title
+          : undefined,
+  };
+}
+
 export default async function RunPage({ params }: { params: { runId: string } }) {
   const { runId } = params;
   const base = apiBaseUrlClient();
@@ -18,6 +57,10 @@ export default async function RunPage({ params }: { params: { runId: string } })
   const channelLink = runData.run.channelDirName
     ? `/library/${encodeURIComponent(runData.run.channelDirName)}`
     : undefined;
+  const firstVideo = getFirstArtifactVideo(artifactsData.artifacts);
+  const previewVideoId =
+    runData.run.previewVideoId ?? firstVideo?.videoId ?? tryExtractVideoId(runData.run.inputUrl);
+  const previewTitle = runData.run.previewTitle ?? firstVideo?.title;
 
   return (
     <div>
@@ -36,24 +79,24 @@ export default async function RunPage({ params }: { params: { runId: string } })
       </div>
 
       <div className="card mb12">
-        {runData.run.previewVideoId && (
+        {previewVideoId && (
           <a
             className="thumb lg mb10"
-            href={`https://www.youtube.com/watch?v=${encodeURIComponent(runData.run.previewVideoId)}`}
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(previewVideoId)}`}
             target="_blank"
             rel="noreferrer"
           >
             <img
-              src={youtubeThumb(runData.run.previewVideoId)}
-              alt={runData.run.previewTitle ?? "Video thumbnail"}
+              src={youtubeThumb(previewVideoId)}
+              alt={previewTitle ?? "Video thumbnail"}
               loading="lazy"
             />
           </a>
         )}
-        {runData.run.previewTitle && (
+        {previewTitle && (
           <>
             <div className="muted">Title</div>
-            <div className="break">{runData.run.previewTitle}</div>
+            <div className="break">{previewTitle}</div>
             <div className="spacer10" />
           </>
         )}

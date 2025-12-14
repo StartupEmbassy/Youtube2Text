@@ -27,6 +27,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Web UI: runs list and run detail include an "Open downloads" action when channel artifacts are available, and runs are labeled more descriptively than just runId.
 - Web UI: show YouTube thumbnails in Runs and Library; API tracks `previewVideoId` on runs for a cheap thumbnail in the runs list.
 - Web UI: thumbnails sized down; run detail shows a Title field when available.
+- Web UI: fix huge thumbnails (make `.thumb` a block element) and add robust fallbacks for run thumbnails/titles from artifacts or direct video URL parsing.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE

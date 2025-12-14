@@ -242,6 +242,7 @@ pre {
   border: 1px solid var(--border);
   background: rgba(2, 6, 23, 0.7);
   overflow: hidden;
+  display: block;
 }
 
 .thumb.lg {
