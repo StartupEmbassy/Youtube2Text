@@ -4,3 +4,4 @@ import "./txtFormatter.test.js";
 import "./ytDlpErrors.test.js";
 import "./apiEventBuffer.test.js";
 import "./apiPersistence.test.js";
+import "./storageFsAdapter.test.js";

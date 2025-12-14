@@ -1,10 +1,13 @@
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { createReadStream, promises as fs } from "node:fs";
+import { basename as pathBasename } from "node:path";
 import { parse as parseUrl } from "node:url";
 import type { AppConfig } from "../config/schema.js";
 import { RunManager } from "./runManager.js";
 import { badRequest, json, notFound, readJsonBody } from "./http.js";
 import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
+import { FileSystemStorageAdapter } from "../storage/index.js";
 
 type ServerOptions = {
   port: number;
@@ -27,6 +30,36 @@ function segments(req: IncomingMessage): string[] {
   return pathname.split("/").filter(Boolean);
 }
 
+function decodePathSegment(raw: string): string | undefined {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return undefined;
+  }
+}
+
+function isSafeBaseName(name: string): boolean {
+  return name.length > 0 && name === pathBasename(name) && !name.includes("..");
+}
+
+function contentTypeForAudioPath(path: string): string {
+  if (path.endsWith(".mp3")) return "audio/mpeg";
+  if (path.endsWith(".wav")) return "audio/wav";
+  return "application/octet-stream";
+}
+
+async function streamFile(res: ServerResponse, path: string, contentType: string) {
+  try {
+    const stat = await fs.stat(path);
+    res.statusCode = 200;
+    res.setHeader("content-type", contentType);
+    res.setHeader("content-length", String(stat.size));
+    createReadStream(path).pipe(res);
+  } catch {
+    notFound(res);
+  }
+}
+
 export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const manager = new RunManager(config, {
     maxBufferedEventsPerRun: opts.maxBufferedEventsPerRun,
@@ -34,6 +67,12 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
     persistDir: opts.persistDir,
   });
   await manager.init();
+
+  const storage = new FileSystemStorageAdapter({
+    outputDir: config.outputDir,
+    audioDir: config.audioDir,
+    audioFormat: config.audioFormat,
+  });
 
   const server = createServer(async (req, res) => {
     setCors(res);
@@ -54,6 +93,111 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       if (req.method === "GET" && seg.length === 1 && seg[0] === "runs") {
         json(res, 200, { runs: manager.listRuns() });
         return;
+      }
+
+      if (
+        req.method === "GET" &&
+        seg.length === 2 &&
+        seg[0] === "library" &&
+        seg[1] === "channels"
+      ) {
+        const channels = await storage.listChannels();
+        json(res, 200, { channels });
+        return;
+      }
+
+      if (
+        req.method === "GET" &&
+        seg.length === 3 &&
+        seg[0] === "library" &&
+        seg[1] === "channels"
+      ) {
+        const channelDirName = decodePathSegment(seg[2]!);
+        if (!channelDirName) return badRequest(res, "Invalid channelDirName");
+        const meta = await storage.readChannelMeta(channelDirName);
+        if (!meta) return notFound(res);
+        json(res, 200, { channelDirName, meta });
+        return;
+      }
+
+      if (
+        req.method === "GET" &&
+        seg.length === 4 &&
+        seg[0] === "library" &&
+        seg[1] === "channels" &&
+        seg[3] === "videos"
+      ) {
+        const channelDirName = decodePathSegment(seg[2]!);
+        if (!channelDirName) return badRequest(res, "Invalid channelDirName");
+        const videos = await storage.listVideos(channelDirName);
+        json(res, 200, { channelDirName, videos });
+        return;
+      }
+
+      if (
+        req.method === "GET" &&
+        seg.length === 6 &&
+        seg[0] === "library" &&
+        seg[1] === "channels" &&
+        seg[3] === "videos"
+      ) {
+        const channelDirName = decodePathSegment(seg[2]!);
+        const baseName = decodePathSegment(seg[4]!);
+        const kind = seg[5]!;
+        if (!channelDirName) return badRequest(res, "Invalid channelDirName");
+        if (!baseName || !isSafeBaseName(baseName)) return badRequest(res, "Invalid basename");
+
+        const videos = await storage.listVideos(channelDirName);
+        const video = videos.find((v) => v.basename === baseName);
+        if (!video) return notFound(res);
+
+        if (kind === "txt") {
+          const exists = await storage.exists(video.paths.txtPath);
+          if (!exists) return notFound(res);
+          const text = await storage.readText(video.paths.txtPath);
+          res.statusCode = 200;
+          res.setHeader("content-type", "text/plain; charset=utf-8");
+          res.end(text);
+          return;
+        }
+        if (kind === "json") {
+          const transcript = await storage.readTranscriptJson(video.paths.jsonPath);
+          json(res, 200, transcript);
+          return;
+        }
+        if (kind === "meta") {
+          if (!video.paths.metaPath) return notFound(res);
+          const meta = await storage.readVideoMeta(video.paths.metaPath);
+          if (!meta) return notFound(res);
+          json(res, 200, meta);
+          return;
+        }
+        if (kind === "comments") {
+          const exists = await storage.exists(video.paths.commentsPath);
+          if (!exists) return notFound(res);
+          const raw = await storage.readText(video.paths.commentsPath);
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/json; charset=utf-8");
+          res.end(raw);
+          return;
+        }
+        if (kind === "csv") {
+          const exists = await storage.exists(video.paths.csvPath);
+          if (!exists) return notFound(res);
+          const raw = await storage.readText(video.paths.csvPath);
+          res.statusCode = 200;
+          res.setHeader("content-type", "text/csv; charset=utf-8");
+          res.end(raw);
+          return;
+        }
+        if (kind === "audio") {
+          const exists = await storage.exists(video.paths.audioPath);
+          if (!exists) return notFound(res);
+          await streamFile(res, video.paths.audioPath, contentTypeForAudioPath(video.paths.audioPath));
+          return;
+        }
+
+        return notFound(res);
       }
 
       if (req.method === "POST" && seg.length === 1 && seg[0] === "runs") {

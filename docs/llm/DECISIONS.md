@@ -163,9 +163,28 @@ Design choices:
 - Multi-stage Docker build:
   - Builder: install Node deps + build `dist/`.
   - Runtime: install `ffmpeg` + `python3`/`pip` + `yt-dlp`, then run `node dist/api.js`.
+- Install `yt-dlp` into a Python virtualenv inside the image (avoids Debian/PEP-668 "externally managed environment" errors without using `--break-system-packages`).
+- Optional reproducibility: allow pinning `yt-dlp` via `--build-arg YT_DLP_VERSION=...`.
 - Bind mounts for persistence:
   - `./output` -> `/data/output` (includes `output/_runs/` for persisted runs/events)
   - `./audio` -> `/data/audio`
 
 Non-goals:
 - Cookies/members-only support.
+
+## D-010 - Phase 1 admin UI: Next.js + separate web service
+
+Decision:
+- Build the Phase 1 local-first admin UI using Next.js (in `web/`).
+- Deploy as a separate service/container from the API runner (docker-compose with `youtube2text-api` + `youtube2text-web`).
+
+Rationale:
+- Keeps CLI independent and unchanged.
+- Keeps the API runner as the single interface to the filesystem outputs (web does not reimplement `output/` parsing).
+- Avoids the "two processes in one container" anti-pattern and keeps deployments simpler to debug (logs/healthchecks).
+
+Design choices:
+- Web consumes API:
+  - Runs: `GET /runs`, `GET /runs/:id`, SSE `GET /runs/:id/events`
+  - Library: `GET /library/channels`, `GET /library/channels/:channelDirName/videos`, `GET /library/.../:basename/:kind` for artifact viewing
+- Web uses `Y2T_API_BASE_URL` (server-side fetch) and `NEXT_PUBLIC_Y2T_API_BASE_URL` (browser/SSE).

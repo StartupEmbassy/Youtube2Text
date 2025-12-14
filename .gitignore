@@ -72,6 +72,7 @@ target/
 dist/
 build/
 out/
+.next/
 *.wasm
 
 # Package manager lock files (optional - uncomment if you want to ignore them)

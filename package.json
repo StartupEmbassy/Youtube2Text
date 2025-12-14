@@ -14,6 +14,9 @@
     "dev": "tsx src/cli/index.ts",
     "dev:api": "tsx src/api/index.ts",
     "api": "node dist/api.js",
+    "dev:web": "npm --prefix web run dev",
+    "build:web": "npm --prefix web run build",
+    "start:web": "npm --prefix web run start",
     "test:docker-smoke": "node scripts/dockerSmokeTest.mjs",
     "test": "node --import tsx --test tests/all.test.ts"
   },

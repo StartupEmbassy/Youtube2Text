@@ -137,6 +137,9 @@ Exit criteria: core still runs as CLI exactly like today and can be embedded in 
 
 Goal: browse outputs + run jobs locally as an admin.
 
+Implementation note (Phase 1):
+- UI stack: Next.js admin UI in `web/` consuming the existing API runner (SSE for events).
+
 Screens:
 - Dashboard (runs + errors + recent channels/videos)
 - Runs/Queue with real-time progress (from JSON events)

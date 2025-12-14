@@ -171,10 +171,14 @@ Endpoints:
 - `GET /runs/:id`
 - `GET /runs/:id/events` (SSE, supports `Last-Event-ID`)
 - `GET /runs/:id/artifacts`
+- `GET /library/channels`
+- `GET /library/channels/:channelDirName`
+- `GET /library/channels/:channelDirName/videos`
+- `GET /library/channels/:channelDirName/videos/:basename/:kind` where `kind` is `txt|json|meta|comments|csv|audio`
 
 ## Docker (API runner)
 
-Docker runs the HTTP API runner (it does not replace the CLI).
+Docker runs the HTTP API runner (and optionally the web UI via docker-compose). It does not replace the CLI.
 
 Prerequisites:
 - Docker + Docker Compose
@@ -187,9 +191,19 @@ $env:ASSEMBLYAI_API_KEY="your_key_here"
 docker compose up --build
 ```
 
+Open:
+- Web UI: `http://127.0.0.1:3000`
+- API: `http://127.0.0.1:8787`
+
 Data is persisted locally via bind mounts:
 - `./output` -> `/data/output` (includes `output/_runs/` for persisted runs/events)
 - `./audio` -> `/data/audio`
+
+Optional (reproducible builds): pin `yt-dlp` version at build time:
+
+```powershell
+docker build --build-arg YT_DLP_VERSION=2025.01.01 -t youtube2text-api .
+```
 
 ### Docker smoke test (no credits)
 
@@ -203,6 +217,33 @@ Run:
 
 ```powershell
 npm run test:docker-smoke
+```
+
+## Web UI (Next.js, Phase 1 - experimental)
+
+This repo includes an admin UI built with Next.js. It reads existing outputs via the API and streams run progress via SSE. It does not replace the CLI.
+
+Run locally (two terminals):
+
+```powershell
+npm run dev:api
+```
+
+```powershell
+cd web
+npm install
+npm run dev
+```
+
+Defaults:
+- Web: `http://127.0.0.1:3000`
+- API: `http://127.0.0.1:8787`
+
+Run via Docker Compose (API + Web):
+
+```powershell
+$env:ASSEMBLYAI_API_KEY="your_key_here"
+docker compose up --build
 ```
 
 ### runs.yaml (optional)

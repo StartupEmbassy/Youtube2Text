@@ -11,6 +11,7 @@ yarn-debug.log*
 yarn-error.log*
 tests
 docs
+web
 *.md
 *.yml
 *.yaml
@@ -18,4 +19,3 @@ docs
 config.yaml
 runs.yaml
 runs.yml
-

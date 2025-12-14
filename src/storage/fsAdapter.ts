@@ -42,6 +42,8 @@ export class FileSystemStorageAdapter implements StorageAdapter {
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
+      // Reserved directories (not channels).
+      if (entry.name.startsWith("_")) continue;
       const channelDirName = entry.name;
       const metaPath = join(
         this.dirs.outputDir,

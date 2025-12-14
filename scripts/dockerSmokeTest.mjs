@@ -43,12 +43,22 @@ async function findFreePort() {
   });
 }
 
+async function fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function waitForHealthy(baseUrl, timeoutMs) {
   const startedAt = Date.now();
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
-      const res = await fetch(`${baseUrl}/health`);
+      const res = await fetchWithTimeout(`${baseUrl}/health`, 1500);
       if (res.ok) return;
     } catch {
       // ignore until timeout
@@ -96,6 +106,14 @@ async function assertDockerReady() {
   }
 }
 
+async function cleanupContainer(containerName) {
+  try {
+    await runCapture("docker", ["rm", "-f", containerName]);
+  } catch {
+    // ignore
+  }
+}
+
 const imageTag = process.env.Y2T_DOCKER_IMAGE_TAG || "youtube2text-api:smoke";
 const containerName = process.env.Y2T_DOCKER_CONTAINER_NAME || "y2t-api-smoke";
 const hostPort = Number.parseInt(process.env.Y2T_DOCKER_PORT || "", 10) || (await findFreePort());
@@ -107,7 +125,10 @@ try {
   await assertDockerReady();
 
   console.log(`\n[smoke] Building Docker image: ${imageTag}`);
-  await run("docker", ["build", "-t", imageTag, "."]);
+  // Use quiet build output so this can run in CI/CLIs with limited log buffers.
+  await runCapture("docker", ["build", "-q", "-t", imageTag, "."]);
+
+  await cleanupContainer(containerName);
 
   console.log(`\n[smoke] Starting container ${containerName} on ${baseUrl}`);
   await run("docker", [
@@ -128,19 +149,14 @@ try {
   await waitForHealthy(baseUrl, 20_000);
 
   console.log(`\n[smoke] Checking /runs ...`);
-  const runsRes = await fetch(`${baseUrl}/runs`);
+  const runsRes = await fetchWithTimeout(`${baseUrl}/runs`, 1500);
   if (!runsRes.ok) throw new Error(`/runs returned ${runsRes.status}`);
-  const runs = await runsRes.json();
-  if (!Array.isArray(runs)) throw new Error(`/runs did not return an array`);
+  const runsBody = await runsRes.json();
+  const runs = Array.isArray(runsBody) ? runsBody : runsBody?.runs;
+  if (!Array.isArray(runs)) throw new Error(`/runs did not return an array (or {runs: []})`);
 
   console.log(`\n[smoke] OK`);
 } finally {
-  if (started) {
-    console.log(`\n[smoke] Stopping container ${containerName}`);
-    try {
-      await runCapture("docker", ["stop", containerName]);
-    } catch {
-      // best-effort cleanup
-    }
-  }
+  if (started) console.log(`\n[smoke] Cleaning up container ${containerName}`);
+  await cleanupContainer(containerName);
 }

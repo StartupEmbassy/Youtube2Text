@@ -6,7 +6,17 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
-2025-12-14 - Claude - Fix Dockerfile PEP 668 error on Debian 12: add `--break-system-packages` to pip install yt-dlp; verified Docker image builds and API responds on /health - Files: [Dockerfile, docs/llm/HISTORY.md] - Version impact: no
+2025-12-14 - GPT-5.2 - Start Phase 1: add Next.js admin UI scaffold under `web/`, add API `GET /library/...` endpoints for browsing existing outputs and fetching artifacts, update docker-compose to run api+web, and add a unit test to ensure `_runs` is excluded from channel listing - Files: [src/api/server.ts, src/storage/fsAdapter.ts, web/*, docker-compose.yml, .dockerignore, package.json, README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md, tests/storageFsAdapter.test.ts, tests/all.test.ts] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Clean up HANDOFF: enforce ASCII-only, remove garbled text, and align snapshot claims with verified tests (docker smoke test) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - Claude - Report manual Docker API e2e run (POST /runs with real AssemblyAI key); transcription completed (Spanish detected) - Files: [docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Docker hardening: install `yt-dlp` in a Python virtualenv (avoid Debian/PEP-668 without `--break-system-packages`) and allow optional pinning via `YT_DLP_VERSION` build arg; update docs/decision/README - Files: [Dockerfile, README.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Fix Docker smoke test reliability: accept `/runs` response shape `{runs: []}` and add fetch timeouts to avoid hangs; ensure containers are cleaned up even on failures - Files: [scripts/dockerSmokeTest.mjs, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - Claude - Fix Dockerfile PEP 668 error on Debian 12: add `--break-system-packages` to pip install yt-dlp; verified Docker image builds and API responds on /health - Files: [Dockerfile, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Add no-credit Docker smoke test (`npm run test:docker-smoke`) that builds the API image, starts a container, checks `/health` and `/runs`, then stops; document in README and handoff - Files: [scripts/dockerSmokeTest.mjs, package.json, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
