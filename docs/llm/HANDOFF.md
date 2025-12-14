@@ -21,6 +21,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Docker: install `yt-dlp` into a Python virtualenv inside the image (avoids Debian PEP-668 without `--break-system-packages`); optional version pin via build arg.
 - Docker smoke test added and passing: `npm run test:docker-smoke` builds the image, starts the container, checks `/health` and `/runs`, then cleans up.
 - Phase 1 started: Next.js admin UI scaffold in `web/` + API `GET /library/...` endpoints to browse existing `output/` and fetch artifacts (txt/json/audio).
+- UI polish: removed inline `style={{}}` usage in `web/app/*` (use CSS classes in `web/app/globals.css`).
+- Web types: renamed `web/lib/types.ts` to `web/lib/apiSchema.ts`.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
@@ -30,7 +32,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 1. UI error handling when API is down (Next.js error boundaries + user feedback) - DONE
 2. API contract: OpenAPI + generated TS types/client + contract-check workflow to prevent drift - DONE (see `docs/operations/API_CONTRACT.md`)
 3. SSE global: add global event stream so the runs list is "live" - DONE
-4. Follow-ups: styling consistency, improve SSE UX, and consider removing the `web/lib/types.ts` facade if desired
+4. Follow-ups: improve SSE UX (optional) - DONE
+
+Recently completed follow-ups:
+- Styling consistency: removed inline `style={{}}` in the UI in favor of CSS classes.
+- Types facade: replaced `web/lib/types.ts` with `web/lib/apiSchema.ts` (re-exports from `web/lib/apiTypes.gen.ts`).
+- SSE events: run detail Events view summarizes key fields (stage, index/total, reason/error) instead of raw JSON lines.
 
 ## Phase 0 Notes (implemented)
 - yt-dlp errors are classified (access vs transient vs unavailable) and only retryable failures are retried.

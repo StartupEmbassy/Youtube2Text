@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { RunCreateResponse } from "../lib/types";
+import type { RunCreateResponse } from "../lib/apiSchema";
 
 type Props = {
   apiBaseUrl: string;
@@ -48,47 +48,32 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="card" style={{ marginBottom: 12 }}>
-      <div className="row" style={{ marginBottom: 10 }}>
+    <form onSubmit={onSubmit} className="card mb12">
+      <div className="row mb10">
         <strong>Start a run</strong>
         <span className="pill">POST /runs</span>
       </div>
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="flexWrap">
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://www.youtube.com/@channel | playlist | video"
-          style={{
-            flex: "1 1 520px",
-            minWidth: 260,
-            padding: "10px 12px",
-            borderRadius: 10,
-            border: "1px solid rgba(148, 163, 184, 0.18)",
-            background: "rgba(2, 6, 23, 0.7)",
-            color: "inherit",
-          }}
+          className="input"
         />
-        <label className="muted" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <label className="muted inlineRow">
           <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
           force
         </label>
         <button
           type="submit"
           disabled={status === "submitting" || url.trim().length === 0}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 10,
-            border: "1px solid rgba(148, 163, 184, 0.18)",
-            background: "rgba(15, 23, 42, 0.7)",
-            color: "inherit",
-            cursor: "pointer",
-          }}
+          className="button"
         >
           {status === "submitting" ? "Starting..." : "Start"}
         </button>
       </div>
       {message && (
-        <div className="muted" style={{ marginTop: 10, color: status === "error" ? "#fecaca" : undefined }}>
+        <div className={`muted mt10 ${status === "error" ? "textBad" : ""}`}>
           {message}
         </div>
       )}

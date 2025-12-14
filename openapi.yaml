@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.3.0
+  version: 0.3.2
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:

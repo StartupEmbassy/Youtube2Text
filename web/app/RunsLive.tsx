@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { GlobalRunEvent, RunRecord } from "../lib/types";
+import type { GlobalRunEvent, RunRecord } from "../lib/apiSchema";
 
 type Props = {
   apiBaseUrl: string;
@@ -57,7 +57,7 @@ export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 10 }}>
+      <div className="row mb10">
         <span className="muted">Live</span>
         <span className={`pill ${connected ? "ok" : "bad"}`}>
           {connected ? "connected" : "disconnected"}
@@ -71,21 +71,17 @@ export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
               <Link href={`/runs/${run.runId}`}>{run.runId}</Link>
               <span className={statusClass(run.status)}>{run.status}</span>
             </div>
-            <div className="muted" style={{ marginTop: 8, wordBreak: "break-word" }}>
-              {run.inputUrl}
-            </div>
-            <div className="muted" style={{ marginTop: 8 }}>
+            <div className="muted mt8 break">{run.inputUrl}</div>
+            <div className="muted mt8">
               {run.channelTitle ? `${run.channelTitle} (${run.channelId ?? "?"})` : run.channelId}
             </div>
             {run.stats && (
-              <div className="muted" style={{ marginTop: 8 }}>
+              <div className="muted mt8">
                 {run.stats.succeeded} ok, {run.stats.skipped} skipped, {run.stats.failed} failed /
                 {` ${run.stats.total} total`}
               </div>
             )}
-            {run.error && (
-              <div className="muted" style={{ marginTop: 8, color: "#fecaca" }}>{run.error}</div>
-            )}
+            {run.error && <div className="muted mt8 textBad">{run.error}</div>}
           </div>
         ))}
       </div>
@@ -94,4 +90,3 @@ export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
     </div>
   );
 }
-

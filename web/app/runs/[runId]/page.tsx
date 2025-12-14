@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { apiBaseUrl, apiGetJson } from "../../../lib/api";
-import type { RunRecord } from "../../../lib/types";
+import type { RunRecord } from "../../../lib/apiSchema";
 import { RunEvents } from "./RunEvents";
 
 type RunResponse = { run: RunRecord };
@@ -14,29 +14,27 @@ export default async function RunPage({ params }: { params: { runId: string } })
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 12 }}>
-        <h1 style={{ margin: 0 }}>Run</h1>
+      <div className="row mb12">
+        <h1 className="m0">Run</h1>
         <Link href="/" className="pill">
           Back
         </Link>
       </div>
 
-      <div className="card" style={{ marginBottom: 12 }}>
+      <div className="card mb12">
         <div className="muted">Run ID</div>
-        <div style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" }}>
-          {runData.run.runId}
-        </div>
-        <div style={{ height: 10 }} />
+        <div className="mono">{runData.run.runId}</div>
+        <div className="spacer10" />
         <div className="muted">Input URL</div>
-        <div style={{ wordBreak: "break-word" }}>{runData.run.inputUrl}</div>
-        <div style={{ height: 10 }} />
+        <div className="break">{runData.run.inputUrl}</div>
+        <div className="spacer10" />
         <div className="muted">Status</div>
         <div>{runData.run.status}</div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="stack">
         <div className="card">
-          <div className="row" style={{ marginBottom: 10 }}>
+          <div className="row mb10">
             <strong>Artifacts</strong>
             {runData.run.channelDirName && (
               <Link

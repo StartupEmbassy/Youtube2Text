@@ -1,6 +1,6 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.2-draft
+> Version: 1.1.3-draft
 > Last Updated: 2025-12-14
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
@@ -145,7 +145,7 @@ Phase 1 sequencing (do in order):
 2. UI error handling when API is down (DONE)
 3. OpenAPI contract + generated TS types/client + contract-check workflow (DONE) (see `docs/operations/API_CONTRACT.md`)
 4. Global SSE stream for run updates (DONE)
-5. UI polish (styling consistency, better SSE UX) (planned)
+5. UI polish (styling consistency DONE; SSE event summaries DONE; remaining UX polish planned)
 
 Screens:
 - Dashboard (runs + errors + recent channels/videos)

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { apiBaseUrl, apiGetJson } from "../../../lib/api";
-import type { VideosResponse, VideoInfo } from "../../../lib/types";
+import type { VideosResponse, VideoInfo } from "../../../lib/apiSchema";
 
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text;
@@ -28,7 +28,7 @@ export default async function ChannelPage({
           <strong>{v.title ?? meta?.title ?? v.videoId}</strong>
           <span className="pill">{v.videoId}</span>
         </div>
-        <div className="muted" style={{ marginTop: 8 }}>
+        <div className="muted mt8 break">
           {videoUrl ? (
             <a href={videoUrl} target="_blank" rel="noreferrer">
               {videoUrl}
@@ -37,8 +37,8 @@ export default async function ChannelPage({
             v.basename
           )}
         </div>
-        {desc && <div className="muted" style={{ marginTop: 8 }}>{truncate(desc, 220)}</div>}
-        <div style={{ height: 10 }} />
+        {desc && <div className="muted mt8">{truncate(desc, 220)}</div>}
+        <div className="spacer10" />
         <div className="row">
           <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
             TXT
@@ -56,18 +56,15 @@ export default async function ChannelPage({
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 12 }}>
-        <h1 style={{ margin: 0 }}>Channel</h1>
+      <div className="row mb12">
+        <h1 className="m0">Channel</h1>
         <Link className="pill" href="/library">
           Back
         </Link>
       </div>
-      <div className="muted" style={{ marginBottom: 12 }}>
-        {channelDirName}
-      </div>
+      <div className="muted mb12">{channelDirName}</div>
       <div className="grid">{data.videos.map(renderVideo)}</div>
       {data.videos.length === 0 && <p className="muted">No videos found.</p>}
     </div>
   );
 }
-

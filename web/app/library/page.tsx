@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { apiGetJson } from "../../lib/api";
-import type { ChannelsResponse } from "../../lib/types";
+import type { ChannelsResponse } from "../../lib/apiSchema";
 
 export default async function LibraryPage() {
   const data = await apiGetJson<ChannelsResponse>("/library/channels");
 
   return (
     <div>
-      <h1 style={{ margin: "0 0 12px 0" }}>Library</h1>
+      <h1 className="title">Library</h1>
       <div className="grid">
         {data.channels.map((c) => (
           <div key={c.channelDirName} className="card">
@@ -17,7 +17,7 @@ export default async function LibraryPage() {
               </Link>
               <span className="pill">{c.channelId}</span>
             </div>
-            <div className="muted" style={{ marginTop: 8 }}>
+            <div className="muted mt8">
               {c.channelDirName}
             </div>
           </div>
@@ -29,4 +29,3 @@ export default async function LibraryPage() {
     </div>
   );
 }
-

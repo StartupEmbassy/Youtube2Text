@@ -16,15 +16,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <strong>Youtube2Text</strong>
             <Link href="/">Runs</Link>
             <Link href="/library">Library</Link>
-            <span className="muted" style={{ marginLeft: "auto" }}>
+            <span className="muted mlAuto">
               API: {process.env.NEXT_PUBLIC_Y2T_API_BASE_URL ?? "http://127.0.0.1:8787"}
             </span>
           </div>
-          <div style={{ height: 14 }} />
+          <div className="spacer14" />
           {children}
         </div>
       </body>
     </html>
   );
 }
-

@@ -15,3 +15,4 @@ export type ChannelMetaResponse = components["schemas"]["ChannelMetaResponse"];
 
 export type VideoInfo = components["schemas"]["VideoInfo"];
 export type VideosResponse = components["schemas"]["VideosResponse"];
+
