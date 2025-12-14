@@ -1,6 +1,11 @@
 export async function retry<T>(
   operation: () => Promise<T>,
-  opts: { retries: number; baseDelayMs: number; maxDelayMs: number }
+  opts: {
+    retries: number;
+    baseDelayMs: number;
+    maxDelayMs: number;
+    shouldRetry?: (error: unknown, attempt: number) => boolean;
+  }
 ): Promise<T> {
   let attempt = 0;
   let lastError: unknown;
@@ -11,6 +16,9 @@ export async function retry<T>(
     } catch (error) {
       lastError = error;
       if (attempt === opts.retries) break;
+      if (opts.shouldRetry && !opts.shouldRetry(error, attempt)) {
+        throw error;
+      }
       const delay = Math.min(
         opts.baseDelayMs * 2 ** attempt,
         opts.maxDelayMs
@@ -22,4 +30,3 @@ export async function retry<T>(
 
   throw lastError;
 }
-

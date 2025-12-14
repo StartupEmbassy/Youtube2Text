@@ -1,0 +1,146 @@
+import { spawn } from "node:child_process";
+import net from "node:net";
+
+function run(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: "inherit", ...options });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${command} ${args.join(" ")} exited with ${code}`));
+    });
+  });
+}
+
+function runCapture(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"], ...options });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += String(d)));
+    child.stderr.on("data", (d) => (stderr += String(d)));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve({ stdout, stderr });
+      else reject(new Error(`${command} ${args.join(" ")} exited with ${code}\n${stderr}`));
+    });
+  });
+}
+
+async function findFreePort() {
+  return await new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (typeof address === "string" || !address) {
+        server.close(() => reject(new Error("Failed to get free port")));
+        return;
+      }
+      const { port } = address;
+      server.close(() => resolve(port));
+    });
+  });
+}
+
+async function waitForHealthy(baseUrl, timeoutMs) {
+  const startedAt = Date.now();
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      const res = await fetch(`${baseUrl}/health`);
+      if (res.ok) return;
+    } catch {
+      // ignore until timeout
+    }
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error(`Timed out waiting for ${baseUrl}/health`);
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+}
+
+function isDockerDaemonNotRunning(message) {
+  const m = String(message || "").toLowerCase();
+  return (
+    m.includes("docker daemon is not running") ||
+    m.includes("error during connect") ||
+    m.includes("cannot find the file specified") ||
+    m.includes("pipe") ||
+    m.includes("is the docker daemon running")
+  );
+}
+
+async function assertDockerReady() {
+  try {
+    await runCapture("docker", ["version"]);
+    await runCapture("docker", ["info"]);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (isDockerDaemonNotRunning(msg)) {
+      throw new Error(
+        [
+          "Docker is installed but the Docker daemon does not appear to be running.",
+          "",
+          "Fix:",
+          "- Start Docker Desktop",
+          "- Wait until it says 'Docker is running'",
+          "- Re-run: npm run test:docker-smoke",
+          "",
+          "Details:",
+          msg,
+        ].join("\n"),
+      );
+    }
+    throw err;
+  }
+}
+
+const imageTag = process.env.Y2T_DOCKER_IMAGE_TAG || "youtube2text-api:smoke";
+const containerName = process.env.Y2T_DOCKER_CONTAINER_NAME || "y2t-api-smoke";
+const hostPort = Number.parseInt(process.env.Y2T_DOCKER_PORT || "", 10) || (await findFreePort());
+const baseUrl = `http://127.0.0.1:${hostPort}`;
+
+let started = false;
+
+try {
+  await assertDockerReady();
+
+  console.log(`\n[smoke] Building Docker image: ${imageTag}`);
+  await run("docker", ["build", "-t", imageTag, "."]);
+
+  console.log(`\n[smoke] Starting container ${containerName} on ${baseUrl}`);
+  await run("docker", [
+    "run",
+    "-d",
+    "--rm",
+    "--name",
+    containerName,
+    "-p",
+    `${hostPort}:8787`,
+    "-e",
+    "ASSEMBLYAI_API_KEY=smoke",
+    imageTag,
+  ]);
+  started = true;
+
+  console.log(`\n[smoke] Waiting for /health ...`);
+  await waitForHealthy(baseUrl, 20_000);
+
+  console.log(`\n[smoke] Checking /runs ...`);
+  const runsRes = await fetch(`${baseUrl}/runs`);
+  if (!runsRes.ok) throw new Error(`/runs returned ${runsRes.status}`);
+  const runs = await runsRes.json();
+  if (!Array.isArray(runs)) throw new Error(`/runs did not return an array`);
+
+  console.log(`\n[smoke] OK`);
+} finally {
+  if (started) {
+    console.log(`\n[smoke] Stopping container ${containerName}`);
+    try {
+      await runCapture("docker", ["stop", containerName]);
+    } catch {
+      // best-effort cleanup
+    }
+  }
+}

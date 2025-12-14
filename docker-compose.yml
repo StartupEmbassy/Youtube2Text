@@ -1,0 +1,16 @@
+services:
+  youtube2text-api:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      OUTPUT_DIR: /data/output
+      AUDIO_DIR: /data/audio
+      Y2T_API_PERSIST_RUNS: "true"
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY}
+    volumes:
+      - ./output:/data/output
+      - ./audio:/data/audio
+

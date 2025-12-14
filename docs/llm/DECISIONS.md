@@ -116,4 +116,56 @@ Validation results (2025-12-14):
 | English | sYlHLNZ0E8A | `en` | `en_us` | OK |
 | French | VRKw5Vk_iWM | `fr` | `fr` | OK |
 | German | o5HLxhvJmJo | `de` | `de` | OK |
-| Chinese | ixkRmNhpoGQ | `null` | fallback | NEEDS ALD |
+| Chinese | GBbgCupe6hg | `null` | (ALD) | Implemented; needs e2e validate |
+
+## D-007 - Minimal HTTP API runner (Phase 0.2)
+
+Decision:
+- Add a minimal local HTTP API runner as a separate entrypoint (`youtube2text-api`) without affecting the CLI.
+
+Rationale:
+- Enables n8n/Zapier integration and future web UI without parsing logs.
+- Reuses the same core pipeline and `PipelineEventEmitter` contract.
+
+Design choices (Phase 0.2):
+- In-process server using Node `http` (no new dependencies).
+- In-memory RunManager (no DB); runs are ephemeral per process.
+- SSE endpoint streams structured pipeline events and supports `Last-Event-ID`.
+- Artifacts endpoint reads from the filesystem adapter (`output/`) after/during runs.
+
+## D-008 - Persist API runs/events on disk (Phase 0.2.1)
+
+Decision:
+- Persist API runs and SSE events to disk by default so a server restart does not lose run history.
+
+Rationale:
+- Docker/server restarts are normal and losing run context is confusing.
+- Keeps Phase 0 local-first and avoids adding a DB before Phase 1.
+
+Design choices:
+- Persist under `output/_runs/<runId>/run.json` and `output/_runs/<runId>/events.jsonl`.
+- Reload into memory on server startup, keeping an in-memory buffer for SSE.
+- Controlled by env vars:
+  - `Y2T_API_PERSIST_RUNS` (default: true)
+  - `Y2T_API_PERSIST_DIR` (optional override)
+
+## D-009 - Docker packaging for the API runner (Phase 0.3)
+
+Decision:
+- Provide a Docker image and docker-compose setup for the HTTP API runner.
+- Docker does not replace the CLI; CLI remains the primary local workflow.
+
+Rationale:
+- Server-style deployments need `yt-dlp` + `ffmpeg` available, and Docker is the most repeatable way to bundle them.
+- Keeps Phase 0 local-first while enabling a "run it anywhere" service for n8n/webhooks/web UI later.
+
+Design choices:
+- Multi-stage Docker build:
+  - Builder: install Node deps + build `dist/`.
+  - Runtime: install `ffmpeg` + `python3`/`pip` + `yt-dlp`, then run `node dist/api.js`.
+- Bind mounts for persistence:
+  - `./output` -> `/data/output` (includes `output/_runs/` for persisted runs/events)
+  - `./audio` -> `/data/audio`
+
+Non-goals:
+- Cookies/members-only support.

@@ -3,6 +3,7 @@ import { execCommand } from "../utils/exec.js";
 import { ensureDir, fileExists } from "../utils/fs.js";
 import { retry } from "../utils/retry.js";
 import { logStep } from "../utils/logger.js";
+import { YtDlpError, parseYtDlpFailure } from "./ytDlpErrors.js";
 
 export async function downloadAudio(
   videoUrl: string,
@@ -37,10 +38,29 @@ export async function downloadAudio(
       ];
       const result = await execCommand(ytDlpCommand, args);
       if (result.exitCode !== 0) {
+        const parsed = parseYtDlpFailure(result);
+        if (parsed) {
+          const info =
+            (parsed.kind === "unknown" || parsed.kind === "transient") &&
+            parsed.retryable &&
+            !parsed.hint
+              ? {
+                  ...parsed,
+                  hint: 'If this persists, try: YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=default"]',
+                }
+              : parsed;
+          throw new YtDlpError(info, { stderr: result.stderr, stdout: result.stdout });
+        }
         throw new Error(result.stderr || result.stdout);
       }
     },
-    { retries, baseDelayMs: 1500, maxDelayMs: 15000 }
+    {
+      retries,
+      baseDelayMs: 1500,
+      maxDelayMs: 15000,
+      shouldRetry: (error) =>
+        !(error instanceof YtDlpError) || error.info.retryable,
+    }
   );
 
   return outputPath;

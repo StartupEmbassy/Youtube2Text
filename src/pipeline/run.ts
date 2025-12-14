@@ -25,6 +25,7 @@ import { AppConfig } from "../config/schema.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
 import { InsufficientCreditsError } from "../transcription/errors.js";
 import { PipelineEventEmitter, PipelineStage } from "./events.js";
+import { YtDlpError } from "../youtube/ytDlpErrors.js";
 
 type AssemblyAiAccountResponse = Record<string, unknown> & {
   credit_balance?: number;
@@ -197,6 +198,8 @@ export async function runPipeline(
     await Promise.all(
       videoJobs.map(({ video, paths, index }) =>
         limit(async () => {
+          let stageForError: PipelineStage = "download";
+          let hintForError: string | undefined;
           if (stopAll) {
             skipped += 1;
             const remaining = totalVideos - completedVideos;
@@ -244,7 +247,7 @@ export async function runPipeline(
                 type: "video:error",
                 videoId: video.id,
                 error: errorMessage ?? "Unknown error",
-                stage: "transcribe",
+                stage: stageForError,
                 index,
                 total: totalVideos,
                 completed: completedVideos,
@@ -285,6 +288,7 @@ export async function runPipeline(
               timestamp: nowIso(),
             });
 
+            stageForError = "download";
             emitStage("download", video.id, index, totalVideos);
             const audioPath = await downloadAudio(
               video.url,
@@ -319,6 +323,7 @@ export async function runPipeline(
               );
             }
 
+            stageForError = "transcribe";
             emitStage("transcribe", video.id, index, totalVideos);
             const transcript = await provider.transcribe(audioPath, {
               languageCode: useAssemblyAiAld ? undefined : language.languageCode,
@@ -338,6 +343,7 @@ export async function runPipeline(
                   options.force ||
                   !(await isProcessed(paths.commentsPath))
                 ) {
+                  stageForError = "comments";
                   emitStage("comments", video.id, index, totalVideos);
                   const comments = await fetchVideoComments(
                     video.url,
@@ -361,6 +367,7 @@ export async function runPipeline(
               }
             }
 
+            stageForError = "save";
             emitStage("save", video.id, index, totalVideos);
             await saveTranscriptJson(paths.jsonPath, transcript);
             await saveVideoMetaJson(paths.metaPath, {
@@ -410,6 +417,7 @@ export async function runPipeline(
               })
             );
 
+            stageForError = "format";
             emitStage("format", video.id, index, totalVideos);
             if (config.csvEnabled) {
               await saveTranscriptCsv(
@@ -428,16 +436,22 @@ export async function runPipeline(
               );
               throw error;
             }
+            if (error instanceof YtDlpError) {
+              hintForError = error.info.hint;
+            }
             const message =
               error instanceof Error ? error.message : String(error);
             logWarn(
-              `Failed Video ${index}/${totalVideos} (${video.id}): ${message}`
+              `Failed Video ${index}/${totalVideos} (${video.id}) [${stageForError}]: ${message}`
             );
+            if (hintForError) {
+              logWarn(hintForError);
+            }
             await logErrorRecord(paths.errorLogPath, {
               videoId: video.id,
               videoUrl: video.url,
-              stage: "transcribe",
-              message,
+              stage: stageForError,
+              message: hintForError ? `${message}\nHint: ${hintForError}` : message,
               timestamp: new Date().toISOString(),
             });
             markFinished("failed", message);

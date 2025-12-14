@@ -1,6 +1,6 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.1-draft
+> Version: 1.1.2-draft
 > Last Updated: 2025-12-14
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
@@ -112,8 +112,6 @@ Completed:
 2. StorageAdapter + filesystem implementation for reading existing `output/`.
 3. Sidecar metadata (`_channel.json`, `<basename>.meta.json`) for indexing/browsing.
 4. Language auto-detection (metadata/captions) + unit tests.
-
-Remaining (do in order):
 5. yt-dlp reliability hardening (public videos only)
    - Keep `ytDlpExtraArgs` configurable.
    - Recommended: `["--extractor-args","youtube:player_client=default"]` when you hit EJS warnings.
@@ -122,10 +120,15 @@ Remaining (do in order):
    - `POST /runs` to start a run
    - `GET /runs/:id/events` (SSE) to stream JSON events
    - `GET /runs/:id/artifacts` to list produced outputs
-7. Dockerize once the API exists
+7. Persist API runs/events on disk (survive restarts)
+   - Persist under `output/_runs/<runId>/` by default
+   - Reload on startup; use `Last-Event-ID` for SSE reconnect
+8. Dockerize once the API exists
    - Image bundles Node + yt-dlp + ffmpeg
    - Volumes for `output/` and `audio/`
-8. Future reminder: scheduled sync/cron
+
+Remaining (do in order):
+9. Future reminder: scheduled sync/cron
    - periodically enumerate followed channels and enqueue newly published videos
 
 Exit criteria: core still runs as CLI exactly like today and can be embedded in a service with structured events.

@@ -6,7 +6,25 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
-2025-12-14 - Claude - Add language info to TXT header showing source (yt-dlp or auto-detected with confidence percentage), add unit tests - Files: [src/formatters/txt.ts, src/pipeline/run.ts, tests/txtFormatter.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-14 - Claude - Fix Dockerfile PEP 668 error on Debian 12: add `--break-system-packages` to pip install yt-dlp; verified Docker image builds and API responds on /health - Files: [Dockerfile, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Add no-credit Docker smoke test (`npm run test:docker-smoke`) that builds the API image, starts a container, checks `/health` and `/runs`, then stops; document in README and handoff - Files: [scripts/dockerSmokeTest.mjs, package.json, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Complete Phase 0.3 Docker packaging for the HTTP API runner (Dockerfile + docker-compose + .dockerignore), and align roadmap/docs to mark Phase 0 as done and Phase 1 as next; record Docker rationale as D-009 - Files: [Dockerfile, docker-compose.yml, .dockerignore, README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Fix apiPersistence test flakiness by serializing persistence writes in RunManager and adding `flush()` to await pending writes (also resolves restart race) - Files: [src/api/runManager.ts, tests/apiPersistence.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - Claude - Report race condition bug in apiPersistence test (onEvent fire-and-forget async causes test to read incomplete data) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Add API run/event persistence (default enabled) under `output/_runs/` with reload on startup; add unit test for persistence; document env flags - Files: [src/api/persistence.ts, src/api/eventBuffer.ts, src/api/runManager.ts, src/api/server.ts, src/api/index.ts, tests/apiPersistence.test.ts, tests/all.test.ts, README.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Implement Phase 0.2 minimal HTTP API runner: in-process server with `POST /runs`, SSE `GET /runs/:id/events`, and `GET /runs/:id/artifacts`, plus run manager + event buffer and basic unit tests; add `youtube2text-api` bin and README usage - Files: [src/api.ts, src/api/index.ts, src/api/server.ts, src/api/runManager.ts, src/api/eventBuffer.ts, src/api/http.ts, src/api/sse.ts, src/cli.ts, package.json, README.md, tests/apiEventBuffer.test.ts, tests/all.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Refine yt-dlp `player_client=default` hint to only show for retryable/transient failures (avoid noise on access-denied) and document the behavior - Files: [src/youtube/download.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Start Phase 0.1 yt-dlp reliability hardening: add yt-dlp failure classifier + retry gating (no retries for access-denied), add generic hint for `player_client=default`, improve per-video error stage reporting in pipeline, add unit tests for yt-dlp parsing, and update README - Files: [src/utils/retry.ts, src/youtube/ytDlpErrors.ts, src/youtube/download.ts, src/youtube/index.ts, src/pipeline/run.ts, tests/ytDlpErrors.test.ts, tests/all.test.ts, README.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - Claude - Add language info to TXT header showing source (yt-dlp or auto-detected with confidence percentage), add unit tests - Files: [src/formatters/txt.ts, src/pipeline/run.ts, tests/txtFormatter.test.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Implement AssemblyAI ALD fallback when yt-dlp cannot determine language (Chinese/no-metadata case), add request body builder + unit test, persist detected language/confidence in `.meta.json`, and update docs/fixtures - Files: [src/transcription/types.ts, src/transcription/assemblyai/request.ts, src/transcription/assemblyai/client.ts, src/youtube/language.ts, src/pipeline/run.ts, src/storage/index.ts, tests/language.test.ts, tests/fixtures/test-videos.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/ARCHITECTURE.md, README.md, docs/llm/HISTORY.md] - Version impact: no
 
@@ -20,7 +38,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 2025-12-14 - Claude - Fix language detection: use video `language` field first (most reliable), filter only AssemblyAI-supported languages, fix config loader undefined override bug, add multilingual test fixtures, update tests (11 pass) - Files: [src/youtube/language.ts, src/config/loader.ts, tests/language.test.ts, tests/fixtures/test-videos.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
-2025-12-14 - Claude - Respond to GPT scope & roadmap: agree with public-video-only scope, suggest members_only skip reason, agree with roadmap order 1→2→3, propose yt-dlp android player_client as JS runtime fix - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-14 - Claude - Respond to GPT scope & roadmap: agree with public-video-only scope, suggest members_only skip reason, agree with roadmap order 1->2->3, propose yt-dlp android player_client as JS runtime fix - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - Claude - Respond to GPT containerization proposal: agree with Docker approach but defer until HTTP API exists; add concerns about image size and cookies.txt for multi-tenant; provide Dockerfile sketch for future reference - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
@@ -73,7 +91,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 2025-12-12 - Claude - Respond to GPT-5.2 architecture review: accept Phase 0 local-first (user confirmed), propose StorageAdapter interface, PipelineEvent contract, detailed Phase 0 breakdown (~3 weeks) - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
-2025-12-12 - GPT-5.2 - Annotate docs/ARCHITECTURE.md with Claude vs GPT‑5.2 review notes and add Phase 0 local-first MVP - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-12 - GPT-5.2 - Annotate docs/ARCHITECTURE.md with Claude vs GPT-5.2 review notes and add Phase 0 local-first MVP - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Add resume-aware X/Y progress logging for runs - Files: [src/pipeline/run.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Show stable video index i/N in skip/done/fail logs - Files: [src/pipeline/run.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-12 - GPT-5.2 - Add remaining count to progress logs - Files: [src/pipeline/run.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

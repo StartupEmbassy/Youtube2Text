@@ -5,12 +5,16 @@
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "youtube2text": "dist/cli.js"
+    "youtube2text": "dist/cli.js",
+    "youtube2text-api": "dist/api.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/cli.js",
     "dev": "tsx src/cli/index.ts",
+    "dev:api": "tsx src/api/index.ts",
+    "api": "node dist/api.js",
+    "test:docker-smoke": "node scripts/dockerSmokeTest.mjs",
     "test": "node --import tsx --test tests/all.test.ts"
   },
   "engines": {

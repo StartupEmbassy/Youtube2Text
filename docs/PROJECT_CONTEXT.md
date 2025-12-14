@@ -32,7 +32,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 - replace AssemblyAI with another provider,
 - add semantic post-processing (summaries/topics),
 - attach a web dashboard that reads stored outputs only,
-- package the pipeline for deployment (planned: Docker image that includes `yt-dlp`).
+- package the pipeline for deployment (Docker image included for the HTTP API runner).
 
 ## Key Components
 | Component | Purpose | Owner | Notes |
@@ -56,17 +56,23 @@ Completed:
 - Per-video `.meta.json` and per-channel `_channel.json` sidecars for browsing/indexing
 - Structured JSONL events via `--json-events` (for a future service/UI)
 - Language auto-detection via yt-dlp metadata/captions (with manual override)
+- AssemblyAI automatic language detection fallback when yt-dlp has no language
 - Unit tests for naming/language/txt formatting
+- yt-dlp error classification + smarter retries (no retries for access-denied)
+- Minimal local HTTP API runner (SSE events + artifacts listing)
+- API run/event persistence on disk (restart-safe by default)
+- Docker image + docker compose for the API runner
 
 In progress:
-- Phase 0: core service hardening (no web UI yet)
+- Phase 1: local-first web UI (reads `output/`, consumes JSON events)
 
 ## Roadmap / Milestones (Do in order)
-1. Phase 0: yt-dlp reliability hardening (public videos only)
-2. Phase 0: minimal HTTP API runner (start run + stream events + list artifacts)
-3. Phase 0: Dockerize after API exists (service-style deployment)
-4. Phase 1: local-first web UI (reads `output/`, consumes JSON events)
-5. Future: scheduled sync/cron to auto-check followed channels and enqueue new videos
+1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE
+2. Phase 0: minimal HTTP API runner (start run + stream events + list artifacts) - DONE
+3. Phase 0: persist API runs/events on disk (restart-safe) - DONE
+4. Phase 0: Dockerize API runner (service-style deployment) - DONE
+5. Phase 1: local-first web UI (reads `output/`, consumes JSON events)
+6. Future: scheduled sync/cron to auto-check followed channels and enqueue new videos
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/

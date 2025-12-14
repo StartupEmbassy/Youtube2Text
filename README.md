@@ -14,7 +14,7 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Audio-only download in `mp3` or `wav`.
 - AssemblyAI upload + diarized transcription (`speaker_labels: true`).
 - Idempotent processing: skips videos already processed unless forced.
-- Output formats: `.json`, readable `.txt` (channel + title + description header, speaker labels + timestamps, wrapped for readability), optional `.csv`.
+- Output formats: `.json`, readable `.txt` (channel + title + description + language header incl. source/confidence when available; speaker labels + timestamps; wrapped for readability), optional `.csv`.
 - Optional per-video comments dump via `yt-dlp` into `.comments.json`.
 - Optional per-video metadata sidecar `.meta.json` for browsing/indexing.
 - Fault handling with retries/backoff and per-video error logs.
@@ -42,7 +42,7 @@ Later extensions read from `output/` only (e.g., React dashboard), keeping the p
 ### Production Note
 
 For local development, Youtube2Text relies on a system-installed `yt-dlp`.
-When deploying to a server or container, ensure `yt-dlp` is installed in that environment as well (planned approach: Docker image that bundles Node.js + `yt-dlp`).
+When deploying to a server or container, ensure `yt-dlp` is installed in that environment as well. For the HTTP API runner, a Docker image/docker-compose setup is included (see "Docker (API runner)" below).
 
 ### Troubleshooting yt-dlp on Windows
 
@@ -73,6 +73,8 @@ If you see warnings about a missing JavaScript runtime (EJS), you can optionally
   - `YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=android"]`
 
 If downloads fail after changing this, set `YT_DLP_EXTRA_ARGS=[]` to revert to yt-dlp defaults.
+
+Note: Youtube2Text only targets public videos. If a channel contains members-only/private/age-restricted videos, yt-dlp will fail for those and Youtube2Text will record the failure and continue with the rest.
 
 ## Configuration
 
@@ -136,6 +138,72 @@ Options:
 | `--comments` | boolean | false | Fetch comments via yt-dlp and save `.comments.json`. |
 | `--commentsMax` | number | unset | Limit comments per video when fetching. |
 | `--json-events` | boolean | false | Emit JSONL pipeline events to stdout (logs go to stderr). |
+
+## HTTP API (experimental)
+
+This project also ships an optional local HTTP API runner. It does not replace the CLI.
+
+Run in dev mode:
+
+```powershell
+npm run dev:api
+```
+
+Or build and run:
+
+```powershell
+npm run build
+npm run api
+```
+
+Defaults:
+- Listens on `http://127.0.0.1:8787` (set `HOST`/`PORT` to override)
+
+Persistence (default enabled):
+- Runs and SSE events are persisted under `output/_runs/<runId>/` so restarts do not lose history.
+- Disable with `Y2T_API_PERSIST_RUNS=false`.
+- Override directory with `Y2T_API_PERSIST_DIR=...`.
+
+Endpoints:
+- `GET /health`
+- `POST /runs` with JSON body `{ "url": "...", "force": false, "config": { ... } }`
+- `GET /runs`
+- `GET /runs/:id`
+- `GET /runs/:id/events` (SSE, supports `Last-Event-ID`)
+- `GET /runs/:id/artifacts`
+
+## Docker (API runner)
+
+Docker runs the HTTP API runner (it does not replace the CLI).
+
+Prerequisites:
+- Docker + Docker Compose
+- `ASSEMBLYAI_API_KEY` available as an environment variable
+
+Run:
+
+```powershell
+$env:ASSEMBLYAI_API_KEY="your_key_here"
+docker compose up --build
+```
+
+Data is persisted locally via bind mounts:
+- `./output` -> `/data/output` (includes `output/_runs/` for persisted runs/events)
+- `./audio` -> `/data/audio`
+
+### Docker smoke test (no credits)
+
+This repo includes a no-credit smoke test that:
+1) builds the Docker image
+2) starts the API container
+3) checks `GET /health` and `GET /runs`
+4) stops the container
+
+Run:
+
+```powershell
+npm run test:docker-smoke
+```
 
 ### runs.yaml (optional)
 
