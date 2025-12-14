@@ -7,13 +7,15 @@ import {
   detectLanguageCode,
 } from "../youtube/index.js";
 import { AssemblyAiProvider } from "../transcription/index.js";
-import { formatTxt, formatCsv } from "../formatters/index.js";
+import { formatTxt, formatCsv, formatMd, formatJsonl } from "../formatters/index.js";
 import {
   getOutputPaths,
   isProcessed,
   saveTranscriptCsv,
   saveTranscriptJson,
   saveTranscriptTxt,
+  saveTranscriptMd,
+  saveTranscriptJsonl,
   saveVideoCommentsJson,
   saveVideoMetaJson,
   saveChannelMetaJson,
@@ -413,6 +415,34 @@ export async function runPipeline(
                 description,
                 languageCode: finalLanguageCode,
                 languageSource: useAssemblyAiAld ? "auto-detected" : "yt-dlp",
+                languageConfidence: finalLanguageConfidence,
+              })
+            );
+
+            await saveTranscriptMd(
+              paths.mdPath,
+              formatMd(transcript, {
+                channelId: listing.channelId,
+                channelTitle: listing.channelTitle,
+                title: video.title,
+                url: video.url,
+                uploadDate: video.uploadDate,
+                description,
+                languageCode: finalLanguageCode,
+                languageSource: useAssemblyAiAld ? "auto-detected" : "yt-dlp",
+                languageConfidence: finalLanguageConfidence,
+              })
+            );
+
+            await saveTranscriptJsonl(
+              paths.jsonlPath,
+              formatJsonl(transcript, {
+                videoId: video.id,
+                url: video.url,
+                title: video.title,
+                channelId: listing.channelId,
+                channelTitle: listing.channelTitle,
+                languageCode: finalLanguageCode,
                 languageConfidence: finalLanguageConfidence,
               })
             );

@@ -14,6 +14,8 @@ export { makeChannelDirName, makeVideoBaseName } from "./naming.js";
 export type OutputPaths = {
   jsonPath: string;
   txtPath: string;
+  mdPath: string;
+  jsonlPath: string;
   csvPath: string;
   commentsPath: string;
   metaPath: string;
@@ -66,6 +68,8 @@ export function getOutputPaths(
   return {
     jsonPath: join(dirs.outputDir, channelDirName, `${baseName}.json`),
     txtPath: join(dirs.outputDir, channelDirName, `${baseName}.txt`),
+    mdPath: join(dirs.outputDir, channelDirName, `${baseName}.md`),
+    jsonlPath: join(dirs.outputDir, channelDirName, `${baseName}.jsonl`),
     csvPath: join(dirs.outputDir, channelDirName, `${baseName}.csv`),
     commentsPath: join(
       dirs.outputDir,
@@ -95,6 +99,14 @@ export async function saveTranscriptJson(
 }
 
 export async function saveTranscriptTxt(path: string, text: string) {
+  await writeText(path, text);
+}
+
+export async function saveTranscriptMd(path: string, text: string) {
+  await writeText(path, text);
+}
+
+export async function saveTranscriptJsonl(path: string, text: string) {
   await writeText(path, text);
 }
 

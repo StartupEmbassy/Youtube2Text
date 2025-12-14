@@ -1,6 +1,6 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.3-draft
+> Version: 1.1.4-draft
 > Last Updated: 2025-12-14
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
@@ -61,6 +61,8 @@ Local-first artifacts on disk. Current layout:
 
 - `output/<channel_title_slug>__<channel_id>/<basename>.json`
 - `output/<channel_title_slug>__<channel_id>/<basename>.txt`
+- `output/<channel_title_slug>__<channel_id>/<basename>.md`
+- `output/<channel_title_slug>__<channel_id>/<basename>.jsonl`
 - `output/<channel_title_slug>__<channel_id>/<basename>.csv` (optional)
 - `output/<channel_title_slug>__<channel_id>/<basename>.comments.json` (optional, non-fatal)
 - `output/<channel_title_slug>__<channel_id>/<basename>.meta.json` (sidecar for indexing/browsing)
@@ -146,6 +148,7 @@ Phase 1 sequencing (do in order):
 3. OpenAPI contract + generated TS types/client + contract-check workflow (DONE) (see `docs/operations/API_CONTRACT.md`)
 4. Global SSE stream for run updates (DONE)
 5. UI polish (styling consistency DONE; SSE event summaries DONE; remaining UX polish planned)
+6. Output format expansion (MD + JSONL) (DONE)
 
 Screens:
 - Dashboard (runs + errors + recent channels/videos)

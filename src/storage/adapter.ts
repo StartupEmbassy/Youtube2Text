@@ -30,4 +30,3 @@ export interface StorageAdapter {
 
   getAudioPath(paths: OutputPaths): string;
 }
-

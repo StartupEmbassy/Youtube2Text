@@ -14,7 +14,7 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Audio-only download in `mp3` or `wav`.
 - AssemblyAI upload + diarized transcription (`speaker_labels: true`).
 - Idempotent processing: skips videos already processed unless forced.
-- Output formats: `.json`, readable `.txt` (channel + title + description + language header incl. source/confidence when available; speaker labels + timestamps; wrapped for readability), optional `.csv`.
+- Output formats: `.json` (canonical), readable `.txt` + `.md` (timestamps + wrapping), `.jsonl` (LLM-friendly, one utterance per line), optional `.csv`.
 - Optional per-video comments dump via `yt-dlp` into `.comments.json`.
 - Optional per-video metadata sidecar `.meta.json` for browsing/indexing.
 - Fault handling with retries/backoff and per-video error logs.
@@ -26,7 +26,7 @@ Pipeline stages with explicit module boundaries:
 - **InputResolver**: resolves a channel/playlist URL to a list of video IDs and metadata.
 - **AudioExtractor**: downloads and caches audio tracks locally.
 - **TranscriptionProvider**: interface for ASR backends. First implementation: AssemblyAI.
-- **Formatter**: converts diarized transcript JSON into `.txt` and optional `.csv` formats.
+- **Formatter**: converts diarized transcript JSON into `.txt`, `.md`, `.jsonl` and optional `.csv` formats.
 - **Storage**: writes outputs and handles idempotency checks.
 - **Orchestrator (CLI)**: coordinates stages with concurrency, filtering, retries, and logging.
 
@@ -175,7 +175,7 @@ Endpoints:
 - `GET /library/channels`
 - `GET /library/channels/:channelDirName`
 - `GET /library/channels/:channelDirName/videos`
-- `GET /library/channels/:channelDirName/videos/:basename/:kind` where `kind` is `txt|json|meta|comments|csv|audio`
+- `GET /library/channels/:channelDirName/videos/:basename/:kind` where `kind` is `txt|md|json|jsonl|meta|comments|csv|audio`
 
 ## Docker (API runner)
 
@@ -295,6 +295,8 @@ Outputs are organized by channel folder named `<channel_title_slug>__<channel_id
 output/<channel_title_slug>__<channel_id>/<title_slug>__<video_id>.json   # default title_id
 output/<channel_title_slug>__<channel_id>/<video_id>.json                # filenameStyle=id
 output/<channel_title_slug>__<channel_id>/<video_id>__<title_slug>.json  # filenameStyle=id_title
+output/<channel_title_slug>__<channel_id>/<basename>.md                  # markdown transcript
+output/<channel_title_slug>__<channel_id>/<basename>.jsonl               # utterances as JSONL (one per line)
 output/<channel_title_slug>__<channel_id>/<basename>.comments.json       # if comments enabled
 output/<channel_title_slug>__<channel_id>/<basename>.meta.json           # per-video metadata
 output/<channel_title_slug>__<channel_id>/_channel.json                  # per-channel metadata

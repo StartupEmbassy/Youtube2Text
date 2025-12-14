@@ -8,7 +8,7 @@ Build a modular local-first pipeline to turn YouTube channel audio into speaker-
 2. Enumerate videos reliably without requiring YouTube API keys.
 3. Download audio-only tracks per video using `yt-dlp`.
 4. Transcribe audio via AssemblyAI with speaker diarization enabled.
-5. Persist results as `.json` plus clean, speaker-labeled `.txt` (timestamps + wrapping), with optional `.csv` export.
+5. Persist results as `.json` (canonical) plus clean, speaker-labeled `.txt` and `.md` (timestamps + wrapping), plus `.jsonl` (one utterance per line), with optional `.csv` export.
 6. Ensure idempotency and robust fault handling (skip already processed videos, retry transient failures).
 
 ## Stakeholders
@@ -51,7 +51,7 @@ Completed:
 - CLI supports channel/playlist/single-video URLs
 - Audio download via `yt-dlp`, cached locally
 - AssemblyAI diarized transcription
-- Outputs: `.json`, readable `.txt`, optional `.csv`
+- Outputs: `.json`, readable `.txt` and `.md`, `.jsonl`, optional `.csv`
 - Optional comments dump via `yt-dlp` into `.comments.json` (non-fatal)
 - Per-video `.meta.json` and per-channel `_channel.json` sidecars for browsing/indexing
 - Structured JSONL events via `--json-events` (for a future service/UI)

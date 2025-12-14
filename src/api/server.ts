@@ -160,6 +160,24 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           res.end(text);
           return;
         }
+        if (kind === "md") {
+          const exists = await storage.exists(video.paths.mdPath);
+          if (!exists) return notFound(res);
+          const text = await storage.readText(video.paths.mdPath);
+          res.statusCode = 200;
+          res.setHeader("content-type", "text/markdown; charset=utf-8");
+          res.end(text);
+          return;
+        }
+        if (kind === "jsonl") {
+          const exists = await storage.exists(video.paths.jsonlPath);
+          if (!exists) return notFound(res);
+          const text = await storage.readText(video.paths.jsonlPath);
+          res.statusCode = 200;
+          res.setHeader("content-type", "application/x-ndjson; charset=utf-8");
+          res.end(text);
+          return;
+        }
         if (kind === "json") {
           const transcript = await storage.readTranscriptJson(video.paths.jsonPath);
           json(res, 200, transcript);

@@ -80,6 +80,8 @@ export class FileSystemStorageAdapter implements StorageAdapter {
       const paths: OutputPaths = {
         jsonPath: join(channelDir, `${baseName}.json`),
         txtPath: join(channelDir, `${baseName}.txt`),
+        mdPath: join(channelDir, `${baseName}.md`),
+        jsonlPath: join(channelDir, `${baseName}.jsonl`),
         csvPath: join(channelDir, `${baseName}.csv`),
         commentsPath: join(channelDir, `${baseName}.comments.json`),
         metaPath,

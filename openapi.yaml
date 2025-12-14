@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.3.3
+  version: 0.4.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -358,6 +358,8 @@ components:
         [
           jsonPath,
           txtPath,
+          mdPath,
+          jsonlPath,
           csvPath,
           commentsPath,
           metaPath,
@@ -368,6 +370,8 @@ components:
       properties:
         jsonPath: { type: string }
         txtPath: { type: string }
+        mdPath: { type: string }
+        jsonlPath: { type: string }
         csvPath: { type: string }
         commentsPath: { type: string }
         metaPath: { type: string }
@@ -413,7 +417,7 @@ components:
 
     ArtifactKind:
       type: string
-      enum: [txt, json, meta, comments, csv, audio]
+      enum: [txt, md, json, jsonl, meta, comments, csv, audio]
 
     RunArtifacts:
       type: object

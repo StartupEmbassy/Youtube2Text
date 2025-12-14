@@ -23,6 +23,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Phase 1 started: Next.js admin UI scaffold in `web/` + API `GET /library/...` endpoints to browse existing `output/` and fetch artifacts (txt/json/audio).
 - UI polish: removed inline `style={{}}` usage in `web/app/*` (use CSS classes in `web/app/globals.css`).
 - Web types: renamed `web/lib/types.ts` to `web/lib/apiSchema.ts`.
+- Output artifacts: added `.md` and `.jsonl` alongside `.json`/`.txt`.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
@@ -33,6 +34,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 2. API contract: OpenAPI + generated TS types/client + contract-check workflow to prevent drift - DONE (see `docs/operations/API_CONTRACT.md`)
 3. SSE global: add global event stream so the runs list is "live" - DONE
 4. Follow-ups: improve SSE UX (optional) - DONE
+5. Output formats: emit `.md` + `.jsonl` artifacts - DONE (see D-013)
 
 Recently completed follow-ups:
 - Styling consistency: removed inline `style={{}}` in the UI in favor of CSS classes.
@@ -67,3 +69,5 @@ Recently completed follow-ups:
 ## Open Questions
 - Confirm AssemblyAI `language_code` edge cases (e.g., `es` vs `es_es`) if any appear in practice.
 - Decide if we want a documented "recommended" `YT_DLP_EXTRA_ARGS` value beyond the default `[]`.
+
+Note: additional output formats are documented in `docs/llm/DECISIONS.md` (D-013). Keep HANDOFF short.

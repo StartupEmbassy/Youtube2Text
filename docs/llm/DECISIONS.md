@@ -214,3 +214,20 @@ Decision:
 Rationale:
 - Makes the admin UI feel "alive" without polling.
 - Keeps per-run SSE (`/runs/:id/events`) for detailed progress while providing a lightweight app-wide stream for status changes.
+
+## D-013 - Additional transcript artifacts for long videos (MD + JSONL)
+
+Decision:
+- Keep `.json` as the canonical transcription artifact (provider response).
+- Always emit two additional derived artifacts:
+  - `.md` for human readability (headings + paragraph wrapping + timestamps).
+  - `.jsonl` for downstream LLM tooling (one utterance per line; streamable/chunkable).
+
+Rationale:
+- 1-2h videos produce very large `.json` files; they are not pleasant to open, search, or send to other systems.
+- `.md` is easy to read in GitHub/VS Code and better than raw `.txt` for structured viewing.
+- `.jsonl` is the easiest universal interchange for RAG/embeddings/chunked processing without loading everything into memory.
+
+Non-goals (for now):
+- Do not compress `.json` by default (`.json.gz`) until disk pressure is a real problem.
+- Do not require any web/UI changes to keep CLI usable (CLI remains primary workflow).

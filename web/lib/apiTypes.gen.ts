@@ -562,6 +562,8 @@ export interface components {
         OutputPaths: {
             jsonPath: string;
             txtPath: string;
+            mdPath: string;
+            jsonlPath: string;
             csvPath: string;
             commentsPath: string;
             metaPath: string;
@@ -595,7 +597,7 @@ export interface components {
             videos: components["schemas"]["VideoInfo"][];
         };
         /** @enum {string} */
-        ArtifactKind: "txt" | "json" | "meta" | "comments" | "csv" | "audio";
+        ArtifactKind: "txt" | "md" | "json" | "jsonl" | "meta" | "comments" | "csv" | "audio";
         RunArtifacts: {
             channelDirName?: string;
             channelId?: string;
