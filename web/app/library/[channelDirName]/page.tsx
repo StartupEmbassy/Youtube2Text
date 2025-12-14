@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { apiBaseUrl, apiGetJson } from "../../../lib/api";
+import { apiBaseUrlClient, apiGetJson } from "../../../lib/api";
 import type { VideosResponse, VideoInfo } from "../../../lib/apiSchema";
 
 function truncate(text: string, max: number): string {
@@ -16,7 +16,7 @@ export default async function ChannelPage({
   const data = await apiGetJson<VideosResponse>(
     `/library/channels/${encodeURIComponent(channelDirName)}/videos`,
   );
-  const base = apiBaseUrl();
+  const base = apiBaseUrlClient();
 
   const renderVideo = (v: VideoInfo) => {
     const meta = v.meta;

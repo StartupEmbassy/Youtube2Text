@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Fix Docker URL split bug: separate server vs browser API base URL helpers so Library artifact links use `NEXT_PUBLIC_Y2T_API_BASE_URL` (not Docker-internal `Y2T_API_BASE_URL`); bump version to 0.3.3 - Files: [web/lib/api.ts, web/app/page.tsx, web/app/library/[channelDirName]/page.tsx, web/app/runs/[runId]/page.tsx, openapi.yaml, package.json, package-lock.json, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.3.2 -> 0.3.3)
+
 2025-12-14 - GPT-5.2 - Phase 1 follow-up: improve SSE UX by summarizing per-run events (human-readable lines + Clear button), and bump version to 0.3.2 - Files: [web/app/runs/[runId]/RunEvents.tsx, openapi.yaml, package.json, package-lock.json, docs/ARCHITECTURE.md, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.3.1 -> 0.3.2)
 
 2025-12-14 - GPT-5.2 - Phase 1 follow-ups: remove inline UI styles (consistent CSS classes), replace `web/lib/types.ts` with `web/lib/apiSchema.ts`, and bump version to 0.3.1 - Files: [web/app/globals.css, web/app/error.tsx, web/app/layout.tsx, web/app/page.tsx, web/app/CreateRunForm.tsx, web/app/RunsLive.tsx, web/app/library/page.tsx, web/app/library/[channelDirName]/page.tsx, web/app/runs/[runId]/page.tsx, web/app/runs/[runId]/RunEvents.tsx, web/lib/apiSchema.ts, web/lib/types.ts, openapi.yaml, package.json, package-lock.json, docs/ARCHITECTURE.md, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/REVIEWS.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.3.0 -> 0.3.1)

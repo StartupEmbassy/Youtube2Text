@@ -188,6 +188,7 @@ Design choices:
   - Runs: `GET /runs`, `GET /runs/:id`, SSE `GET /runs/:id/events`
   - Library: `GET /library/channels`, `GET /library/channels/:channelDirName/videos`, `GET /library/.../:basename/:kind` for artifact viewing
 - Web uses `Y2T_API_BASE_URL` (server-side fetch) and `NEXT_PUBLIC_Y2T_API_BASE_URL` (browser/SSE).
+  - Important: do not render `Y2T_API_BASE_URL` into HTML (browser cannot reach Docker-internal hostnames).
 
 ## D-011 - API contract and type generation (Phase 1 - planned)
 

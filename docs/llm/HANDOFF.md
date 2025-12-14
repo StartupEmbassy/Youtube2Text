@@ -52,6 +52,7 @@ Recently completed follow-ups:
 - CLI must remain fully operational; service/web are additional layers.
 - No members-only/private content support (no cookie ingestion/refresh).
 - Keep default `ytDlpExtraArgs` as `[]` (do not default to `youtube:player_client=android`).
+- In Docker: server-side fetch uses `Y2T_API_BASE_URL` (internal network), but any browser-visible links/SSE must use `NEXT_PUBLIC_Y2T_API_BASE_URL`.
 
 ## Future Reminder
 - Scheduled sync/cron: periodically enumerate followed channels and enqueue newly published videos.

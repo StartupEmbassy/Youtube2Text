@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { apiBaseUrl, apiGetJson } from "../../../lib/api";
+import { apiBaseUrlClient, apiGetJson } from "../../../lib/api";
 import type { RunRecord } from "../../../lib/apiSchema";
 import { RunEvents } from "./RunEvents";
 
@@ -8,7 +8,7 @@ type ArtifactsResponse = { run: RunRecord; artifacts: unknown };
 
 export default async function RunPage({ params }: { params: { runId: string } }) {
   const { runId } = params;
-  const base = apiBaseUrl();
+  const base = apiBaseUrlClient();
   const runData = await apiGetJson<RunResponse>(`/runs/${runId}`);
   const artifactsData = await apiGetJson<ArtifactsResponse>(`/runs/${runId}/artifacts`);
 
@@ -48,7 +48,7 @@ export default async function RunPage({ params }: { params: { runId: string } })
           <pre className="preWrap">{JSON.stringify(artifactsData.artifacts, null, 2)}</pre>
         </div>
         <div className="card">
-          <RunEvents apiBaseUrl={process.env.NEXT_PUBLIC_Y2T_API_BASE_URL ?? base} runId={runId} />
+          <RunEvents apiBaseUrl={base} runId={runId} />
         </div>
       </div>
     </div>
