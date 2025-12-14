@@ -64,7 +64,8 @@ Completed:
 - Docker image + docker compose for the API runner
 
 In progress:
-- Phase 1: local-first web UI (Next.js) (reads `output/` via API, consumes SSE/JSON events; runs list uses global SSE `/events`)
+- Phase 1: local-first web UI (Next.js) - DONE (reads `output/` via API, consumes SSE/JSON events; runs list uses global SSE `/events`)
+- Phase 2: hosted single-tenant service (admin) - PLANNED
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE
@@ -73,7 +74,14 @@ In progress:
 4. Phase 0: Dockerize API runner (service-style deployment) - DONE
 5. Phase 1: local-first web UI (reads `output/`, consumes JSON events)
    - DONE: OpenAPI + generated TS types + contract-check workflow to prevent endpoint/type drift (see `docs/operations/API_CONTRACT.md`)
-6. Future: scheduled sync/cron to auto-check followed channels and enqueue new videos
+   - DONE: Global SSE (`GET /events`) for live runs list
+   - DONE: Additional artifacts `.md` + `.jsonl`
+6. Phase 2: hosted single-tenant service (admin)
+   - auth for admin workspace
+   - run/job persistence policies
+   - background worker/queue
+   - optional scheduler/cron for followed channels
+7. Phase 3+: optional multi-tenant cloud platform
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/

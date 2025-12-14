@@ -10,7 +10,8 @@
 Youtube2Text ships today as a standalone CLI pipeline. The roadmap evolves it into:
 1. A core library that can run as CLI or as a service (Phase 0).
 2. A local-first web UI that reads existing outputs and can run jobs (Phase 1).
-3. A multi-tenant cloud platform (Phase 2+).
+3. A hosted single-tenant service for one admin workspace (Phase 2).
+4. A multi-tenant cloud platform (Phase 3+, optional).
 
 ## Non-negotiables
 
@@ -156,7 +157,18 @@ Screens:
 - Channel library with filters/search (reads `output/`)
 - Video view: audio player + transcript + comments tab + exports
 
-### Phase 2+ - Cloud multi-tenant platform (optional)
+### Phase 2 - Hosted single-tenant service (admin)
+
+Goal: deploy Youtube2Text for one admin workspace (no public signup) while keeping the CLI unchanged.
+
+Add:
+- auth for the admin UI/API (simple login or network allowlist)
+- durable run/job store + retention policies
+- background worker/queue for runs
+- operational guardrails (rate limits, quotas, backups, upgrades)
+- optional scheduler/cron (follow channels and enqueue new videos)
+
+### Phase 3+ - Cloud multi-tenant platform (optional)
 
 Add:
 - user auth + private workspaces per user

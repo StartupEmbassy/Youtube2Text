@@ -27,7 +27,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
-2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - IN PROGRESS
+2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - DONE
+3. Phase 2: hosted single-tenant service (admin) - PLANNED
+4. Phase 3+: multi-tenant cloud platform - OPTIONAL
 
 ## Phase 1 Next Steps (Do In Order)
 1. UI error handling when API is down (Next.js error boundaries + user feedback) - DONE
@@ -40,6 +42,16 @@ Recently completed follow-ups:
 - Styling consistency: removed inline `style={{}}` in the UI in favor of CSS classes.
 - Types facade: replaced `web/lib/types.ts` with `web/lib/apiSchema.ts` (re-exports from `web/lib/apiTypes.gen.ts`).
 - SSE events: run detail Events view summarizes key fields (stage, index/total, reason/error) instead of raw JSON lines.
+
+## Phase 2 (planned) - Hosted single-tenant service (admin)
+Goal: run Youtube2Text on a server for one admin workspace (no public signups yet), still keeping the CLI working.
+
+Proposed steps (do in order):
+1. Deploy/runtime hardening: server config, HTTPS reverse proxy, healthchecks, logs, backups, upgrades.
+2. Auth (admin): protect web/API with a single admin login (or network allowlist) and CSRF basics.
+3. Persistent store: move run state from filesystem-only to a small DB (or keep filesystem but add an index DB); define retention policies.
+4. Background jobs/queue: decouple run execution from HTTP request lifecycle (worker process).
+5. Scheduler: optional cron to watch followed channels and enqueue new videos.
 
 ## Phase 0 Notes (implemented)
 - yt-dlp errors are classified (access vs transient vs unavailable) and only retryable failures are retried.
