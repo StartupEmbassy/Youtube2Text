@@ -9,7 +9,8 @@ export async function downloadAudio(
   outputPath: string,
   audioFormat: "mp3" | "wav",
   retries: number,
-  ytDlpCommand = "yt-dlp"
+  ytDlpCommand = "yt-dlp",
+  ytDlpExtraArgs: string[] = []
 ): Promise<string> {
   await ensureDir(dirname(outputPath));
   const targetDir = dirname(outputPath);
@@ -24,6 +25,7 @@ export async function downloadAudio(
     async () => {
       logStep("download", `Downloading audio: ${videoUrl}`);
       const args = [
+        ...ytDlpExtraArgs,
         "-f",
         "ba",
         "-x",

@@ -33,10 +33,16 @@ function inferChannelId(listing: YtDlpListing, inputUrl: string): string {
 
 export async function enumerateVideos(
   inputUrl: string,
-  ytDlpCommand = "yt-dlp"
+  ytDlpCommand = "yt-dlp",
+  ytDlpExtraArgs: string[] = []
 ): Promise<YoutubeListing> {
   logStep("enumerate", `Enumerating videos from ${inputUrl} ...`);
-  const args = ["--flat-playlist", "--dump-single-json", inputUrl];
+  const args = [
+    ...ytDlpExtraArgs,
+    "--flat-playlist",
+    "--dump-single-json",
+    inputUrl,
+  ];
   const result = await execCommand(ytDlpCommand, args);
   if (result.exitCode !== 0) {
     throw new Error(`yt-dlp failed: ${result.stderr}`);

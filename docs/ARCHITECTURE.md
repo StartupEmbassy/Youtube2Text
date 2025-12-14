@@ -229,6 +229,7 @@ Add:
 - Keep CLI behavior identical by default.
 - Define minimal service/API runner contract (no UI).
 - Implement **language auto-detection** and mapping to ASR language codes.
+- Add **scheduled sync (cron)** as a future capability: periodically enumerate followed channels and enqueue new videos for processing.
 
 Exit criteria: core works as CLI exactly like today and can be embedded in a service with structured events.
 
@@ -288,4 +289,3 @@ Security review, monitoring, onboarding.
 - Which language detection heuristic is preferred for Phase 0 fallback?
 - Do we want language detection to be per‑video or per‑channel default with overrides?
 - Preferred LLM provider for Phase 1 per-video chat.
-

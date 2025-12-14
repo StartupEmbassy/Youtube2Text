@@ -30,6 +30,10 @@ program
   )
   .option("--audioFormat <fmt>", "mp3 or wav")
   .option("--language <code>", "AssemblyAI language code")
+  .option(
+    "--languageDetection <mode>",
+    "Language detection: auto | manual"
+  )
   .option("--concurrency <n>", "Parallel videos", (v) => Number(v))
   .option("--csv", "Enable CSV output")
   .option("--ytDlpPath <path>", "Explicit yt-dlp.exe path override")
@@ -73,12 +77,16 @@ async function main() {
           | "title_id") ?? baseConfig.filenameStyle,
       audioFormat:
         (opts.audioFormat as "mp3" | "wav") ?? baseConfig.audioFormat,
+      languageDetection:
+        (opts.languageDetection as "auto" | "manual") ??
+        (opts.language ? "manual" : baseConfig.languageDetection),
       languageCode: opts.language ?? baseConfig.languageCode,
       concurrency: opts.concurrency ?? baseConfig.concurrency,
       maxVideos: opts.maxVideos ?? baseConfig.maxVideos,
       afterDate: opts.after ?? baseConfig.afterDate,
       csvEnabled: opts.csv ?? baseConfig.csvEnabled,
       ytDlpPath: opts.ytDlpPath ?? baseConfig.ytDlpPath,
+      ytDlpExtraArgs: baseConfig.ytDlpExtraArgs,
       assemblyAiCreditsCheck:
         (opts.assemblyAiCreditsCheck as
           | "warn"
@@ -111,12 +119,15 @@ async function main() {
       audioDir: run.audioDir ?? baseConfig.audioDir,
       filenameStyle: run.filenameStyle ?? baseConfig.filenameStyle,
       audioFormat: run.audioFormat ?? baseConfig.audioFormat,
+      languageDetection:
+        run.languageDetection ?? baseConfig.languageDetection,
       languageCode: run.languageCode ?? baseConfig.languageCode,
       concurrency: run.concurrency ?? baseConfig.concurrency,
       maxVideos: run.maxVideos ?? baseConfig.maxVideos,
       afterDate: run.after ?? baseConfig.afterDate,
       csvEnabled: run.csvEnabled ?? baseConfig.csvEnabled,
       ytDlpPath: run.ytDlpPath ?? baseConfig.ytDlpPath,
+      ytDlpExtraArgs: run.ytDlpExtraArgs ?? baseConfig.ytDlpExtraArgs,
       assemblyAiCreditsCheck:
         run.assemblyAiCreditsCheck ?? baseConfig.assemblyAiCreditsCheck,
       assemblyAiMinBalanceMinutes:

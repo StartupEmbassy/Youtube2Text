@@ -82,6 +82,7 @@ AUDIO_DIR=audio
 FILENAME_STYLE=title_id   # id | id_title | title_id
 AUDIO_FORMAT=mp3
 LANGUAGE_CODE=en_us
+LANGUAGE_DETECTION=auto   # auto | manual
 CONCURRENCY=2
 MAX_VIDEOS=
 AFTER_DATE=
@@ -90,6 +91,7 @@ ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
 ASSEMBLYAI_MIN_BALANCE_MINUTES=60
 COMMENTS_ENABLED=false
 COMMENTS_MAX=
+YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=android"]
 ```
 
 Example files:
@@ -114,6 +116,7 @@ Options:
 | `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
 | `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
 | `--language` | string | `en_us` | Passed to AssemblyAI. |
+| `--languageDetection` | `auto|manual` | `auto` | Detect language per video (uses yt-dlp captions/subtitles) or force manual. |
 | `--concurrency` | number | `2` | Parallel videos processed. |
 | `--force` | boolean | false | Reprocess even if outputs exist. |
 | `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |

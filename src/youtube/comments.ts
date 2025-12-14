@@ -8,11 +8,13 @@ type YtDlpCommentsMeta = {
 export async function fetchVideoComments(
   videoUrl: string,
   ytDlpCommand = "yt-dlp",
-  maxComments?: number
+  maxComments?: number,
+  ytDlpExtraArgs: string[] = []
 ): Promise<unknown[] | undefined> {
   try {
     logStep("comments", `Fetching comments for ${videoUrl}`);
     const args = [
+      ...ytDlpExtraArgs,
       "--dump-single-json",
       "--no-playlist",
       "--write-comments",
@@ -43,4 +45,3 @@ export async function fetchVideoComments(
     return undefined;
   }
 }
-

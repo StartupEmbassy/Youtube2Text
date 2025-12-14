@@ -4,6 +4,7 @@ import {
   downloadAudio,
   fetchVideoDescription,
   fetchVideoComments,
+  detectLanguageCode,
 } from "../youtube/index.js";
 import { AssemblyAiProvider } from "../transcription/index.js";
 import { formatTxt, formatCsv } from "../formatters/index.js";
@@ -118,7 +119,8 @@ export async function runPipeline(
     }
   }
 
-  const listing = await enumerateVideos(inputUrl, ytDlpCommand);
+  const ytDlpExtraArgs = config.ytDlpExtraArgs ?? [];
+  const listing = await enumerateVideos(inputUrl, ytDlpCommand, ytDlpExtraArgs);
   const filteredVideos = listing.videos
     .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
     .slice(0, config.maxVideos ?? listing.videos.length);
@@ -254,6 +256,7 @@ export async function runPipeline(
 
           try {
             if (!options.force && alreadyProcessedByIndex[index - 1]) {
+              skipped += 1;
               const remaining = totalVideos - completedVideos;
               logStep(
                 "skip",
@@ -288,12 +291,27 @@ export async function runPipeline(
               paths.audioPath,
               config.audioFormat,
               config.downloadRetries,
-              ytDlpCommand
+              ytDlpCommand,
+              ytDlpExtraArgs
             );
+
+            const language =
+              config.languageDetection === "manual"
+                ? {
+                    languageCode: config.languageCode,
+                    detected: true,
+                    source: "manual" as const,
+                  }
+                : await detectLanguageCode(
+                    video.url,
+                    ytDlpCommand,
+                    ytDlpExtraArgs,
+                    config.languageCode
+                  );
 
             emitStage("transcribe", video.id, index, totalVideos);
             const transcript = await provider.transcribe(audioPath, {
-              languageCode: config.languageCode,
+              languageCode: language.languageCode,
               pollIntervalMs: config.pollIntervalMs,
               maxPollMinutes: config.maxPollMinutes,
               retries: config.transcriptionRetries,
@@ -301,7 +319,7 @@ export async function runPipeline(
 
             const description =
               video.description ??
-              (await fetchVideoDescription(video.url, ytDlpCommand));
+              (await fetchVideoDescription(video.url, ytDlpCommand, ytDlpExtraArgs));
 
             if (config.commentsEnabled) {
               try {
@@ -313,7 +331,8 @@ export async function runPipeline(
                   const comments = await fetchVideoComments(
                     video.url,
                     ytDlpCommand,
-                    config.commentsMax
+                    config.commentsMax,
+                    ytDlpExtraArgs
                   );
                   if (comments) {
                     await saveVideoCommentsJson(
@@ -343,7 +362,7 @@ export async function runPipeline(
               channelTitle: listing.channelTitle,
               filenameStyle: config.filenameStyle,
               audioFormat: config.audioFormat,
-              languageCode: config.languageCode,
+              languageCode: language.languageCode,
               createdAt: nowIso(),
             });
             await saveTranscriptTxt(

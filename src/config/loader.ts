@@ -15,12 +15,21 @@ function loadYamlConfig(path: string): PartialConfig {
 function loadEnvConfig(): PartialConfig {
   dotenv.config();
   const env = process.env;
+  let ytDlpExtraArgs: unknown = undefined;
+  if (env.YT_DLP_EXTRA_ARGS) {
+    try {
+      ytDlpExtraArgs = JSON.parse(env.YT_DLP_EXTRA_ARGS);
+    } catch {
+      ytDlpExtraArgs = undefined;
+    }
+  }
   return {
     assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
     outputDir: env.OUTPUT_DIR,
     audioDir: env.AUDIO_DIR,
     filenameStyle: env.FILENAME_STYLE,
     audioFormat: env.AUDIO_FORMAT,
+    languageDetection: env.LANGUAGE_DETECTION,
     languageCode: env.LANGUAGE_CODE,
     concurrency: env.CONCURRENCY ? Number(env.CONCURRENCY) : undefined,
     maxVideos: env.MAX_VIDEOS ? Number(env.MAX_VIDEOS) : undefined,
@@ -44,7 +53,8 @@ function loadEnvConfig(): PartialConfig {
     transcriptionRetries: env.TRANSCRIPTION_RETRIES
       ? Number(env.TRANSCRIPTION_RETRIES)
       : undefined,
-    ytDlpPath: env.YT_DLP_PATH || env.YTDLP_PATH
+    ytDlpPath: env.YT_DLP_PATH || env.YTDLP_PATH,
+    ytDlpExtraArgs,
   };
 }
 

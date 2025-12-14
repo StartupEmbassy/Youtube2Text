@@ -11,6 +11,7 @@ const runSchema = z.object({
   audioDir: z.string().optional(),
   filenameStyle: z.enum(["id", "id_title", "title_id"]).optional(),
   audioFormat: z.enum(["mp3", "wav"]).optional(),
+  languageDetection: z.enum(["auto", "manual"]).optional(),
   languageCode: z.string().optional(),
   concurrency: z.number().int().positive().optional(),
   csvEnabled: z.boolean().optional(),
@@ -20,6 +21,7 @@ const runSchema = z.object({
   commentsMax: z.number().int().positive().optional(),
   force: z.boolean().optional(),
   ytDlpPath: z.string().optional(),
+  ytDlpExtraArgs: z.array(z.string()).optional(),
 });
 
 const runsFileSchema = z.union([

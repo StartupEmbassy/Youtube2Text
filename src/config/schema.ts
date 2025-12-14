@@ -6,6 +6,7 @@ export const configSchema = z.object({
   audioDir: z.string().default("audio"),
   filenameStyle: z.enum(["id", "id_title", "title_id"]).default("title_id"),
   audioFormat: z.enum(["mp3", "wav"]).default("mp3"),
+  languageDetection: z.enum(["auto", "manual"]).default("auto"),
   languageCode: z.string().default("en_us"),
   concurrency: z.number().int().positive().default(2),
   maxVideos: z.number().int().positive().optional(),
@@ -21,7 +22,11 @@ export const configSchema = z.object({
   maxPollMinutes: z.number().int().positive().default(60),
   downloadRetries: z.number().int().nonnegative().default(2),
   transcriptionRetries: z.number().int().nonnegative().default(2),
-  ytDlpPath: z.string().optional()
+  ytDlpPath: z.string().optional(),
+  ytDlpExtraArgs: z.array(z.string()).default([
+    "--extractor-args",
+    "youtube:player_client=android",
+  ]),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

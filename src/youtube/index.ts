@@ -1,5 +1,8 @@
 export { enumerateVideos } from "./enumerate.js";
 export { downloadAudio } from "./download.js";
 export { fetchVideoDescription } from "./metadata.js";
+export { fetchVideoMetadata } from "./metadata.js";
+export type { YoutubeVideoMetadata } from "./metadata.js";
 export { fetchVideoComments } from "./comments.js";
+export { detectLanguageCode } from "./language.js";
 export type { YoutubeListing, YoutubeVideo } from "./types.js";

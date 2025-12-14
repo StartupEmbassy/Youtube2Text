@@ -5,6 +5,7 @@ outputDir: output
 audioDir: audio
 filenameStyle: title_id   # id | id_title | title_id
 audioFormat: mp3
+languageDetection: auto   # auto | manual
 languageCode: en_us
 concurrency: 2
 downloadRetries: 2
@@ -17,3 +18,6 @@ assemblyAiMinBalanceMinutes: 60
 commentsEnabled: false
 commentsMax:
 ytDlpPath:
+ytDlpExtraArgs:
+  - "--extractor-args"
+  - "youtube:player_client=android"
