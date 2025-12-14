@@ -235,13 +235,18 @@ pre {
 }
 
 .thumb {
-  width: 160px;
-  flex: 0 0 160px;
+  width: 120px;
+  flex: 0 0 120px;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: rgba(2, 6, 23, 0.7);
   overflow: hidden;
+}
+
+.thumb.lg {
+  width: 160px;
+  flex-basis: 160px;
 }
 
 .thumb img {

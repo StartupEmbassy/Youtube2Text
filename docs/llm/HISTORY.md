@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Web UX: shrink thumbnails and ensure Run detail shows a video Title by enriching run preview data from artifacts when runs finish; bump version to 0.5.1 - Files: [src/api/runManager.ts, web/app/globals.css, web/app/runs/[runId]/page.tsx, openapi.yaml, web/lib/apiTypes.gen.ts, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json] - Version impact: yes (package.json 0.5.0 -> 0.5.1)
+
 2025-12-14 - GPT-5.2 - Web UX: add YouTube thumbnails in Runs/Run detail/Library by tracking `previewVideoId` on RunRecord, update OpenAPI/types, and bump version to 0.5.0 - Files: [src/api/runManager.ts, openapi.yaml, web/lib/apiTypes.gen.ts, web/app/RunsLive.tsx, web/app/runs/[runId]/page.tsx, web/app/library/[channelDirName]/page.tsx, web/app/globals.css, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json] - Version impact: yes (package.json 0.4.2 -> 0.5.0)
 
 2025-12-14 - GPT-5.2 - Web UX: make runs list more descriptive (use channelTitle/inputUrl instead of runId), and add "Open downloads" shortcuts on run cards and run detail; bump version to 0.4.2 - Files: [web/app/RunsLive.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HANDOFF.md, docs/VERSIONING_RULES.md, openapi.yaml, web/lib/apiTypes.gen.ts, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.4.1 -> 0.4.2)

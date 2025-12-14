@@ -26,6 +26,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Output artifacts: added `.md` and `.jsonl` alongside `.json`/`.txt`.
 - Web UI: runs list and run detail include an "Open downloads" action when channel artifacts are available, and runs are labeled more descriptively than just runId.
 - Web UI: show YouTube thumbnails in Runs and Library; API tracks `previewVideoId` on runs for a cheap thumbnail in the runs list.
+- Web UI: thumbnails sized down; run detail shows a Title field when available.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE

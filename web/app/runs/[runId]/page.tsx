@@ -38,7 +38,7 @@ export default async function RunPage({ params }: { params: { runId: string } })
       <div className="card mb12">
         {runData.run.previewVideoId && (
           <a
-            className="thumb mb10"
+            className="thumb lg mb10"
             href={`https://www.youtube.com/watch?v=${encodeURIComponent(runData.run.previewVideoId)}`}
             target="_blank"
             rel="noreferrer"
@@ -49,6 +49,13 @@ export default async function RunPage({ params }: { params: { runId: string } })
               loading="lazy"
             />
           </a>
+        )}
+        {runData.run.previewTitle && (
+          <>
+            <div className="muted">Title</div>
+            <div className="break">{runData.run.previewTitle}</div>
+            <div className="spacer10" />
+          </>
         )}
         <div className="muted">Run ID</div>
         <div className="mono">{runData.run.runId}</div>

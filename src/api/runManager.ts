@@ -270,6 +270,9 @@ export class RunManager {
         };
         this.persistRun(run);
         this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+        if (!run.previewTitle && run.channelDirName) {
+          void this.tryEnrichPreviewFromArtifacts(run);
+        }
       }
       if (event.type === "run:error") {
         run.error = event.error;
@@ -308,5 +311,35 @@ export class RunManager {
   private persistEvent(runId: string, id: number, event: PipelineEvent) {
     if (!this.persistence) return;
     this.enqueuePersist(() => appendEvent(this.persistence!, runId, { id, event }));
+  }
+
+  private async tryEnrichPreviewFromArtifacts(run: RunRecord): Promise<void> {
+    try {
+      if (!run.channelDirName) return;
+      const adapter = new FileSystemStorageAdapter({
+        outputDir: this.baseConfig.outputDir,
+        audioDir: this.baseConfig.audioDir,
+        audioFormat: this.baseConfig.audioFormat,
+      });
+      const videos = await adapter.listVideos(run.channelDirName);
+      const first = videos[0];
+      if (!first) return;
+
+      let changed = false;
+      if (!run.previewVideoId && first.videoId) {
+        run.previewVideoId = first.videoId;
+        changed = true;
+      }
+      if (!run.previewTitle && (first.title || first.meta?.title)) {
+        run.previewTitle = first.title ?? first.meta?.title;
+        changed = true;
+      }
+      if (!changed) return;
+
+      this.persistRun(run);
+      this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+    } catch {
+      // best-effort only
+    }
   }
 }
