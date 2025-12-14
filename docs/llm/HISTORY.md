@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Small UI cleanup from Claude feedback: remove redundant per-route error.tsx files (keep global error boundary) and remove unnecessary router.refresh() after navigating to a newly created run - Files: [web/app/CreateRunForm.tsx, web/app/library/error.tsx, web/app/runs/[runId]/error.tsx, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - GPT-5.2 - Phase 1 Step 1: add Next.js error boundaries for API-down UX (global + per-route) and improve run creation UX by navigating to the created run detail page; update roadmap/handoff ordering - Files: [web/app/error.tsx, web/app/library/error.tsx, web/app/runs/[runId]/error.tsx, web/app/CreateRunForm.tsx, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Document Phase 1 Step 3 plan: OpenAPI contract + generated TS types/client + contract-check workflow to prevent endpoint/type drift; add operations doc and link from roadmap/handoff/decisions - Files: [docs/operations/API_CONTRACT.md, docs/operations/README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: no

@@ -34,7 +34,6 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
       const runId: string | undefined = body?.run?.runId;
       if (runId) {
         router.push(`/runs/${runId}`);
-        router.refresh();
       } else {
         setStatus("done");
         setMessage("Run created. Refresh to see it in the list.");
