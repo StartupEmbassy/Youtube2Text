@@ -18,7 +18,7 @@ export function RunEvents({ apiBaseUrl, runId }: Props) {
 
   useEffect(() => {
     const es = new EventSource(url);
-    setConnected(true);
+    es.onopen = () => setConnected(true);
 
     const handler = (event: MessageEvent) => {
       const id = Number.parseInt((event as any).lastEventId || "0", 10) || 0;
@@ -61,4 +61,3 @@ export function RunEvents({ apiBaseUrl, runId }: Props) {
     </div>
   );
 }
-

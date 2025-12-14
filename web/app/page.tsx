@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { apiGetJson } from "../lib/api";
+import { apiBaseUrl, apiGetJson } from "../lib/api";
 import type { RunsResponse, RunRecord } from "../lib/types";
+import { CreateRunForm } from "./CreateRunForm";
 
 function statusClass(status: RunRecord["status"]): string {
   if (status === "done") return "pill ok";
@@ -11,9 +12,11 @@ function statusClass(status: RunRecord["status"]): string {
 
 export default async function Page() {
   const data = await apiGetJson<RunsResponse>("/runs");
+  const base = apiBaseUrl();
   return (
     <div>
       <h1 style={{ margin: "0 0 12px 0" }}>Runs</h1>
+      <CreateRunForm apiBaseUrl={process.env.NEXT_PUBLIC_Y2T_API_BASE_URL ?? base} />
       <div className="grid">
         {data.runs.map((run) => (
           <div key={run.runId} className="card">
@@ -43,4 +46,3 @@ export default async function Page() {
     </div>
   );
 }
-

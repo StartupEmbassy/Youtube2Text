@@ -33,6 +33,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
   - Dev: `npm run dev:api`
   - Prod: `npm run build && npm run api`
   - Persistence: enabled by default under `output/_runs/` (disable with `Y2T_API_PERSIST_RUNS=false`)
+  - Web UI review: see `docs/llm/REVIEWS.md`
 
 ## Key Decisions (Do Not Drift)
 - CLI must remain fully operational; service/web are additional layers.

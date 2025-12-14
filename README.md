@@ -222,6 +222,7 @@ npm run test:docker-smoke
 ## Web UI (Next.js, Phase 1 - experimental)
 
 This repo includes an admin UI built with Next.js. It reads existing outputs via the API and streams run progress via SSE. It does not replace the CLI.
+It can also start runs via the API (`POST /runs`).
 
 Run locally (two terminals):
 

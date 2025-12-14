@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Phase 1 follow-ups: move Claude web UI review out of HANDOFF into `docs/llm/REVIEWS.md`, improve SSE connected state (use EventSource onopen), and add a simple "Start run" form in the web UI that calls `POST /runs`; update README - Files: [docs/llm/HANDOFF.md, docs/llm/REVIEWS.md, docs/llm/HISTORY.md, web/app/runs/[runId]/RunEvents.tsx, web/app/CreateRunForm.tsx, web/app/page.tsx, README.md] - Version impact: no
+
+2025-12-14 - Claude - Review GPT Phase 1 web UI scaffold: document positives (Next.js 14 RSC, standalone Docker, clean separation, StorageAdapter reuse) and areas to improve (type duplication, no error handling, no run creation form, mixed styling, no SSE reconnect) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - GPT-5.2 - Start Phase 1: add Next.js admin UI scaffold under `web/`, add API `GET /library/...` endpoints for browsing existing outputs and fetching artifacts, update docker-compose to run api+web, and add a unit test to ensure `_runs` is excluded from channel listing - Files: [src/api/server.ts, src/storage/fsAdapter.ts, web/*, docker-compose.yml, .dockerignore, package.json, README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md, tests/storageFsAdapter.test.ts, tests/all.test.ts] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Clean up HANDOFF: enforce ASCII-only, remove garbled text, and align snapshot claims with verified tests (docker smoke test) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
