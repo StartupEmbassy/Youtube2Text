@@ -8,26 +8,14 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Current Status
 - Last Updated: 2025-12-14 - GPT-5.2
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 1 local-first web UI (admin) without breaking CLI
+- Goal: Phase 2 hosted single-tenant service planning (keep CLI intact)
 
 ## What Changed Recently
-- Added structured pipeline events (`--json-events`) for service/web streaming.
-- Added `StorageAdapter` so web can read `output/` without duplicating path logic.
-- Added metadata sidecars: `output/<channel_dir>/_channel.json` and `output/<channel_dir>/<basename>.meta.json`.
-- Added language detection (yt-dlp metadata/captions) + AssemblyAI ALD fallback; language info included in TXT header (with source/confidence when available).
-- Phase 0.1: yt-dlp error classification + smarter retries + clearer per-video error stages.
-- Phase 0.2: minimal local HTTP API runner (`youtube2text-api`) with `POST /runs`, SSE events, and artifacts listing.
-- Phase 0.2.1: API run/event persistence on disk (restart-safe by default).
-- Docker: install `yt-dlp` into a Python virtualenv inside the image (avoids Debian PEP-668 without `--break-system-packages`); optional version pin via build arg.
-- Docker smoke test added and passing: `npm run test:docker-smoke` builds the image, starts the container, checks `/health` and `/runs`, then cleans up.
-- Phase 1 started: Next.js admin UI scaffold in `web/` + API `GET /library/...` endpoints to browse existing `output/` and fetch artifacts (txt/json/audio).
-- UI polish: removed inline `style={{}}` usage in `web/app/*` (use CSS classes in `web/app/globals.css`).
-- Web types: renamed `web/lib/types.ts` to `web/lib/apiSchema.ts`.
-- Output artifacts: added `.md` and `.jsonl` alongside `.json`/`.txt`.
-- Web UI: runs list and run detail include an "Open downloads" action when channel artifacts are available, and runs are labeled more descriptively than just runId.
-- Web UI: show YouTube thumbnails in Runs and Library; API tracks `previewVideoId` on runs for a cheap thumbnail in the runs list.
-- Web UI: thumbnails sized down; run detail shows a Title field when available.
-- Web UI: fix huge thumbnails (make `.thumb` a block element) and add robust fallbacks for run thumbnails/titles from artifacts or direct video URL parsing.
+- Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
+- Phase 1 DONE: Next.js admin UI (Runs + Library) with SSE, OpenAPI contract/typegen, and live runs list.
+- Outputs expanded: `.json` (canonical) + `.txt` + `.md` + `.jsonl` (+ optional `.csv`, `.comments.json`, `.meta.json`).
+- Web UX: "Open downloads" shortcuts, more descriptive run labels, thumbnails across Runs/Library.
+- Ops: contract check (`npm run api:contract:check`) + docker smoke test (`npm run test:docker-smoke`).
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
@@ -83,7 +71,4 @@ Proposed steps (do in order):
 - Web (manual): `npm run dev:api` then `npm run dev:web`
 
 ## Open Questions
-- Confirm AssemblyAI `language_code` edge cases (e.g., `es` vs `es_es`) if any appear in practice.
-- Decide if we want a documented "recommended" `YT_DLP_EXTRA_ARGS` value beyond the default `[]`.
-
-Note: additional output formats are documented in `docs/llm/DECISIONS.md` (D-013). Keep HANDOFF short.
+- None currently. Track new unknowns in `docs/llm/HISTORY.md` and convert stable choices into `docs/llm/DECISIONS.md`.
