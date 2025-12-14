@@ -6,6 +6,10 @@ import { RunEvents } from "./RunEvents";
 type RunResponse = { run: RunRecord };
 type ArtifactsResponse = { run: RunRecord; artifacts: unknown };
 
+function youtubeThumb(videoId: string): string {
+  return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
+}
+
 export default async function RunPage({ params }: { params: { runId: string } }) {
   const { runId } = params;
   const base = apiBaseUrlClient();
@@ -32,11 +36,28 @@ export default async function RunPage({ params }: { params: { runId: string } })
       </div>
 
       <div className="card mb12">
+        {runData.run.previewVideoId && (
+          <a
+            className="thumb mb10"
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(runData.run.previewVideoId)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img
+              src={youtubeThumb(runData.run.previewVideoId)}
+              alt={runData.run.previewTitle ?? "Video thumbnail"}
+              loading="lazy"
+            />
+          </a>
+        )}
         <div className="muted">Run ID</div>
         <div className="mono">{runData.run.runId}</div>
         <div className="spacer10" />
         <div className="muted">Input URL</div>
         <div className="break">{runData.run.inputUrl}</div>
+        {runData.run.channelTitle && <div className="spacer10" />}
+        {runData.run.channelTitle && <div className="muted">Channel</div>}
+        {runData.run.channelTitle && <div>{runData.run.channelTitle}</div>}
         <div className="spacer10" />
         <div className="muted">Status</div>
         <div>{runData.run.status}</div>

@@ -516,6 +516,8 @@ export interface components {
             channelId?: string;
             channelTitle?: string;
             channelDirName?: string;
+            previewVideoId?: string;
+            previewTitle?: string;
             stats?: components["schemas"]["RunStats"];
         };
         RunsResponse: {

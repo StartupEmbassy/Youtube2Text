@@ -31,6 +31,8 @@ export type RunRecord = {
   channelId?: string;
   channelTitle?: string;
   channelDirName?: string;
+  previewVideoId?: string;
+  previewTitle?: string;
   stats?: { succeeded: number; failed: number; skipped: number; total: number };
 };
 
@@ -240,6 +242,18 @@ export class RunManager {
 
     const run = this.runs.get(runId);
     if (run) {
+      if (!run.previewVideoId) {
+        if (event.type === "video:start") {
+          run.previewVideoId = event.videoId;
+          run.previewTitle = event.title;
+          this.persistRun(run);
+          this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+        } else if (event.type === "video:skip" || event.type === "video:done" || event.type === "video:error") {
+          run.previewVideoId = event.videoId;
+          this.persistRun(run);
+          this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+        }
+      }
       if (event.type === "run:start") {
         run.channelId = event.channelId;
         run.channelTitle = event.channelTitle;

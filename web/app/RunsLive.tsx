@@ -9,6 +9,10 @@ type Props = {
   initialRuns: RunRecord[];
 };
 
+function youtubeThumb(videoId: string): string {
+  return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
+}
+
 function displayTitle(run: RunRecord): string {
   if (run.channelTitle && run.channelTitle.trim().length > 0) return run.channelTitle;
   if (run.inputUrl && run.inputUrl.trim().length > 0) return run.inputUrl;
@@ -73,6 +77,15 @@ export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
       <div className="grid">
         {runs.map((run) => (
           <div key={run.runId} className="card">
+            {run.previewVideoId && (
+              <Link href={`/runs/${run.runId}`} className="thumb mb10">
+                <img
+                  src={youtubeThumb(run.previewVideoId)}
+                  alt={run.previewTitle ?? "Video thumbnail"}
+                  loading="lazy"
+                />
+              </Link>
+            )}
             <div className="row">
               <Link className="break" href={`/runs/${run.runId}`}>
                 <strong>{displayTitle(run)}</strong>

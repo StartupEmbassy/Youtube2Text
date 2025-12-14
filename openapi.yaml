@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.4.2
+  version: 0.5.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -278,6 +278,8 @@ components:
         channelId: { type: string }
         channelTitle: { type: string }
         channelDirName: { type: string }
+        previewVideoId: { type: string }
+        previewTitle: { type: string }
         stats: { $ref: "#/components/schemas/RunStats" }
 
     RunsResponse:
