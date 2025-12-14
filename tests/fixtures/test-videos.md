@@ -27,6 +27,7 @@ npx tsx src/cli/index.ts --maxVideos 1 --force "VIDEO_URL"
 
 ## Expected Behavior
 
-1. Language should be auto-detected from `automatic_captions` or `subtitles`
-2. If no captions available, falls back to config `languageCode` (default: `en_us`)
-3. Detected language logged: `[language] Detected: es (automatic_captions)`
+1. Language should be auto-detected from `language`, `subtitles`, or supported `automatic_captions` keys.
+2. If yt-dlp does not provide a usable language (e.g., Chinese test), the pipeline enables AssemblyAI automatic language detection (`language_detection: true`).
+3. Detected language logged (yt-dlp): `[language] Detected: es (language|subtitles|automatic_captions)`
+4. Fallback logged (ALD): `[language] Undetected via yt-dlp; using AssemblyAI automatic language detection`

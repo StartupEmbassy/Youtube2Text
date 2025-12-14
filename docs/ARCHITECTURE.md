@@ -89,13 +89,13 @@ Transcription is abstracted via a `TranscriptionProvider` (AssemblyAI first).
 
 Language handling requirement: non-English videos transcribe poorly when forced to `en_us`.
 
-Implemented approach (Phase 0, no new dependencies):
+Implemented approach (Phase 0):
 1. Manual override (`--language` / `languageCode`) when desired.
 2. Otherwise auto-detect per video using yt-dlp metadata priority:
    - `metadata.language` (most reliable)
    - `subtitles` (manually uploaded)
    - `automatic_captions` (filtered to AssemblyAI-supported codes)
-3. Fall back to configured default `languageCode`, with explicit warning log.
+3. If still undetected, enable AssemblyAI automatic language detection (`language_detection: true`).
 
 Persist detected language in per-video `.meta.json` for later UI/RAG use.
 

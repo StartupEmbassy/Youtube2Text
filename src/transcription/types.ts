@@ -14,9 +14,10 @@ export type TranscriptJson = {
 };
 
 export type TranscriptionOptions = {
-  languageCode: string;
+  languageCode?: string;
+  languageDetection?: boolean;
+  languageConfidenceThreshold?: number;
   pollIntervalMs: number;
   maxPollMinutes: number;
   retries: number;
 };
-

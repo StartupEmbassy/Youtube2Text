@@ -2,6 +2,7 @@ import { retry } from "../../utils/retry.js";
 import { logStep } from "../../utils/logger.js";
 import { TranscriptJson, TranscriptionOptions } from "../types.js";
 import { requestJson, uploadFile } from "./http.js";
+import { buildCreateTranscriptRequestBody } from "./request.js";
 
 type CreateResponse = { id: string; status: string };
 
@@ -23,14 +24,20 @@ export class AssemblyAiClient {
 
   async createTranscript(
     audioUrl: string,
-    languageCode: string
+    options: Pick<
+      TranscriptionOptions,
+      "languageCode" | "languageDetection" | "languageConfidenceThreshold"
+    >
   ): Promise<CreateResponse> {
     return await requestJson<CreateResponse>(this.apiKey, "/transcript", {
       method: "POST",
       body: JSON.stringify({
-        audio_url: audioUrl,
-        speaker_labels: true,
-        language_code: languageCode,
+        ...buildCreateTranscriptRequestBody({
+          audioUrl,
+          languageCode: options.languageCode,
+          languageDetection: options.languageDetection,
+          languageConfidenceThreshold: options.languageConfidenceThreshold,
+        }),
       }),
     });
   }
@@ -53,10 +60,11 @@ export class AssemblyAiClient {
       async () => {
         logStep("upload", `Uploading to AssemblyAI: ${audioPath}`);
         const uploadUrl = await this.uploadAudio(audioPath);
-        const created = await this.createTranscript(
-          uploadUrl,
-          opts.languageCode
-        );
+        const created = await this.createTranscript(uploadUrl, {
+          languageCode: opts.languageCode,
+          languageDetection: opts.languageDetection,
+          languageConfidenceThreshold: opts.languageConfidenceThreshold,
+        });
         const deadline =
           Date.now() + opts.maxPollMinutes * 60 * 1000;
 

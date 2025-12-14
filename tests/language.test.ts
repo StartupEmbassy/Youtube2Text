@@ -4,6 +4,7 @@ import {
   chooseLanguageCodeFromMetadata,
   mapToAssemblyAiLanguageCode,
 } from "../src/youtube/language.js";
+import { buildCreateTranscriptRequestBody } from "../src/transcription/assemblyai/request.js";
 
 test("mapToAssemblyAiLanguageCode maps common languages", () => {
   assert.equal(mapToAssemblyAiLanguageCode("en"), "en_us");
@@ -68,4 +69,16 @@ test("chooseLanguageCodeFromMetadata returns default when only unsupported langu
   );
   assert.equal(selection.detected, false);
   assert.equal(selection.languageCode, "en_us");
+});
+
+test("AssemblyAI request uses ALD when language undetected", () => {
+  const selection = chooseLanguageCodeFromMetadata(undefined, "en_us");
+  assert.equal(selection.detected, false);
+
+  const body = buildCreateTranscriptRequestBody({
+    audioUrl: "https://example.com/audio.mp3",
+    languageDetection: true,
+  });
+  assert.equal(body.language_detection, true);
+  assert.equal(body.language_code, undefined);
 });

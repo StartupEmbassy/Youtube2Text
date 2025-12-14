@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - Claude - Add language info to TXT header showing source (yt-dlp or auto-detected with confidence percentage), add unit tests - Files: [src/formatters/txt.ts, src/pipeline/run.ts, tests/txtFormatter.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Implement AssemblyAI ALD fallback when yt-dlp cannot determine language (Chinese/no-metadata case), add request body builder + unit test, persist detected language/confidence in `.meta.json`, and update docs/fixtures - Files: [src/transcription/types.ts, src/transcription/assemblyai/request.ts, src/transcription/assemblyai/client.ts, src/youtube/language.ts, src/pipeline/run.ts, src/storage/index.ts, tests/language.test.ts, tests/fixtures/test-videos.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/ARCHITECTURE.md, README.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - Claude - Validate multilingual detection (ES/EN/FR/DE/ZH), propose AssemblyAI ALD for videos without YouTube metadata (D-006), document test results - Files: [docs/llm/DECISIONS.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Split LLM docs: move long decision rationale out of HANDOFF into `docs/llm/DECISIONS.md`, add `docs/llm/README.md` index, and refresh `docs/STRUCTURE.md` + `LLM_START_HERE.md` so future sessions know where information lives (ASCII-only) - Files: [docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/README.md, docs/STRUCTURE.md, LLM_START_HERE.md, docs/llm/HISTORY.md] - Version impact: no

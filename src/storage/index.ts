@@ -40,6 +40,8 @@ export type VideoMeta = {
   filenameStyle: AppConfig["filenameStyle"];
   audioFormat: string;
   languageCode?: string;
+  languageDetection?: boolean;
+  languageConfidence?: number;
   createdAt: string;
 };
 

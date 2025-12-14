@@ -141,6 +141,5 @@ export async function detectLanguageCode(
     return selection;
   }
 
-  logWarn(`Language undetected -> using default: ${defaultLanguageCode}`);
   return selection;
 }

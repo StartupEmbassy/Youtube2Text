@@ -39,7 +39,8 @@ Decision:
   1. `metadata.language` (most reliable; declared language)
   2. `subtitles` (manually uploaded)
   3. `automatic_captions` (filtered to AssemblyAI-supported codes only)
-  4. fallback to configured default (`languageCode`, e.g. `en_us`) with an explicit warning
+  4. if still undetected: use AssemblyAI Automatic Language Detection (ALD)
+  5. only if ALD is disabled: fallback to configured default (`languageCode`, e.g. `en_us`)
 
 Rationale:
 - No new dependencies.
@@ -76,14 +77,14 @@ Deferred (YAGNI until a second implementation exists):
 - Audio extractor abstraction
 - Formatter abstraction (txt/csv/json)
 
-## D-006 - AssemblyAI ALD as fallback for language detection (PROPOSAL)
+## D-006 - AssemblyAI ALD fallback when yt-dlp has no language
 
 Problem:
 - Some videos have no YouTube language metadata (`language` field is null, no subtitles, no automatic_captions).
 - Example: Chinese educational videos often lack this data.
 - Current D-003 priority chain falls back to default (e.g. `en_us`), causing poor transcription.
 
-Proposed solution:
+Solution:
 - Use AssemblyAI Automatic Language Detection (ALD) as a fallback when YouTube metadata is unavailable.
 - ALD is enabled via `language_detection: true` in the transcription request.
 - Supports 99 languages (more than our 20-language whitelist).
@@ -104,9 +105,9 @@ Tradeoffs:
 - Con: Slightly longer processing time (ALD analyzes first ~60s of audio).
 - Con: Cannot use language_code hint; ALD decides autonomously.
 
-Decision status: PENDING user approval.
+Decision status: IMPLEMENTED.
 
-Test case: Chinese video `https://www.youtube.com/watch?v=ixkRmNhpoGQ` (no metadata).
+Test case: Chinese video `https://www.youtube.com/watch?v=GBbgCupe6hg` (yt-dlp language is null / no usable captions).
 
 Validation results (2025-12-14):
 | Language | Video URL | `language` field | Mapped | Status |

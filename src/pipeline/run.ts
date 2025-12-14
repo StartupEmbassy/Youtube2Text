@@ -309,9 +309,20 @@ export async function runPipeline(
                     config.languageCode
                   );
 
+            const useAssemblyAiAld =
+              config.languageDetection !== "manual" && !language.detected;
+
+            if (useAssemblyAiAld) {
+              logStep(
+                "language",
+                "Undetected via yt-dlp; using AssemblyAI automatic language detection"
+              );
+            }
+
             emitStage("transcribe", video.id, index, totalVideos);
             const transcript = await provider.transcribe(audioPath, {
-              languageCode: language.languageCode,
+              languageCode: useAssemblyAiAld ? undefined : language.languageCode,
+              languageDetection: useAssemblyAiAld ? true : undefined,
               pollIntervalMs: config.pollIntervalMs,
               maxPollMinutes: config.maxPollMinutes,
               retries: config.transcriptionRetries,
@@ -362,9 +373,28 @@ export async function runPipeline(
               channelTitle: listing.channelTitle,
               filenameStyle: config.filenameStyle,
               audioFormat: config.audioFormat,
-              languageCode: language.languageCode,
+              languageCode:
+                typeof transcript.language_code === "string"
+                  ? transcript.language_code
+                  : useAssemblyAiAld
+                    ? undefined
+                    : language.languageCode,
+              languageDetection: useAssemblyAiAld ? true : undefined,
+              languageConfidence:
+                typeof transcript.language_confidence === "number"
+                  ? transcript.language_confidence
+                  : undefined,
               createdAt: nowIso(),
             });
+            const finalLanguageCode =
+              typeof transcript.language_code === "string"
+                ? transcript.language_code
+                : language.languageCode;
+            const finalLanguageConfidence =
+              typeof transcript.language_confidence === "number"
+                ? transcript.language_confidence
+                : undefined;
+
             await saveTranscriptTxt(
               paths.txtPath,
               formatTxt(transcript, {
@@ -374,6 +404,9 @@ export async function runPipeline(
                 url: video.url,
                 uploadDate: video.uploadDate,
                 description,
+                languageCode: finalLanguageCode,
+                languageSource: useAssemblyAiAld ? "auto-detected" : "yt-dlp",
+                languageConfidence: finalLanguageConfidence,
               })
             );
 

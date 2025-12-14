@@ -61,11 +61,26 @@ export function formatTxt(
     channelId?: string;
     channelTitle?: string;
     description?: string;
+    languageCode?: string;
+    languageSource?: "yt-dlp" | "auto-detected";
+    languageConfidence?: number;
   },
   options?: { timestamps?: boolean; wrapWidth?: number }
 ): string {
   const timestamps = options?.timestamps ?? true;
   const wrapWidth = options?.wrapWidth ?? 100;
+
+  let languageLine: string | undefined;
+  if (meta.languageCode) {
+    if (meta.languageSource === "auto-detected" && meta.languageConfidence !== undefined) {
+      const pct = Math.round(meta.languageConfidence * 100);
+      languageLine = `Language: ${meta.languageCode} (auto-detected, ${pct}% confidence)`;
+    } else if (meta.languageSource) {
+      languageLine = `Language: ${meta.languageCode} (${meta.languageSource})`;
+    } else {
+      languageLine = `Language: ${meta.languageCode}`;
+    }
+  }
 
   const headerLines = [
     meta.channelTitle || meta.channelId
@@ -76,6 +91,7 @@ export function formatTxt(
     ...formatHeaderBlock("Description", meta.description, wrapWidth),
     `URL: ${meta.url}`,
     meta.uploadDate ? `Date: ${meta.uploadDate}` : undefined,
+    languageLine,
     "---",
   ].filter(Boolean) as string[];
 

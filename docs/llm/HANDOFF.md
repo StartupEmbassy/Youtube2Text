@@ -4,7 +4,7 @@ This file is the current operational snapshot. Keep it short.
 Long-form rationale lives in `docs/llm/DECISIONS.md`.
 
 ## Current Status
-- Last Updated: 2025-12-14 - GPT-5.2
+- Last Updated: 2025-12-14 - Claude
 - Scope: Public YouTube videos only (no cookies support)
 - Goal: Finish Phase 0 (core service hardening) without breaking CLI
 
@@ -13,6 +13,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 - Added `StorageAdapter` so web can read `output/` without duplicating path logic.
 - Added metadata sidecars: `output/<channel_dir>/_channel.json` and `output/<channel_dir>/<basename>.meta.json`.
 - Added language detection (yt-dlp metadata/captions) and unit tests.
+- Validated language detection for ES/EN/FR/DE (all OK). Chinese video has no YouTube metadata.
+- Implemented: AssemblyAI Automatic Language Detection (ALD) fallback via `language_detection: true` when yt-dlp metadata/captions cannot determine a supported language (covers Chinese/no-metadata cases). See D-006.
+- Added language info to TXT header: `Language: es (yt-dlp)` or `Language: zh (auto-detected, 97% confidence)`.
 
 ## Phase 0: Next Steps (Do In Order)
 0. Keep builds clean (build compiles only `src/`; tests run via `npm test` + `tsx`)
@@ -39,4 +42,3 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 ## Open Questions
 - Confirm AssemblyAI `language_code` edge cases (e.g., `es` vs `es_es`) if any appear in practice.
 - Decide if we want a documented "recommended" `YT_DLP_EXTRA_ARGS` value beyond the default `[]`.
-- Implement AssemblyAI ALD as fallback? See D-006 in DECISIONS.md. Chinese video has no YouTube metadata.

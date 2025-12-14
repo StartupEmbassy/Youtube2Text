@@ -29,3 +29,26 @@ test("formatTxt includes channel/title/description headers and timestamps", () =
   assert.match(txt, /^\[00:00:02 - 00:00:03 Speaker B\] Second line/m);
 });
 
+test("formatTxt includes language from yt-dlp", () => {
+  const transcript = { id: "t1", status: "completed", utterances: [] };
+  const txt = formatTxt(transcript, {
+    title: "Video",
+    url: "https://example.com",
+    languageCode: "es",
+    languageSource: "yt-dlp",
+  });
+  assert.match(txt, /^Language: es \(yt-dlp\)/m);
+});
+
+test("formatTxt includes language from auto-detection with confidence", () => {
+  const transcript = { id: "t1", status: "completed", utterances: [] };
+  const txt = formatTxt(transcript, {
+    title: "Video",
+    url: "https://example.com",
+    languageCode: "zh",
+    languageSource: "auto-detected",
+    languageConfidence: 0.9672,
+  });
+  assert.match(txt, /^Language: zh \(auto-detected, 97% confidence\)/m);
+});
+

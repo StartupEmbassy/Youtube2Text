@@ -127,7 +127,7 @@ Options:
 | `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
 | `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
 | `--language` | string | `en_us` | Passed to AssemblyAI. |
-| `--languageDetection` | `auto|manual` | `auto` | Detect language per video (uses yt-dlp captions/subtitles) or force manual. |
+| `--languageDetection` | `auto|manual` | `auto` | Detect language per video via yt-dlp metadata/captions; if undetected, fall back to AssemblyAI automatic language detection. |
 | `--concurrency` | number | `2` | Parallel videos processed. |
 | `--force` | boolean | false | Reprocess even if outputs exist. |
 | `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |
