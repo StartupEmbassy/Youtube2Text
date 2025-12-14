@@ -9,6 +9,12 @@ type Props = {
   initialRuns: RunRecord[];
 };
 
+function displayTitle(run: RunRecord): string {
+  if (run.channelTitle && run.channelTitle.trim().length > 0) return run.channelTitle;
+  if (run.inputUrl && run.inputUrl.trim().length > 0) return run.inputUrl;
+  return "Run";
+}
+
 function statusClass(status: RunRecord["status"]): string {
   if (status === "done") return "pill ok";
   if (status === "error") return "pill bad";
@@ -68,13 +74,23 @@ export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
         {runs.map((run) => (
           <div key={run.runId} className="card">
             <div className="row">
-              <Link href={`/runs/${run.runId}`}>{run.runId}</Link>
+              <Link className="break" href={`/runs/${run.runId}`}>
+                <strong>{displayTitle(run)}</strong>
+              </Link>
               <span className={statusClass(run.status)}>{run.status}</span>
             </div>
-            <div className="muted mt8 break">{run.inputUrl}</div>
-            <div className="muted mt8">
-              {run.channelTitle ? `${run.channelTitle} (${run.channelId ?? "?"})` : run.channelId}
-            </div>
+
+            <div className="muted mt8 mono break">{run.runId}</div>
+            {run.inputUrl && <div className="muted mt8 break">{run.inputUrl}</div>}
+
+            {run.channelDirName && (
+              <div className="mt8">
+                <Link className="button secondary" href={`/library/${encodeURIComponent(run.channelDirName)}`}>
+                  Open downloads
+                </Link>
+              </div>
+            )}
+
             {run.stats && (
               <div className="muted mt8">
                 {run.stats.succeeded} ok, {run.stats.skipped} skipped, {run.stats.failed} failed /

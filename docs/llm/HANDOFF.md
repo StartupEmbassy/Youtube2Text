@@ -24,6 +24,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - UI polish: removed inline `style={{}}` usage in `web/app/*` (use CSS classes in `web/app/globals.css`).
 - Web types: renamed `web/lib/types.ts` to `web/lib/apiSchema.ts`.
 - Output artifacts: added `.md` and `.jsonl` alongside `.json`/`.txt`.
+- Web UI: runs list and run detail include an "Open downloads" action when channel artifacts are available, and runs are labeled more descriptively than just runId.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE

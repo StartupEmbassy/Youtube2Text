@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Web UX: make runs list more descriptive (use channelTitle/inputUrl instead of runId), and add "Open downloads" shortcuts on run cards and run detail; bump version to 0.4.2 - Files: [web/app/RunsLive.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HANDOFF.md, docs/VERSIONING_RULES.md, openapi.yaml, web/lib/apiTypes.gen.ts, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.4.1 -> 0.4.2)
+
 2025-12-14 - GPT-5.2 - Roadmap update: mark Phase 1 as DONE, define Phase 2 (hosted single-tenant admin) and Phase 3+ (optional multi-tenant), and bump version to 0.4.1 - Files: [docs/llm/HANDOFF.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, openapi.yaml, web/lib/apiTypes.gen.ts, package.json, package-lock.json, docs/VERSIONING_RULES.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.4.0 -> 0.4.1)
 
 2025-12-14 - GPT-5.2 - Add `.md` and `.jsonl` transcript artifacts (for readability + LLM-friendly chunking), expose them via API/Web library, update OpenAPI contract and tests, and bump version to 0.4.0 - Files: [src/formatters/md.ts, src/formatters/jsonl.ts, src/formatters/index.ts, src/pipeline/run.ts, src/storage/index.ts, src/storage/fsAdapter.ts, src/api/server.ts, web/app/library/[channelDirName]/page.tsx, openapi.yaml, web/lib/apiTypes.gen.ts, tests/outputFormats.test.ts, tests/all.test.ts, README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/VERSIONING_RULES.md, docs/llm/DECISIONS.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json] - Version impact: yes (package.json 0.3.3 -> 0.4.0)

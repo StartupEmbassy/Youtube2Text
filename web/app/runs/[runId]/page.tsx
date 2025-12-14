@@ -11,14 +11,24 @@ export default async function RunPage({ params }: { params: { runId: string } })
   const base = apiBaseUrlClient();
   const runData = await apiGetJson<RunResponse>(`/runs/${runId}`);
   const artifactsData = await apiGetJson<ArtifactsResponse>(`/runs/${runId}/artifacts`);
+  const channelLink = runData.run.channelDirName
+    ? `/library/${encodeURIComponent(runData.run.channelDirName)}`
+    : undefined;
 
   return (
     <div>
       <div className="row mb12">
         <h1 className="m0">Run</h1>
-        <Link href="/" className="pill">
-          Back
-        </Link>
+        <div className="flexWrap">
+          {channelLink && (
+            <Link href={channelLink} className="button secondary">
+              Open downloads
+            </Link>
+          )}
+          <Link href="/" className="pill">
+            Back
+          </Link>
+        </div>
       </div>
 
       <div className="card mb12">
@@ -36,12 +46,9 @@ export default async function RunPage({ params }: { params: { runId: string } })
         <div className="card">
           <div className="row mb10">
             <strong>Artifacts</strong>
-            {runData.run.channelDirName && (
-              <Link
-                className="pill"
-                href={`/library/${encodeURIComponent(runData.run.channelDirName)}`}
-              >
-                Open channel
+            {channelLink && (
+              <Link className="pill" href={channelLink}>
+                Library
               </Link>
             )}
           </div>
