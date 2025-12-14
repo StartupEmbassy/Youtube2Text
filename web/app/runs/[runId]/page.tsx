@@ -34,17 +34,20 @@ export default async function RunPage({ params }: { params: { runId: string } })
         <div>{runData.run.status}</div>
       </div>
 
-      <div className="grid" style={{ alignItems: "start" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div className="card">
           <div className="row" style={{ marginBottom: 10 }}>
             <strong>Artifacts</strong>
             {runData.run.channelDirName && (
-              <Link className="pill" href={`/library/${encodeURIComponent(runData.run.channelDirName)}`}>
+              <Link
+                className="pill"
+                href={`/library/${encodeURIComponent(runData.run.channelDirName)}`}
+              >
                 Open channel
               </Link>
             )}
           </div>
-          <pre>{JSON.stringify(artifactsData.artifacts, null, 2)}</pre>
+          <pre className="preWrap">{JSON.stringify(artifactsData.artifacts, null, 2)}</pre>
         </div>
         <div className="card">
           <RunEvents apiBaseUrl={process.env.NEXT_PUBLIC_Y2T_API_BASE_URL ?? base} runId={runId} />
