@@ -143,7 +143,7 @@ Implementation note (Phase 1):
 Phase 1 sequencing (do in order):
 1. UI scaffold + API library endpoints (DONE)
 2. UI error handling when API is down (DONE)
-3. OpenAPI contract + generated TS types/client + contract-check workflow (planned) (see `docs/operations/API_CONTRACT.md`)
+3. OpenAPI contract + generated TS types/client + contract-check workflow (DONE) (see `docs/operations/API_CONTRACT.md`)
 4. UI polish (styling consistency, better SSE UX) (planned)
 
 Screens:

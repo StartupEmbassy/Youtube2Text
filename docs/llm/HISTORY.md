@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Phase 1 Step 2: implement OpenAPI contract + generated frontend types + contract-check workflow (OpenAPI spec at repo root, generated types in web/, validate+generate+diff check scripts); bump version to 0.2.0 per VERSIONING_RULES - Files: [openapi.yaml, web/lib/apiTypes.gen.ts, web/lib/types.ts, web/app/CreateRunForm.tsx, scripts/apiContractCheck.mjs, package.json, package-lock.json, docs/operations/API_CONTRACT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.1.0 -> 0.2.0)
+
 2025-12-14 - GPT-5.2 - Web UI UX: change run detail layout to always stack Events below Artifacts (no side-by-side columns) and wrap Artifacts JSON to avoid horizontal scroll - Files: [web/app/runs/[runId]/page.tsx, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - GPT-5.2 - Web UI responsiveness: wrap long event lines to avoid horizontal scroll and make run detail grid responsive (single column on small screens) - Files: [web/app/globals.css, web/app/runs/[runId]/RunEvents.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HISTORY.md] - Version impact: no

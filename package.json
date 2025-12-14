@@ -1,6 +1,6 @@
 {
   "name": "youtube2text",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-first YouTube audio extraction and diarized transcription pipeline.",
   "type": "module",
   "main": "dist/cli.js",
@@ -17,6 +17,9 @@
     "dev:web": "npm --prefix web run dev",
     "build:web": "npm --prefix web run build",
     "start:web": "npm --prefix web run start",
+    "api:spec:validate": "redocly lint openapi.yaml",
+    "api:types:generate": "openapi-typescript openapi.yaml -o web/lib/apiTypes.gen.ts",
+    "api:contract:check": "node scripts/apiContractCheck.mjs",
     "test:docker-smoke": "node scripts/dockerSmokeTest.mjs",
     "test": "node --import tsx --test tests/all.test.ts"
   },
@@ -31,7 +34,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@redocly/cli": "^1.34.5",
     "@types/node": "^22.10.2",
+    "openapi-typescript": "^7.9.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

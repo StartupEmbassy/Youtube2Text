@@ -1,4 +1,4 @@
-# API Contract (Planned - Phase 1 Step)
+# API Contract (Phase 1 Step)
 
 This doc is ASCII-only (Windows-safe).
 
@@ -8,12 +8,11 @@ When the API grows, we want a single source of truth for endpoints and types, an
 
 This is the "Option 2" approach: OpenAPI + generated TypeScript types/client.
 
-## What We Will Add (when we implement this step)
+## What Exists Now
 
 Files:
-- `openapi.yaml` (or `openapi.json`) at repo root (authoritative API contract)
+- `openapi.yaml` at repo root (authoritative API contract)
 - `web/lib/apiTypes.gen.ts` (generated; do not hand-edit)
-- Optional: `web/lib/apiClient.gen.ts` (generated client wrappers)
 
 Scripts (root `package.json`):
 - `npm run api:spec:validate`
@@ -44,7 +43,7 @@ Every time you:
 Run:
 - `npm run api:contract:check`
 
-## Scope Of The Initial Spec
+## Scope Of The Current Spec
 
 Start by covering what exists today (Phase 1):
 - Health:
@@ -72,4 +71,3 @@ Future endpoints we likely want (admin-local):
 
 - CLI is still primary and remains independent. API/Web are shells.
 - Multi-tenant auth is Phase 2+. Do not overbuild auth in Phase 1.
-

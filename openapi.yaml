@@ -1,0 +1,418 @@
+openapi: 3.1.0
+info:
+  title: Youtube2Text API
+  version: 0.2.0
+  description: |
+    Minimal local HTTP API for Youtube2Text.
+    Notes:
+    - CLI remains the primary workflow; API/Web are shells around the same core.
+    - SSE endpoints are documented as text/event-stream.
+servers:
+  - url: http://127.0.0.1:8787
+security: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /runs:
+    get:
+      summary: List runs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunsResponse"
+    post:
+      summary: Create and start a run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunCreateResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /runs/{runId}:
+    get:
+      summary: Get a run
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunGetResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /runs/{runId}/artifacts:
+    get:
+      summary: Get artifacts for a run (channel videos listing)
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunArtifactsResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /runs/{runId}/events:
+    get:
+      summary: Stream run events (SSE)
+      description: |
+        Server-Sent Events stream. Event names include:
+        - run:start, run:done, run:error
+        - video:start, video:stage, video:done, video:skip, video:error
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /library/channels:
+    get:
+      summary: List channels from output directory
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelsResponse"
+
+  /library/channels/{channelDirName}:
+    get:
+      summary: Get channel metadata
+      parameters:
+        - $ref: "#/components/parameters/ChannelDirName"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelMetaResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /library/channels/{channelDirName}/videos:
+    get:
+      summary: List videos for a channel
+      parameters:
+        - $ref: "#/components/parameters/ChannelDirName"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideosResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /library/channels/{channelDirName}/videos/{basename}/{kind}:
+    get:
+      summary: Fetch a specific video artifact
+      parameters:
+        - $ref: "#/components/parameters/ChannelDirName"
+        - $ref: "#/components/parameters/Basename"
+        - $ref: "#/components/parameters/ArtifactKind"
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  parameters:
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ChannelDirName:
+      name: channelDirName
+      in: path
+      required: true
+      schema:
+        type: string
+    Basename:
+      name: basename
+      in: path
+      required: true
+      schema:
+        type: string
+    ArtifactKind:
+      name: kind
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ArtifactKind"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      required: [ok, service]
+      properties:
+        ok:
+          type: boolean
+        service:
+          type: string
+
+    RunStatus:
+      type: string
+      enum: [queued, running, done, error]
+
+    RunStats:
+      type: object
+      required: [succeeded, failed, skipped, total]
+      properties:
+        succeeded: { type: integer }
+        failed: { type: integer }
+        skipped: { type: integer }
+        total: { type: integer }
+
+    RunRecord:
+      type: object
+      required: [runId, status, inputUrl, force, createdAt]
+      properties:
+        runId: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        inputUrl: { type: string }
+        force: { type: boolean }
+        createdAt: { type: string }
+        startedAt: { type: string }
+        finishedAt: { type: string }
+        error: { type: string }
+        channelId: { type: string }
+        channelTitle: { type: string }
+        channelDirName: { type: string }
+        stats: { $ref: "#/components/schemas/RunStats" }
+
+    RunsResponse:
+      type: object
+      required: [runs]
+      properties:
+        runs:
+          type: array
+          items: { $ref: "#/components/schemas/RunRecord" }
+
+    RunGetResponse:
+      type: object
+      required: [run]
+      properties:
+        run: { $ref: "#/components/schemas/RunRecord" }
+
+    RunCreateRequest:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string }
+        force: { type: boolean }
+        config:
+          type: object
+          additionalProperties: true
+
+    RunCreateLinks:
+      type: object
+      required: [run, events, artifacts]
+      properties:
+        run: { type: string }
+        events: { type: string }
+        artifacts: { type: string }
+
+    RunCreateResponse:
+      type: object
+      required: [run, links]
+      properties:
+        run: { $ref: "#/components/schemas/RunRecord" }
+        links: { $ref: "#/components/schemas/RunCreateLinks" }
+
+    ChannelInfo:
+      type: object
+      required: [channelId, channelDirName]
+      properties:
+        channelId: { type: string }
+        channelTitle: { type: string }
+        channelDirName: { type: string }
+        metaPath: { type: string }
+
+    ChannelsResponse:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelInfo" }
+
+    ChannelMeta:
+      type: object
+      required: [channelId, channelTitle, channelUrl]
+      properties:
+        channelId: { type: string }
+        channelTitle: { type: string }
+        channelUrl: { type: string }
+        retrievedAt: { type: string }
+
+    ChannelMetaResponse:
+      type: object
+      required: [channelDirName, meta]
+      properties:
+        channelDirName: { type: string }
+        meta: { $ref: "#/components/schemas/ChannelMeta" }
+
+    OutputPaths:
+      type: object
+      required:
+        [
+          jsonPath,
+          txtPath,
+          csvPath,
+          commentsPath,
+          metaPath,
+          channelMetaPath,
+          errorLogPath,
+          audioPath
+        ]
+      properties:
+        jsonPath: { type: string }
+        txtPath: { type: string }
+        csvPath: { type: string }
+        commentsPath: { type: string }
+        metaPath: { type: string }
+        channelMetaPath: { type: string }
+        errorLogPath: { type: string }
+        audioPath: { type: string }
+
+    VideoMeta:
+      type: object
+      required: [videoId]
+      properties:
+        videoId: { type: string }
+        title: { type: string }
+        channelId: { type: string }
+        channelTitle: { type: string }
+        channelUrl: { type: string }
+        videoUrl: { type: string }
+        description: { type: string }
+        publishedAt: { type: string }
+        languageCode: { type: string }
+        languageDetection: { type: string }
+        languageConfidence: { type: number }
+
+    VideoInfo:
+      type: object
+      required: [videoId, basename, paths]
+      properties:
+        videoId: { type: string }
+        title: { type: string }
+        basename: { type: string }
+        metaPath: { type: string }
+        paths: { $ref: "#/components/schemas/OutputPaths" }
+        meta: { $ref: "#/components/schemas/VideoMeta" }
+
+    VideosResponse:
+      type: object
+      required: [channelDirName, videos]
+      properties:
+        channelDirName: { type: string }
+        videos:
+          type: array
+          items: { $ref: "#/components/schemas/VideoInfo" }
+
+    ArtifactKind:
+      type: string
+      enum: [txt, json, meta, comments, csv, audio]
+
+    RunArtifacts:
+      type: object
+      required: [videos]
+      properties:
+        channelDirName: { type: string }
+        channelId: { type: string }
+        channelTitle: { type: string }
+        videos:
+          type: array
+          items: { $ref: "#/components/schemas/VideoInfo" }
+
+    RunArtifactsResponse:
+      type: object
+      required: [run, artifacts]
+      properties:
+        run: { $ref: "#/components/schemas/RunRecord" }
+        artifacts: { $ref: "#/components/schemas/RunArtifacts" }

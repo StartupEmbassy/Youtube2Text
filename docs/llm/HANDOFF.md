@@ -28,7 +28,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Phase 1 Next Steps (Do In Order)
 1. UI error handling when API is down (Next.js error boundaries + user feedback) - DONE
-2. API contract: OpenAPI + generated TS types/client + contract-check workflow to prevent drift (planned) (see `docs/operations/API_CONTRACT.md`)
+2. API contract: OpenAPI + generated TS types/client + contract-check workflow to prevent drift - DONE (see `docs/operations/API_CONTRACT.md`)
 3. SSE global (planned): optional global event stream so the app feels "live" (fits after contract-check)
 4. Follow-ups: types dedup, styling consistency, improve SSE UX
 

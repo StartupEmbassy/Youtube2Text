@@ -191,7 +191,7 @@ Design choices:
 
 ## D-011 - API contract and type generation (Phase 1 - planned)
 
-Decision (planned):
+Decision:
 - Use OpenAPI as the authoritative API contract and generate TypeScript types (and optionally a client) for the Next.js UI.
 - Add a "contract check" command that fails if generated artifacts are out-of-date, preventing endpoint/type drift.
 

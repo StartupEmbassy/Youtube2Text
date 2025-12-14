@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { RunCreateResponse } from "../lib/types";
 
 type Props = {
   apiBaseUrl: string;
@@ -30,7 +31,7 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
         const text = await res.text();
         throw new Error(`POST /runs failed: ${res.status} ${text}`);
       }
-      const body = (await res.json()) as any;
+      const body = (await res.json()) as RunCreateResponse;
       const runId: string | undefined = body?.run?.runId;
       if (runId) {
         router.push(`/runs/${runId}`);

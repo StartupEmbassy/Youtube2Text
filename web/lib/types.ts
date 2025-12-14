@@ -1,60 +1,16 @@
-export type RunStatus = "queued" | "running" | "done" | "error";
+import type { components } from "./apiTypes.gen";
 
-export type RunRecord = {
-  runId: string;
-  status: RunStatus;
-  inputUrl: string;
-  force: boolean;
-  createdAt: string;
-  startedAt?: string;
-  finishedAt?: string;
-  error?: string;
-  channelId?: string;
-  channelTitle?: string;
-  channelDirName?: string;
-  stats?: { succeeded: number; failed: number; skipped: number; total: number };
-};
+export type RunStatus = components["schemas"]["RunStatus"];
+export type RunRecord = components["schemas"]["RunRecord"];
+export type RunsResponse = components["schemas"]["RunsResponse"];
+export type RunGetResponse = components["schemas"]["RunGetResponse"];
+export type RunCreateRequest = components["schemas"]["RunCreateRequest"];
+export type RunCreateResponse = components["schemas"]["RunCreateResponse"];
+export type RunArtifactsResponse = components["schemas"]["RunArtifactsResponse"];
 
-export type RunsResponse = { runs: RunRecord[] };
+export type ChannelInfo = components["schemas"]["ChannelInfo"];
+export type ChannelsResponse = components["schemas"]["ChannelsResponse"];
+export type ChannelMetaResponse = components["schemas"]["ChannelMetaResponse"];
 
-export type ChannelInfo = {
-  channelId: string;
-  channelTitle?: string;
-  channelDirName: string;
-  metaPath?: string;
-};
-
-export type ChannelsResponse = { channels: ChannelInfo[] };
-
-export type VideoInfo = {
-  videoId: string;
-  title?: string;
-  basename: string;
-  metaPath?: string;
-  paths: {
-    jsonPath: string;
-    txtPath: string;
-    csvPath: string;
-    commentsPath: string;
-    metaPath: string;
-    channelMetaPath: string;
-    errorLogPath: string;
-    audioPath: string;
-  };
-  meta?: {
-    videoId: string;
-    title?: string;
-    channelId?: string;
-    channelTitle?: string;
-    channelUrl?: string;
-    videoUrl?: string;
-    description?: string;
-    publishedAt?: string;
-    languageCode?: string;
-    languageDetection?: string;
-    languageConfidence?: number;
-  };
-};
-
-export type VideosResponse = { channelDirName: string; videos: VideoInfo[] };
-
+export type VideoInfo = components["schemas"]["VideoInfo"];
+export type VideosResponse = components["schemas"]["VideosResponse"];
