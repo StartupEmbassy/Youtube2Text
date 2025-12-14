@@ -140,6 +140,12 @@ Goal: browse outputs + run jobs locally as an admin.
 Implementation note (Phase 1):
 - UI stack: Next.js admin UI in `web/` consuming the existing API runner (SSE for events).
 
+Phase 1 sequencing (do in order):
+1. UI scaffold + API library endpoints (DONE)
+2. UI error handling when API is down (DONE)
+3. OpenAPI contract + generated TS types/client + contract-check workflow (planned) (see `docs/operations/API_CONTRACT.md`)
+4. UI polish (styling consistency, better SSE UX) (planned)
+
 Screens:
 - Dashboard (runs + errors + recent channels/videos)
 - Runs/Queue with real-time progress (from JSON events)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   apiBaseUrl: string;
@@ -11,6 +12,7 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
   const [force, setForce] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "error" | "done">("idle");
   const [message, setMessage] = useState<string>("");
+  const router = useRouter();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,10 +30,17 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
         const text = await res.text();
         throw new Error(`POST /runs failed: ${res.status} ${text}`);
       }
-      setStatus("done");
-      setMessage("Run created. Refresh to see it in the list.");
-      setUrl("");
-      setForce(false);
+      const body = (await res.json()) as any;
+      const runId: string | undefined = body?.run?.runId;
+      if (runId) {
+        router.push(`/runs/${runId}`);
+        router.refresh();
+      } else {
+        setStatus("done");
+        setMessage("Run created. Refresh to see it in the list.");
+        setUrl("");
+        setForce(false);
+      }
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : String(err));
@@ -86,4 +95,3 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
     </form>
   );
 }
-

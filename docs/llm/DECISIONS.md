@@ -188,3 +188,19 @@ Design choices:
   - Runs: `GET /runs`, `GET /runs/:id`, SSE `GET /runs/:id/events`
   - Library: `GET /library/channels`, `GET /library/channels/:channelDirName/videos`, `GET /library/.../:basename/:kind` for artifact viewing
 - Web uses `Y2T_API_BASE_URL` (server-side fetch) and `NEXT_PUBLIC_Y2T_API_BASE_URL` (browser/SSE).
+
+## D-011 - API contract and type generation (Phase 1 - planned)
+
+Decision (planned):
+- Use OpenAPI as the authoritative API contract and generate TypeScript types (and optionally a client) for the Next.js UI.
+- Add a "contract check" command that fails if generated artifacts are out-of-date, preventing endpoint/type drift.
+
+Rationale:
+- The API surface will grow (runs control, library search, config validation).
+- We do not want `web/` to duplicate API types forever, and we do not want hand-maintained docs/specs to drift.
+
+Operational rule:
+- Any change to endpoints or request/response JSON must update the OpenAPI spec and keep `npm run api:contract:check` passing.
+
+Reference:
+- See `docs/operations/API_CONTRACT.md` for the planned workflow and scripts.

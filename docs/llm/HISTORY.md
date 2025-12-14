@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Phase 1 Step 1: add Next.js error boundaries for API-down UX (global + per-route) and improve run creation UX by navigating to the created run detail page; update roadmap/handoff ordering - Files: [web/app/error.tsx, web/app/library/error.tsx, web/app/runs/[runId]/error.tsx, web/app/CreateRunForm.tsx, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Document Phase 1 Step 3 plan: OpenAPI contract + generated TS types/client + contract-check workflow to prevent endpoint/type drift; add operations doc and link from roadmap/handoff/decisions - Files: [docs/operations/API_CONTRACT.md, docs/operations/README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - GPT-5.2 - Phase 1 follow-ups: move Claude web UI review out of HANDOFF into `docs/llm/REVIEWS.md`, improve SSE connected state (use EventSource onopen), and add a simple "Start run" form in the web UI that calls `POST /runs`; update README - Files: [docs/llm/HANDOFF.md, docs/llm/REVIEWS.md, docs/llm/HISTORY.md, web/app/runs/[runId]/RunEvents.tsx, web/app/CreateRunForm.tsx, web/app/page.tsx, README.md] - Version impact: no
 
 2025-12-14 - Claude - Review GPT Phase 1 web UI scaffold: document positives (Next.js 14 RSC, standalone Docker, clean separation, StorageAdapter reuse) and areas to improve (type duplication, no error handling, no run creation form, mixed styling, no SSE reconnect) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

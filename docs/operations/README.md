@@ -10,3 +10,6 @@ Suggested sections for each runbook:
 5. Contact or escalation information
 
 Create new documents in this directory as your operational footprint grows.
+
+Planned:
+- `docs/operations/API_CONTRACT.md` - OpenAPI + generated types/client + contract-check workflow to prevent endpoint/type drift.

@@ -72,6 +72,7 @@ In progress:
 3. Phase 0: persist API runs/events on disk (restart-safe) - DONE
 4. Phase 0: Dockerize API runner (service-style deployment) - DONE
 5. Phase 1: local-first web UI (reads `output/`, consumes JSON events)
+   - Planned step: add OpenAPI + generated TS types/client + contract-check workflow to prevent endpoint/type drift (see `docs/operations/API_CONTRACT.md`)
 6. Future: scheduled sync/cron to auto-check followed channels and enqueue new videos
 
 ## References
