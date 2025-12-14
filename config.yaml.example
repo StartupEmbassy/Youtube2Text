@@ -18,6 +18,4 @@ assemblyAiMinBalanceMinutes: 60
 commentsEnabled: false
 commentsMax:
 ytDlpPath:
-ytDlpExtraArgs:
-  - "--extractor-args"
-  - "youtube:player_client=android"
+ytDlpExtraArgs: []

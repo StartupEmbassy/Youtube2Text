@@ -15,7 +15,7 @@ runs:
     commentsEnabled: false
     commentsMax:
     ytDlpPath:
-    ytDlpExtraArgs: ["--extractor-args","youtube:player_client=android"]
+    ytDlpExtraArgs: []
 
   - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
     maxVideos: 5
@@ -32,4 +32,4 @@ runs:
     commentsMax: 200
     force: false
     ytDlpPath:
-    ytDlpExtraArgs: ["--extractor-args","youtube:player_client=android"]
+    ytDlpExtraArgs: []

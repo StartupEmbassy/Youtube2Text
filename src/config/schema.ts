@@ -23,10 +23,7 @@ export const configSchema = z.object({
   downloadRetries: z.number().int().nonnegative().default(2),
   transcriptionRetries: z.number().int().nonnegative().default(2),
   ytDlpPath: z.string().optional(),
-  ytDlpExtraArgs: z.array(z.string()).default([
-    "--extractor-args",
-    "youtube:player_client=android",
-  ]),
+  ytDlpExtraArgs: z.array(z.string()).default([]),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

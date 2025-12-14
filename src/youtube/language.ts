@@ -50,13 +50,13 @@ const YT_TO_ASSEMBLYAI: Record<string, string> = {
 
 export function mapToAssemblyAiLanguageCode(ytLang: string): string | undefined {
   const normalized = ytLang.toLowerCase();
-  if (YT_TO_ASSEMBLYAI[normalized]) {
-    return YT_TO_ASSEMBLYAI[normalized];
-  }
-  const primary = normalized.split("-")[0];
-  if (YT_TO_ASSEMBLYAI[primary]) {
-    return YT_TO_ASSEMBLYAI[primary];
-  }
+  const direct = YT_TO_ASSEMBLYAI[normalized];
+  if (direct) return direct;
+
+  const primary = normalized.split("-")[0] ?? normalized;
+  const primaryMapped = YT_TO_ASSEMBLYAI[primary];
+  if (primaryMapped) return primaryMapped;
+
   if (ASSEMBLYAI_SUPPORTED.has(primary)) {
     return primary;
   }

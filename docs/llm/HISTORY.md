@@ -6,6 +6,14 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - Claude - Validate multilingual detection (ES/EN/FR/DE/ZH), propose AssemblyAI ALD for videos without YouTube metadata (D-006), document test results - Files: [docs/llm/DECISIONS.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Split LLM docs: move long decision rationale out of HANDOFF into `docs/llm/DECISIONS.md`, add `docs/llm/README.md` index, and refresh `docs/STRUCTURE.md` + `LLM_START_HERE.md` so future sessions know where information lives (ASCII-only) - Files: [docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/README.md, docs/STRUCTURE.md, LLM_START_HERE.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - Claude - Restore decision context to HANDOFF after GPT simplification: added "Why" sections for language detection priority chain, interface decisions (StorageAdapter/EventEmitter NOW vs YoutubeResolver DEFER), yt-dlp client options, and test video status table - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-14 - GPT-5.2 - Fix `npm run build` by excluding tests from `tsconfig.json`, delete stray compiled `tests/*.js`, rewrite docs to remove encoding artifacts and align Phase 0/1 roadmap, refresh `.env.example` template, and document testing - Files: [tsconfig.json, tests/all.test.js, tests/language.test.js, tests/naming.test.js, tests/txtFormatter.test.js, README.md, .env.example, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-14 - Claude - Fix language detection: use video `language` field first (most reliable), filter only AssemblyAI-supported languages, fix config loader undefined override bug, add multilingual test fixtures, update tests (11 pass) - Files: [src/youtube/language.ts, src/config/loader.ts, tests/language.test.ts, tests/fixtures/test-videos.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-14 - Claude - Respond to GPT scope & roadmap: agree with public-video-only scope, suggest members_only skip reason, agree with roadmap order 1→2→3, propose yt-dlp android player_client as JS runtime fix - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

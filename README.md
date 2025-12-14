@@ -47,7 +47,7 @@ When deploying to a server or container, ensure `yt-dlp` is installed in that en
 ### Troubleshooting yt-dlp on Windows
 
 If you installed `yt-dlp` via `winget`, PowerShell can sometimes resolve it via an alias while child processes (like Node.js) cannot.
-If Youtube2Text reports “yt-dlp not found” but `yt-dlp --version` works in your shell, restart the shell or ensure the real `yt-dlp.exe` path is on PATH.
+If Youtube2Text reports "yt-dlp not found" but `yt-dlp --version` works in your shell, restart the shell or ensure the real `yt-dlp.exe` path is on PATH.
 The pipeline also attempts to resolve the executable via PowerShell automatically.
 
 If VSCode's integrated terminal still cannot find it, set an explicit path:
@@ -62,6 +62,17 @@ You can also pass an explicit path via CLI or `runs.yaml`:
 ```powershell
 npm run dev -- --ytDlpPath "C:\Users\cdela\AppData\Local\Microsoft\WinGet\Links\yt-dlp.exe"
 ```
+
+### yt-dlp extractor warnings (public videos)
+
+If you see warnings about a missing JavaScript runtime (EJS), you can optionally set `YT_DLP_EXTRA_ARGS` to use a different YouTube player client.
+
+- Conservative option (often silences warnings):
+  - `YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=default"]`
+- More aggressive option (may avoid extractor JS entirely, but can require additional YouTube tokens depending on upstream changes):
+  - `YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=android"]`
+
+If downloads fail after changing this, set `YT_DLP_EXTRA_ARGS=[]` to revert to yt-dlp defaults.
 
 ## Configuration
 
@@ -91,14 +102,14 @@ ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
 ASSEMBLYAI_MIN_BALANCE_MINUTES=60
 COMMENTS_ENABLED=false
 COMMENTS_MAX=
-YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=android"]
+YT_DLP_EXTRA_ARGS=[]
 ```
 
 Example files:
 
-- `.env.example` — template of supported env vars (copy to `.env`).
-- `config.yaml.example` — optional non-secret defaults (copy to `config.yaml`).
-- `runs.yaml.example` — optional batch runs template (copy to `runs.yaml` or `runs.yml`).
+- `.env.example` - template of supported env vars (copy to `.env`).
+- `config.yaml.example` - optional non-secret defaults (copy to `config.yaml`).
+- `runs.yaml.example` - optional batch runs template (copy to `runs.yaml` or `runs.yml`).
 
 ## CLI Usage
 
@@ -200,3 +211,17 @@ output/<channel_id>/_errors.jsonl
 - Alternative `TranscriptionProvider` implementations.
 - Semantic post-processing: summarization, topic clustering.
 - React dashboard to browse and interact with local outputs.
+
+## Testing
+
+Run unit tests:
+
+```powershell
+npm test
+```
+
+Build TypeScript output:
+
+```powershell
+npm run build
+```

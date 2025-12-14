@@ -8,7 +8,8 @@ Recommended reading order:
 1. This file (rules, workflows, and current expectations)
 2. docs/PROJECT_CONTEXT.md (vision, architecture, current state)
 3. docs/VERSIONING_RULES.md (version management policy)
-4. docs/llm/HANDOFF.md (current work state and priorities)
+4. docs/llm/README.md (LLM docs index)
+5. docs/llm/HANDOFF.md (current work state and priorities)
 
 ## Critical Rules (Non-Negotiable)
 
@@ -40,16 +41,16 @@ Recommended reading order:
 - Synchronize version numbers across related files when changes span multiple scripts.
 
 ### Environment Files (If Applicable)
-- Do not edit generated .env.example files directly.
-- Never change or remove existing credentials in .env or equivalent secret stores.
-- If a new variable is needed, document it in the relevant README and ask the user to add it manually.
+- It is OK to update `.env.example` to reflect supported configuration (never commit real credentials).
+- Never commit real credentials in `.env` or elsewhere.
+- If a new variable is needed, document it in README and `docs/llm/HANDOFF.md`.
 
 ## Current Focus (Snapshot)
 
 Source of truth: docs/llm/HANDOFF.md.
-- Last Updated: 2025-12-14 - Claude
-- Working on: Language detection bug fixes and validation
-- Status: MVP CLI complete. Language detection fixed. 11 unit tests passing. E2E validated with Spanish video.
+- Last Updated: 2025-12-14 - GPT-5.2
+- Working on: Phase 0 core service hardening (no web UI)
+- Status: Build + unit tests passing; next is yt-dlp reliability and minimal HTTP API runner.
 
 Keep this section synchronized with the "Current Status" block in docs/llm/HANDOFF.md.
 
@@ -72,8 +73,10 @@ Keep this section synchronized with the "Current Status" block in docs/llm/HANDO
 ## Quick Navigation
 - Project Overview: docs/PROJECT_CONTEXT.md
 - Version Rules: docs/VERSIONING_RULES.md
+- LLM Docs Index: docs/llm/README.md
 - Current Work State: docs/llm/HANDOFF.md
 - Change History: docs/llm/HISTORY.md
+- Decision Rationale: docs/llm/DECISIONS.md
 - Runbooks: docs/operations/
 
 ## LLM-to-LLM Communication

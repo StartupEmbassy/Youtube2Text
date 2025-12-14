@@ -1,14 +1,14 @@
 # Project Context - Youtube2Text
 
 ## Vision
-Build a modular local-first pipeline to turn YouTube channel audio into speaker‑diarized transcripts, stored on disk in structured formats for later analysis and UI browsing.
+Build a modular local-first pipeline to turn YouTube channel audio into speaker-diarized transcripts, stored on disk in structured formats for later analysis and UI browsing.
 
 ## Objectives
 1. Provide a CLI that accepts a public YouTube channel, playlist, or video URL with optional filters (date, max videos).
 2. Enumerate videos reliably without requiring YouTube API keys.
 3. Download audio-only tracks per video using `yt-dlp`.
 4. Transcribe audio via AssemblyAI with speaker diarization enabled.
-5. Persist results as `.json` plus clean, speaker-labeled `.txt`, with optional `.csv` export.
+5. Persist results as `.json` plus clean, speaker-labeled `.txt` (timestamps + wrapping), with optional `.csv` export.
 6. Ensure idempotency and robust fault handling (skip already processed videos, retry transient failures).
 
 ## Stakeholders
@@ -31,41 +31,42 @@ Stages:
 This separation keeps the pipeline local-first and makes later extensions straightforward:
 - replace AssemblyAI with another provider,
 - add semantic post-processing (summaries/topics),
-- attach a React dashboard that reads stored outputs only.
+- attach a web dashboard that reads stored outputs only,
 - package the pipeline for deployment (planned: Docker image that includes `yt-dlp`).
 
 ## Key Components
 | Component | Purpose | Owner | Notes |
 |-----------|---------|-------|-------|
-| InputResolver | Channel/playlist → video list | TBD | Uses `yt-dlp --flat-playlist`. |
-| AudioExtractor | Video → local audio file | TBD | Wraps `yt-dlp` for audio-only download. |
-| TranscriptionProvider | Audio → diarized transcript | TBD | AssemblyAI v1 implementation first. |
-| Formatter | Transcript → txt/csv | TBD | Speaker-labeled output. |
-| Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_id>/<video_id>.*`. |
+| InputResolver | Channel/playlist -> video list | TBD | Uses `yt-dlp --flat-playlist`. |
+| AudioExtractor | Video -> local audio file | TBD | Wraps `yt-dlp` for audio-only download. |
+| TranscriptionProvider | Audio -> diarized transcript | TBD | AssemblyAI v1 implementation first. |
+| Formatter | Transcript -> txt/csv | TBD | Speaker-labeled output. |
+| Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
 ## Current Status (2025-12-14)
-MVP CLI fully functional. Language detection working correctly with AssemblyAI integration.
+MVP CLI is functional. The core is being hardened so it can be embedded as a service later without breaking CLI usage.
 
-**Completed:**
-- ✅ Node.js + TypeScript CLI with Commander
-- ✅ YouTube enumeration via yt-dlp (channels, playlists, single videos)
-- ✅ Audio download with retry logic
-- ✅ AssemblyAI transcription with speaker diarization
-- ✅ Output formatters (JSON, TXT with timestamps, CSV)
-- ✅ Language auto-detection from video metadata
-- ✅ Unit tests (11 tests passing)
-- ✅ E2E validation with multilingual videos
+Completed:
+- CLI supports channel/playlist/single-video URLs
+- Audio download via `yt-dlp`, cached locally
+- AssemblyAI diarized transcription
+- Outputs: `.json`, readable `.txt`, optional `.csv`
+- Optional comments dump via `yt-dlp` into `.comments.json` (non-fatal)
+- Per-video `.meta.json` and per-channel `_channel.json` sidecars for browsing/indexing
+- Structured JSONL events via `--json-events` (for a future service/UI)
+- Language auto-detection via yt-dlp metadata/captions (with manual override)
+- Unit tests for naming/language/txt formatting
 
-**In Progress:**
-- Web Platform Phase 0 (local-first MVP)
+In progress:
+- Phase 0: core service hardening (no web UI yet)
 
-## Upcoming Milestones
-1. ~~Scaffold Node.js + TypeScript project and CLI skeleton.~~ ✅ DONE
-2. ~~Implement YouTube enumeration and audio download modules.~~ ✅ DONE
-3. ~~Implement AssemblyAI transcription provider and formatters.~~ ✅ DONE
-4. ~~Add idempotency, retry tests, and documentation polish.~~ ✅ DONE
-5. Begin Web Platform Phase 0 (Next.js local-first UI)
+## Roadmap / Milestones (Do in order)
+1. Phase 0: yt-dlp reliability hardening (public videos only)
+2. Phase 0: minimal HTTP API runner (start run + stream events + list artifacts)
+3. Phase 0: Dockerize after API exists (service-style deployment)
+4. Phase 1: local-first web UI (reads `output/`, consumes JSON events)
+5. Future: scheduled sync/cron to auto-check followed channels and enqueue new videos
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/

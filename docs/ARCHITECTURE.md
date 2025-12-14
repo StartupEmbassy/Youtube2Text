@@ -1,44 +1,42 @@
-# Youtube2Text Web Platform Architecture
+# Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.0-draft  
-> Last Updated: 2025-12-12  
-> Status: Design Phase  
-> Authors: Claude + GPT‑5.2 (merged; viewpoints preserved)
+> Version: 1.1.1-draft
+> Last Updated: 2025-12-14
+> Status: Design / Roadmap
+> Authors: Claude + GPT-5.2 (viewpoints preserved)
 
 ## Overview
 
-Youtube2Text currently ships as a standalone CLI pipeline. This document describes how to evolve it into:
-1. A **service/API** that can be called from n8n/Zapier or other interfaces.
-2. A **local-first web UI** on top of that service.
-3. A **multi-tenant cloud platform** with private workspaces per user.
+Youtube2Text ships today as a standalone CLI pipeline. The roadmap evolves it into:
+1. A core library that can run as CLI or as a service (Phase 0).
+2. A local-first web UI that reads existing outputs and can run jobs (Phase 1).
+3. A multi-tenant cloud platform (Phase 2+).
 
-### Non‑negotiables
+## Non-negotiables
 
-- **CLI independence**: the CLI must remain fully functional and usable without the web platform.
-- **Shared core**: web/service layers reuse CLI modules; the core never depends on web code.
-- **Local-first path to cloud**: validate UX locally before committing to cloud infra.
+- CLI independence: the CLI must remain fully functional and usable without any web code.
+- Shared core: web/service layers reuse the same core modules; core never depends on web.
+- Local-first path to cloud: validate correctness + UX locally before committing to cloud infra.
+- Public videos only: no cookies ingestion/refresh; members-only/private content is out of scope.
 
-### Review Notes (Claude vs GPT‑5.2)
+## Claude vs GPT Notes (kept explicit)
 
-**Claude (original intent):**
-- Cloud-first multi-tenant platform (Next.js + Supabase + R2 + Redis/BullMQ).
-- Import CLI core as a library inside workers.
+Claude (original intent):
+- Cloud-first multi-tenant platform (Next.js + Supabase + object storage + Redis/BullMQ).
+- Import the CLI core as a library inside workers.
 - RLS everywhere for isolation.
-- Web Phase 0 MVP to validate UX.
+- UI early to validate UX.
 
-**GPT‑5.2 (complement / adjustment):**
-- Insert a **core hardening/service-first Phase 0** before any UI.
-- Make structured progress **events a first-class contract**, not log parsing.
-- Promote channel-level RAG and Markdown export earlier because they are core to user workflow.
-- Preserve CLI defaults; new capabilities are opt-in flags/config.
+GPT-5.2 (adjustment):
+- Insert a core hardening/service-first Phase 0 before any UI.
+- Treat structured progress events as a first-class contract (no log parsing).
+- Keep CLI behavior identical by default; new capabilities are opt-in flags/config.
 
----
-
-## System Architecture (High Level)
+## System Architecture (high level)
 
 Layers:
 
-1. **Core Pipeline (shared)**
+1. Core pipeline (shared)
    - YouTube enumeration + metadata
    - Audio extraction
    - ASR provider(s)
@@ -46,246 +44,107 @@ Layers:
    - Storage abstraction
    - Progress/event emission
 
-2. **Service/API Layer**
-   - Accepts URL + config
-   - Starts jobs (sync/transcribe)
-   - Streams events (SSE/WebSocket)
-   - Returns artifact locations for each video
+2. Runners (thin shells)
+   - CLI runner (current)
+   - Future HTTP API runner
+   - Future worker runner (cloud)
 
-3. **UI Layer**
-   - Local-first admin UI (Phase 1)
-   - Cloud multi-tenant UI (Phase 2+)
+3. UI
+   - Phase 1 local-first web UI
+   - Phase 2+ cloud UI
 
-**Key point:** the service and UI are replaceable shells around the same core.
-
----
-
-## Technology Stack
-
-### Phase 1 (local-first MVP)
-
-**Claude proposal (accepted):**
-- Next.js App Router in `web/`
-- Tailwind + shadcn/ui
-- wavesurfer.js for waveform audio
-- Simple local password auth for admin
-- Service uses local filesystem adapter
-
-### Phase 2+ (cloud)
-
-**Claude proposal (accepted with minor adjustments):**
-- Next.js (Vercel)
-- Supabase Postgres + Auth + Realtime
-- Cloudflare R2 for audio/transcripts
-- Upstash Redis + BullMQ workers
-- Optional OpenRouter (or configurable LLM providers)
-
----
+Key point: the service and UI are replaceable shells around the same core.
 
 ## Storage Strategy
 
-### Local-first (Phase 0–1)
+Local-first artifacts on disk. Current layout:
 
-Artifacts on disk, namespaced for future multi-tenancy:
+- `output/<channel_title_slug>__<channel_id>/<basename>.json`
+- `output/<channel_title_slug>__<channel_id>/<basename>.txt`
+- `output/<channel_title_slug>__<channel_id>/<basename>.csv` (optional)
+- `output/<channel_title_slug>__<channel_id>/<basename>.comments.json` (optional, non-fatal)
+- `output/<channel_title_slug>__<channel_id>/<basename>.meta.json` (sidecar for indexing/browsing)
+- `output/<channel_title_slug>__<channel_id>/_channel.json` (per-channel metadata)
+- `audio/<channel_title_slug>__<channel_id>/<basename>.<ext>`
 
-```
-output/<user_id>/<channel_title_slug>__<channel_id>/<basename>.json
-output/<user_id>/<channel_title_slug>__<channel_id>/<basename>.txt
-output/<user_id>/<channel_title_slug>__<channel_id>/<basename>.csv
-output/<user_id>/<channel_title_slug>__<channel_id>/<basename>.comments.json
-audio/<user_id>/<channel_title_slug>__<channel_id>/<basename>.mp3
-```
+Future multi-tenancy (Phase 2+) can wrap the same structure under a `user_id` prefix:
+`output/<user_id>/...` and `audio/<user_id>/...`.
 
-Where `<basename>` follows `filenameStyle`:
-- `id` → `<video_id>`
-- `id_title` → `<video_id>__<title_slug>`
-- `title_id` (default) → `<title_slug>__<video_id>`
+## Events Contract
 
-### Cloud (Phase 2+)
+Core emits structured events via a `PipelineEventEmitter` port. Example event types:
 
-- Large artifacts stored in R2 using the same key layout.
-- Postgres stores indexes for:
-  - users, sources/channels, videos
-  - runs/jobs + per-video stage state
-  - errors
-  - exports
-  - embeddings/chunks
-- Idempotency uses DB + expected artifact keys, not hard-coded filenames.
+- `run:start`, `run:done`
+- `video:start`, `video:skip`, `video:error`, `video:done`
+- `video:stage` (download|upload|transcribe|format|comments|save)
 
----
+Runners decide how to consume events:
+- CLI default: human logs to stdout.
+- CLI `--json-events`: JSONL events to stdout (logs to stderr).
+- API runner: translate events to SSE/WebSocket streams.
 
-## Job Processing & Events
+## Transcription, Language Handling, Credits
 
-### Event Contract (Claude sketch, adopted)
+Transcription is abstracted via a `TranscriptionProvider` (AssemblyAI first).
 
-Core emits structured events via a `PipelineEventEmitter` port:
+Language handling requirement: non-English videos transcribe poorly when forced to `en_us`.
 
-```
-run:start
-video:start
-video:stage (download|upload|transcribe|format|comments|save)
-video:skip
-video:error
-video:done
-run:done
-```
+Implemented approach (Phase 0, no new dependencies):
+1. Manual override (`--language` / `languageCode`) when desired.
+2. Otherwise auto-detect per video using yt-dlp metadata priority:
+   - `metadata.language` (most reliable)
+   - `subtitles` (manually uploaded)
+   - `automatic_captions` (filtered to AssemblyAI-supported codes)
+3. Fall back to configured default `languageCode`, with explicit warning log.
 
-Payload includes: `user_id`, `channel_id`, `video_id`, `index`, `total`, `stage`, `timestamp`, `message`.
+Persist detected language in per-video `.meta.json` for later UI/RAG use.
 
-### CLI integration
+Credits behavior:
+- Preflight account/balance check is best-effort (warn/abort/none).
+- Hard stop on "insufficient credits" errors is mandatory.
 
-- Default emitter prints human logs (current behavior).
-- Optional flag `--json-events` switches emitter to JSON lines on stdout.
+## Phases / Roadmap (counted, sequential)
 
-### Cloud workers (Claude proposal)
+### Phase 0 - Core service hardening (no web UI)
 
-- BullMQ queue in Redis.
-- Worker runs core pipeline with:
-  - R2 storage adapter
-  - JSON/SSE event emitter
-  - DB stage updates
+Completed:
+1. PipelineEventEmitter + CLI `--json-events`.
+2. StorageAdapter + filesystem implementation for reading existing `output/`.
+3. Sidecar metadata (`_channel.json`, `<basename>.meta.json`) for indexing/browsing.
+4. Language auto-detection (metadata/captions) + unit tests.
 
----
+Remaining (do in order):
+5. yt-dlp reliability hardening (public videos only)
+   - Keep `ytDlpExtraArgs` configurable.
+   - Recommended: `["--extractor-args","youtube:player_client=default"]` when you hit EJS warnings.
+   - Do not default to `youtube:player_client=android` (can require extra YouTube tokens and break public downloads).
+6. Minimal HTTP API runner (service shell around core)
+   - `POST /runs` to start a run
+   - `GET /runs/:id/events` (SSE) to stream JSON events
+   - `GET /runs/:id/artifacts` to list produced outputs
+7. Dockerize once the API exists
+   - Image bundles Node + yt-dlp + ffmpeg
+   - Volumes for `output/` and `audio/`
+8. Future reminder: scheduled sync/cron
+   - periodically enumerate followed channels and enqueue newly published videos
 
-## Transcription, Language Handling & Credits
+Exit criteria: core still runs as CLI exactly like today and can be embedded in a service with structured events.
 
-### ASR Provider Port
+### Phase 1 - Local-first web UI (kept from Claude, moved later)
 
-`TranscriptionProvider` is injected into the pipeline (default AssemblyAI). This allows future providers without modifying core logic.
-
-### Language Detection (user requirement)
-
-Problem: Spanish videos transcribed poorly when forced to `en_us`.
-
-Plan:
-- **Auto-detect language per video** in Phase 0:
-  1. Prefer `yt-dlp` metadata fields if present (e.g., `language`, `tags`, `categories`).
-  2. Fallback to lightweight language detection over video title/description/comments.
-- Map detected language to AssemblyAI `language_code`.
-- Allow override via config/CLI for deterministic runs.
-- Persist detected language in video metadata for later UI/RAG use.
-
-### Credits behavior
-
-- Preflight check via `/account` is best-effort.
-- Hard stop on “insufficient credits” errors is mandatory.
-
----
-
-## LLM Integration
-
-### Phase 1 MVP
-
-- Per-video chat using full transcript + description + comments context.
-
-### Phase 2+ Core Requirement
-
-Channel-level “Ask the channel”:
-- Index per user + channel.
-- Chunk transcripts with timestamps and metadata.
-- Retrieve top‑k chunks → answer with citations.
-
----
-
-## Web UI (kept from Claude, rephased)
-
-### Phase 1 Local‑First UI
+Goal: browse outputs + run jobs locally as an admin.
 
 Screens:
 - Dashboard (runs + errors + recent channels/videos)
 - Runs/Queue with real-time progress (from JSON events)
-- Channel library with filters/search
-- Video view: audio player + diarized transcript + comments tab + export buttons
+- Channel library with filters/search (reads `output/`)
+- Video view: audio player + transcript + comments tab + exports
 
-### Phase 2+ Multi‑Tenant UI
+### Phase 2+ - Cloud multi-tenant platform (optional)
 
 Add:
-- User auth (Google OAuth)
-- Private workspaces per user
-- Admin user management + limits (foundation for future billing)
-- Usage tracking
-
----
-
-## Deployment
-
-**Claude proposal (accepted):**
-- Local Phase 1: `web/` runs on your machine; service spawns CLI locally.
-- Cloud Phase 2+: Vercel for web/API, Railway/Render (or equivalent) for BullMQ workers, Supabase + R2 + Upstash as managed services.
-
----
-
-## Implementation Phases
-
-### Phase 0: Core Service Hardening (before any UI)
-
-**Claude suggestions we adopt:**
-- Add `PipelineEventEmitter` port to the pipeline.
-- Add `--json-events` CLI flag.
-- Add `StorageAdapter` port with default filesystem adapter.
-- Wire `TranscriptionProvider` via DI.
-
-**GPT‑5.2 additions:**
-- Keep CLI behavior identical by default.
-- Define minimal service/API runner contract (no UI).
-- Implement **language auto-detection** and mapping to ASR language codes.
-- Add **scheduled sync (cron)** as a future capability: periodically enumerate followed channels and enqueue new videos for processing.
-
-Exit criteria: core works as CLI exactly like today and can be embedded in a service with structured events.
-
-### Phase 1: Local‑First Web MVP (Claude detailed plan)
-
-**1.1 Project Setup**  
-Next.js `web/`, Tailwind + shadcn/ui, local admin auth.
-
-**1.2 Channel Library**  
-LocalStorageAdapter, scan output folders, channel/video list UI.
-
-**1.3 Video Viewer**  
-Audio streaming, waveform, timestamp seek, speaker coloring, comments tab.
-
-**1.4 Pipeline Runner UI**  
-Spawn CLI with `--json-events`, SSE to UI, progress dashboard.
-
-**1.5 Chat & Markdown Export**  
-Per-video chat, per-video MD export, per-channel MD with index.
-
-### Phase 2: Cloud Foundation
-
-Supabase schema + RLS, R2 bucket, OAuth auth, API routes.
-
-### Phase 3: Sources & Videos (cloud)
-
-CRUD sources, sync/enumeration jobs, video browsing in cloud UI.
-
-### Phase 4: Cloud Processing Pipeline
-
-BullMQ workers, audio → R2, AssemblyAI jobs, realtime progress.
-
-### Phase 5: Video Player & Search
-
-Waveform playback, transcript search, UI polish.
-
-### Phase 6: LLM Chat & Channel RAG
-
-Provider config, streaming chat, channel semantic search/RAG.
-
-### Phase 7: Webhooks & Export
-
-Webhook system, exports (JSON/TXT/CSV/MD/ZIP).
-
-### Phase 8: Polish & Optimization
-
-Recovery, performance, usage tracking.
-
-### Phase 9: Beta Launch
-
-Security review, monitoring, onboarding.
-
----
-
-## Open Questions
-
-- Which language detection heuristic is preferred for Phase 0 fallback?
-- Do we want language detection to be per‑video or per‑channel default with overrides?
-- Preferred LLM provider for Phase 1 per-video chat.
+- user auth + private workspaces per user
+- persistent DB indexes (runs/jobs, channels, videos, errors)
+- object storage for artifacts
+- workers/queues for background processing
+- usage tracking + admin controls (foundation for future billing)
