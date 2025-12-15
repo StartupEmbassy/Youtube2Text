@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <div className="container">
           <div className="nav">
-            <strong>Youtube2Text</strong>
+            <Link href="/"><strong>Youtube2Text</strong></Link>
             <Link href="/">Runs</Link>
             <Link href="/library">Library</Link>
             <span className="muted mlAuto">

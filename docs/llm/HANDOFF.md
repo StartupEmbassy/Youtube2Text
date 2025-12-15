@@ -15,6 +15,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Phase 1 DONE: Next.js admin UI (Runs + Library) with SSE, OpenAPI contract/typegen, and live runs list.
 - Outputs expanded: `.json` (canonical) + `.txt` + `.md` + `.jsonl` (+ optional `.csv`, `.comments.json`, `.meta.json`).
 - Web UX: "Open downloads" shortcuts, more descriptive run labels, thumbnails across Runs/Library.
+- Run detail: summarized status/progress + downloads list (no raw artifacts JSON) and improved error display.
 - Ops: contract check (`npm run api:contract:check`) + docker smoke test (`npm run test:docker-smoke`).
 
 ## Roadmap (Do In Order)

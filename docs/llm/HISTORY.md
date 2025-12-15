@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-14 - GPT-5.2 - Web UX: make navbar brand link to `/`, and make Run detail actually usable (status/progress summary, per-video downloads list, and clearer error display instead of raw artifacts JSON); bump version to 0.5.4 - Files: [web/app/layout.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HANDOFF.md, openapi.yaml, web/lib/apiTypes.gen.ts, docs/VERSIONING_RULES.md, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.5.3 -> 0.5.4)
+
 2025-12-14 - GPT-5.2 - Docs polish: update HANDOFF goal to Phase 2, shorten "What Changed Recently", and clear stale open questions; bump version to 0.5.3 - Files: [docs/llm/HANDOFF.md, openapi.yaml, web/lib/apiTypes.gen.ts, docs/VERSIONING_RULES.md, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.5.2 -> 0.5.3)
 
 2025-12-14 - GPT-5.2 - Fix thumbnails/title on runs: make `.thumb` constrain image size (block element), and add run thumbnail/title fallbacks from artifacts or direct video URL parsing (watch/shorts/youtu.be); bump version to 0.5.2 - Files: [web/app/globals.css, web/app/RunsLive.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HANDOFF.md, openapi.yaml, web/lib/apiTypes.gen.ts, docs/VERSIONING_RULES.md, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.5.1 -> 0.5.2)

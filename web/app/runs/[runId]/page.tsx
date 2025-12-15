@@ -4,7 +4,16 @@ import type { RunRecord } from "../../../lib/apiSchema";
 import { RunEvents } from "./RunEvents";
 
 type RunResponse = { run: RunRecord };
-type ArtifactsResponse = { run: RunRecord; artifacts: unknown };
+type ArtifactVideo = {
+  videoId: string;
+  title?: string;
+  basename: string;
+  meta?: { description?: string };
+};
+type ArtifactsResponse = {
+  run: RunRecord;
+  artifacts: { channelDirName?: string; videos?: ArtifactVideo[] };
+};
 
 function youtubeThumb(videoId: string): string {
   return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
@@ -61,6 +70,8 @@ export default async function RunPage({ params }: { params: { runId: string } })
   const previewVideoId =
     runData.run.previewVideoId ?? firstVideo?.videoId ?? tryExtractVideoId(runData.run.inputUrl);
   const previewTitle = runData.run.previewTitle ?? firstVideo?.title;
+  const stats = runData.run.stats;
+  const channelDirName = runData.run.channelDirName;
 
   return (
     <div>
@@ -111,19 +122,72 @@ export default async function RunPage({ params }: { params: { runId: string } })
         <div className="spacer10" />
         <div className="muted">Status</div>
         <div>{runData.run.status}</div>
+        {stats && (
+          <>
+            <div className="spacer10" />
+            <div className="muted">Progress</div>
+            <div>
+              {stats.succeeded} ok, {stats.skipped} skipped, {stats.failed} failed / {stats.total} total
+            </div>
+          </>
+        )}
+        {runData.run.error && (
+          <>
+            <div className="spacer10" />
+            <div className="muted">Error</div>
+            <div className="textBad break">{runData.run.error}</div>
+            <div className="muted mt8">See Events below for details.</div>
+          </>
+        )}
       </div>
 
       <div className="stack">
         <div className="card">
           <div className="row mb10">
-            <strong>Artifacts</strong>
+            <strong>Downloads</strong>
             {channelLink && (
               <Link className="pill" href={channelLink}>
                 Library
               </Link>
             )}
           </div>
-          <pre className="preWrap">{JSON.stringify(artifactsData.artifacts, null, 2)}</pre>
+          {!channelDirName ? (
+            <p className="muted">No channel artifacts yet (channelDirName unknown).</p>
+          ) : artifactsData.artifacts.videos && artifactsData.artifacts.videos.length > 0 ? (
+            <div className="grid">
+              {artifactsData.artifacts.videos.map((v) => (
+                <div key={v.basename} className="card">
+                  <div className="row">
+                    <strong className="break">{v.title ?? v.videoId}</strong>
+                    <span className="pill">{v.videoId}</span>
+                  </div>
+                  <div className="spacer10" />
+                  <div className="row">
+                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
+                      TXT
+                    </a>
+                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/md`} target="_blank" rel="noreferrer">
+                      MD
+                    </a>
+                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/jsonl`} target="_blank" rel="noreferrer">
+                      JSONL
+                    </a>
+                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/json`} target="_blank" rel="noreferrer">
+                      JSON
+                    </a>
+                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/comments`} target="_blank" rel="noreferrer">
+                      Comments
+                    </a>
+                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/audio`} target="_blank" rel="noreferrer">
+                      Audio
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">No artifacts yet.</p>
+          )}
         </div>
         <div className="card">
           <RunEvents apiBaseUrl={base} runId={runId} />
