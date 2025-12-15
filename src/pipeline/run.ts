@@ -5,6 +5,9 @@ import {
   fetchVideoDescription,
   fetchVideoComments,
   detectLanguageCode,
+  safeChannelThumbnailUrl,
+  fetchVideoMetadata,
+  fetchChannelMetadata,
 } from "../youtube/index.js";
 import { AssemblyAiProvider } from "../transcription/index.js";
 import { formatTxt, formatCsv, formatMd, formatJsonl } from "../formatters/index.js";
@@ -184,9 +187,36 @@ export async function runPipeline(
   if (totalVideos > 0) {
     const channelMetaPath = videoJobs[0]?.paths.channelMetaPath;
     if (channelMetaPath) {
+      let channelThumbnailUrl: string | undefined;
+      const channelUrl = `https://www.youtube.com/channel/${listing.channelId}`;
+      const channelMeta =
+        (await fetchChannelMetadata(channelUrl, ytDlpCommand, ytDlpExtraArgs)) ??
+        undefined;
+      channelThumbnailUrl = safeChannelThumbnailUrl(channelMeta);
+
+      if (!channelThumbnailUrl) {
+        const firstVideoUrl = filteredVideos[0]?.url;
+        if (firstVideoUrl) {
+          const videoMeta = await fetchVideoMetadata(firstVideoUrl, ytDlpCommand, ytDlpExtraArgs);
+          const uploaderUrl =
+            (videoMeta as any)?.uploader_url ||
+            (videoMeta as any)?.channel_url ||
+            undefined;
+          if (typeof uploaderUrl === "string" && uploaderUrl.trim().length > 0) {
+            const chanMeta = await fetchChannelMetadata(
+              uploaderUrl,
+              ytDlpCommand,
+              ytDlpExtraArgs
+            );
+            channelThumbnailUrl = safeChannelThumbnailUrl(chanMeta);
+          }
+        }
+      }
       await saveChannelMetaJson(channelMetaPath, {
         channelId: listing.channelId,
         channelTitle: listing.channelTitle,
+        channelThumbnailUrl,
+        channelUrl,
         inputUrl,
         updatedAt: nowIso(),
       });

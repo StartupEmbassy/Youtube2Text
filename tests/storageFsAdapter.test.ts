@@ -19,6 +19,15 @@ test("FileSystemStorageAdapter.listChannels skips reserved _* directories", asyn
     const channelDir = "some-channel__UC123";
     mkdirSync(join(outputDir, channelDir), { recursive: true });
     writeFileSync(join(outputDir, channelDir, "video__abc123.json"), "{}\n");
+    writeFileSync(
+      join(outputDir, channelDir, "_channel.json"),
+      JSON.stringify({
+        channelId: "UC123",
+        channelTitle: "Some Channel",
+        channelThumbnailUrl: "https://example.com/avatar.jpg",
+        updatedAt: new Date().toISOString(),
+      })
+    );
 
     const adapter = new FileSystemStorageAdapter({
       outputDir,
@@ -29,8 +38,8 @@ test("FileSystemStorageAdapter.listChannels skips reserved _* directories", asyn
 
     assert.equal(channels.length, 1);
     assert.equal(channels[0]!.channelDirName, channelDir);
+    assert.equal(channels[0]!.channelThumbnailUrl, "https://example.com/avatar.jpg");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
-

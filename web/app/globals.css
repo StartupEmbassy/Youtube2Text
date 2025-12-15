@@ -260,3 +260,27 @@ pre {
 .flex1 {
   flex: 1 1 auto;
 }
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  display: block;
+  background: rgba(2, 6, 23, 0.7);
+}
+
+.avatarFallback {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(2, 6, 23, 0.7);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+}

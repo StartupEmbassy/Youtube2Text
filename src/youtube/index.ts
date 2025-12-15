@@ -5,5 +5,6 @@ export { fetchVideoMetadata } from "./metadata.js";
 export type { YoutubeVideoMetadata } from "./metadata.js";
 export { fetchVideoComments } from "./comments.js";
 export { detectLanguageCode } from "./language.js";
+export { safeChannelThumbnailUrl, fetchChannelMetadata } from "./channel.js";
 export { YtDlpError, parseYtDlpFailure } from "./ytDlpErrors.js";
 export type { YoutubeListing, YoutubeVideo } from "./types.js";

@@ -164,11 +164,11 @@ Goal: deploy Youtube2Text for one admin workspace (no public signup) while keepi
 Add:
 
 Phase 2.1 - Integration MVP (API-first; do in order):
-1) X-API-Key auth for API + admin UI (env `Y2T_API_KEY`)
-2) `POST /runs/plan` to enumerate + skip counts + estimate without transcribing
-3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`)
-4) Cache-first for single-video URLs (return cached artifacts unless `force`)
-5) Integration docs (`INTEGRATION.md`) with curl + n8n examples
+1) X-API-Key auth for API + admin UI (env `Y2T_API_KEY`) - DONE (v0.6.0)
+2) `POST /runs/plan` to enumerate + skip counts + estimate without transcribing - DONE (v0.6.0)
+3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`) - DONE (v0.7.0)
+4) Cache-first for single-video URLs (return cached artifacts unless `force`) - DONE (v0.8.0)
+5) Integration docs (`INTEGRATION.md`) with curl + n8n examples - DONE
 
 Phase 2.2 - Ops hardening:
 - extended healthcheck (deps + disk)

@@ -8,7 +8,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Current Status
 - Last Updated: 2025-12-15 - GPT-5.2
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.1 Integration MVP execution (keep CLI intact)
+- Goal: Phase 2.2 Ops hardening kickoff (keep CLI intact)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -17,12 +17,13 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Web UX: "Open downloads" shortcuts, more descriptive run labels, thumbnails across Runs/Library.
 - Run detail: summarized status/progress + downloads list (no raw artifacts JSON) and improved error display.
 - Ops: contract check (`npm run api:contract:check`) + docker smoke test (`npm run test:docker-smoke`).
-- Phase 2.1 started: optional API auth via `Y2T_API_KEY` (X-API-Key) + web UI proxies API requests via Next.js route handlers (so the browser does not need the key).
+- Phase 2.1 DONE: integration MVP (API key auth + planning + webhooks + cache-first single-video + integration docs).
+- Library: channel avatars are best-effort from yt-dlp channel metadata (`channelThumbnailUrl` in `_channel.json`); existing channels may require a rerun to populate.
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
 2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - DONE
-3. Phase 2: hosted single-tenant service (admin) - IN PROGRESS (Phase 2.1)
+3. Phase 2: hosted single-tenant service (admin) - IN PROGRESS (Phase 2.2 next)
 4. Phase 3+: multi-tenant cloud platform - OPTIONAL
 
 ## Phase 1 Next Steps (Do In Order)
@@ -51,7 +52,7 @@ Phase 2.1 Integration MVP (do in order):
 2) `POST /runs/plan` (enumerate + skip counts + estimate) without download/transcribe - DONE (v0.6.0)
 3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`, retries + optional signature) - DONE (v0.7.0)
 4) Cache-first for single-video URLs (return `done` immediately unless `force`; channel/playlist runs already skip via idempotency) - DONE (v0.8.0)
-5) Integration docs: `INTEGRATION.md` (curl + n8n examples + artifact download patterns)
+5) Integration docs: `INTEGRATION.md` (curl + n8n examples + artifact download patterns) - DONE
 
 Phase 2.3 Scheduler/watchlist (planned; per-channel or global interval):
 - Maintain a "followed channels" list (per channel URL + optional interval override).

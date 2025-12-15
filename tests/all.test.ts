@@ -11,3 +11,4 @@ import "./apiAuth.test.js";
 import "./apiPlan.test.js";
 import "./apiWebhooks.test.js";
 import "./apiCacheFirst.test.js";
+import "./channelThumbs.test.js";

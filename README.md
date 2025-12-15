@@ -8,6 +8,11 @@ Local-first, modular CLI service that:
 
 The goal is to keep each stage separable and replaceable (e.g., swapping AssemblyAI for another ASR provider, adding semantic post-processing, or attaching a web dashboard).
 
+Quick links:
+- Practical walkthrough: `HOW_TO_USE.md`
+- Integration guide (curl/n8n/webhooks): `INTEGRATION.md`
+- LLM snapshot/roadmap: `docs/llm/HANDOFF.md`
+
 ## Core Capabilities
 
 - Channel/playlist enumeration via `yt-dlp --flat-playlist` (no YouTube API key required).
@@ -18,6 +23,7 @@ The goal is to keep each stage separable and replaceable (e.g., swapping Assembl
 - Optional per-video comments dump via `yt-dlp` into `.comments.json`.
 - Optional per-video metadata sidecar `.meta.json` for browsing/indexing.
 - Fault handling with retries/backoff and per-video error logs.
+- Library UX: channel avatars are best-effort from yt-dlp metadata (stored in `output/<channelDir>/_channel.json`). If a channel folder was created before avatars existed (or before v0.9.2), rerun that channel (or any video from it) once to populate the thumbnail URL.
 
 ## Architecture (High Level)
 

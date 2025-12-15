@@ -1,6 +1,6 @@
 # Repository Structure Guide
 
-This document describes the intended repository layout for Youtube2Text.
+This document describes the current repository layout for Youtube2Text.
 
 ## Top-Level Layout
 
@@ -8,12 +8,15 @@ This document describes the intended repository layout for Youtube2Text.
 <PROJECT_ROOT>/
 +- README.md
 +- LLM_START_HERE.md
++- INTEGRATION.md
++- HOW_TO_USE.md
 +- docs/
 +- src/
 +- scripts/
 +- tests/
 +- output/          # generated
 +- audio/           # generated
++- web/             # Next.js admin UI
 +- .github/
 +- ...
 `
@@ -30,18 +33,20 @@ This document describes the intended repository layout for Youtube2Text.
 | tests/ | Automated tests | Recommended |
 | output/ | Pipeline results by channel/video | Generated |
 | audio/ | Downloaded audio artifacts | Generated |
+| web/ | Next.js admin UI (Phase 1) | Optional |
 | .github/ | Issue/PR templates and workflows | Optional |
 
-## `src/` Modules (planned, current)
+## `src/` Modules (current)
 
 - `src/cli/` - CLI entrypoints and orchestration.
+- `src/api/` - HTTP API runner (SSE, runs persistence, auth, webhooks).
 - `src/config/` - configuration loading from `.env` and optional `config.yaml`/`runs.yaml`.
 - `src/youtube/` - enumeration/metadata/download wrappers around `yt-dlp`.
 - `src/transcription/` - provider interface and AssemblyAI implementation.
-- `src/formatters/` - `.txt` and optional `.csv` generation from transcript JSON.
+- `src/formatters/` - derived artifacts (`.txt`, `.md`, `.jsonl`, optional `.csv`).
 - `src/storage/` - output layout, idempotency checks, and persistence helpers.
-- `src/retry/` - shared retry/backoff utilities.
-- `src/pipeline/` - the orchestrated pipeline with event emission.
+- `src/pipeline/` - the orchestrated pipeline (events, planning, run execution).
+- `src/utils/` - filesystem/exec/logging helpers.
 
 ## Naming Conventions
 
@@ -54,5 +59,6 @@ This document describes the intended repository layout for Youtube2Text.
 ## Onboarding Notes
 
 1. Read `README.md` for usage and configuration.
+2. If integrating: read `INTEGRATION.md`.
 2. Review `docs/PROJECT_CONTEXT.md` and `docs/ARCHITECTURE.md` for roadmap.
 3. Read `docs/llm/README.md` and then `docs/llm/HANDOFF.md` before coding.

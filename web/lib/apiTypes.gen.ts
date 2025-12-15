@@ -638,6 +638,7 @@ export interface components {
             channelId: string;
             channelTitle?: string;
             channelDirName: string;
+            channelThumbnailUrl?: string;
             metaPath?: string;
         };
         ChannelsResponse: {

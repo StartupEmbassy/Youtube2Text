@@ -55,6 +55,7 @@ export class FileSystemStorageAdapter implements StorageAdapter {
       channels.push({
         channelId: meta?.channelId ?? parsed.channelId,
         channelTitle: meta?.channelTitle ?? parsed.channelTitleSlug,
+        channelThumbnailUrl: meta?.channelThumbnailUrl,
         channelDirName,
         metaPath: meta ? metaPath : undefined,
       });

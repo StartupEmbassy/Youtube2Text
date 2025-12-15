@@ -27,6 +27,8 @@ export type OutputPaths = {
 export type ChannelMeta = {
   channelId: string;
   channelTitle?: string;
+  channelThumbnailUrl?: string;
+  channelUrl?: string;
   inputUrl?: string;
   updatedAt: string;
 };

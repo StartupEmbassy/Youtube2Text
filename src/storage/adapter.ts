@@ -5,6 +5,7 @@ export type ChannelInfo = {
   channelId: string;
   channelTitle?: string;
   channelDirName: string;
+  channelThumbnailUrl?: string;
   metaPath?: string;
 };
 
