@@ -9,3 +9,5 @@ import "./storageFsAdapter.test.js";
 import "./apiGlobalEvents.test.js";
 import "./apiAuth.test.js";
 import "./apiPlan.test.js";
+import "./apiWebhooks.test.js";
+import "./apiCacheFirst.test.js";

@@ -169,11 +169,19 @@ Auth (optional, recommended for server/Docker):
 - Example:
   - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
 
+Webhooks (optional):
+- `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
+  - `run:done` when status becomes `done`
+  - `run:error` when status becomes `error`
+- If `Y2T_WEBHOOK_SECRET` is set, requests include:
+  - `X-Y2T-Timestamp` (ISO timestamp)
+  - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`
+
 Endpoints:
 - `GET /health`
 - `GET /events` (SSE global stream for run updates)
 - `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "config": { ... } }` (enumerate + skip counts, no transcription)
-- `POST /runs` with JSON body `{ "url": "...", "force": false, "config": { ... } }`
+- `POST /runs` with JSON body `{ "url": "...", "force": false, "callbackUrl": "https://...", "config": { ... } }` (cache-first for single-video URLs)
 - `GET /runs`
 - `GET /runs/:id`
 - `GET /runs/:id/events` (SSE, supports `Last-Event-ID`)

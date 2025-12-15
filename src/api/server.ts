@@ -11,6 +11,7 @@ import { FileSystemStorageAdapter } from "../storage/index.js";
 import { requireApiKey } from "./auth.js";
 import { sanitizeConfigOverrides } from "./sanitize.js";
 import { planRun } from "../pipeline/plan.js";
+import { tryExtractVideoIdFromUrl } from "../youtube/url.js";
 
 type ServerOptions = {
   port: number;
@@ -271,13 +272,42 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const url = (body as any).url;
         const force = Boolean((body as any).force);
+        const callbackUrl = (body as any).callbackUrl;
         const configOverrides = (body as any).config;
         if (typeof url !== "string" || url.trim().length === 0) {
           badRequest(res, "Missing url");
           return;
         }
-        const record = manager.createRun({ url, force, config: configOverrides });
-        manager.startRun(record.runId, { url, force, config: configOverrides });
+        if (callbackUrl !== undefined && typeof callbackUrl !== "string") {
+          badRequest(res, "Invalid callbackUrl");
+          return;
+        }
+        const mergedConfig = { ...config, ...sanitizeConfigOverrides(configOverrides) };
+
+        if (!force) {
+          const videoId = tryExtractVideoIdFromUrl(url);
+          if (videoId) {
+            const plan = await planRun(url, mergedConfig, { force: false });
+            if (plan.totalVideos === 1 && plan.toProcess === 0) {
+              const record = manager.createCachedRun(
+                { url, force: false, callbackUrl, config: configOverrides },
+                plan
+              );
+              json(res, 201, {
+                run: record,
+                links: {
+                  run: `/runs/${record.runId}`,
+                  events: `/runs/${record.runId}/events`,
+                  artifacts: `/runs/${record.runId}/artifacts`,
+                },
+              });
+              return;
+            }
+          }
+        }
+
+        const record = manager.createRun({ url, force, callbackUrl, config: configOverrides });
+        manager.startRun(record.runId, { url, force, callbackUrl, config: configOverrides });
         json(res, 201, {
           run: record,
           links: {

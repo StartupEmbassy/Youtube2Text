@@ -111,7 +111,11 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create and start a run */
+        /**
+         * Create and start a run
+         * @description Starts a run. For single-video URLs, the API is cache-first:
+         *     if outputs already exist and `force` is false, the API returns a `done` run immediately (no transcription).
+         */
         post: {
             parameters: {
                 query?: never;
@@ -566,6 +570,7 @@ export interface components {
             startedAt?: string;
             finishedAt?: string;
             error?: string;
+            callbackUrl?: string;
             channelId?: string;
             channelTitle?: string;
             channelDirName?: string;
@@ -582,6 +587,15 @@ export interface components {
         RunCreateRequest: {
             url: string;
             force?: boolean;
+            /**
+             * @description Optional. If set, the API sends a POST webhook when the run ends:
+             *     - `run:done` when status becomes done
+             *     - `run:error` when status becomes error
+             *     If `Y2T_WEBHOOK_SECRET` is set on the server, requests include:
+             *     - `X-Y2T-Timestamp` (ISO)
+             *     - `X-Y2T-Signature` (HMAC-SHA256 of `${timestamp}.${body}`)
+             */
+            callbackUrl?: string;
             config?: {
                 [key: string]: unknown;
             };

@@ -49,8 +49,8 @@ Proposed steps (do in order):
 Phase 2.1 Integration MVP (do in order):
 1) X-API-Key auth (`Y2T_API_KEY`) for API + admin UI - DONE (v0.6.0)
 2) `POST /runs/plan` (enumerate + skip counts + estimate) without download/transcribe - DONE (v0.6.0)
-3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`, retries + optional signature)
-4) Cache-first for single-video URLs (return cached artifacts immediately unless `force`; channel/playlist runs already skip via idempotency)
+3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`, retries + optional signature) - DONE (v0.7.0)
+4) Cache-first for single-video URLs (return `done` immediately unless `force`; channel/playlist runs already skip via idempotency) - DONE (v0.8.0)
 5) Integration docs: `INTEGRATION.md` (curl + n8n examples + artifact download patterns)
 
 Phase 2.3 Scheduler/watchlist (planned; per-channel or global interval):

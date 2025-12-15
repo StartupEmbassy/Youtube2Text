@@ -7,6 +7,8 @@ import { EventBuffer } from "./eventBuffer.js";
 import { FileSystemStorageAdapter } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
 import { sanitizeConfigOverrides } from "./sanitize.js";
+import { deliverRunTerminalWebhook } from "./webhooks.js";
+import type { RunPlan } from "../pipeline/plan.js";
 import {
   appendEvent,
   createRunPersistence,
@@ -28,6 +30,7 @@ export type RunRecord = {
   startedAt?: string;
   finishedAt?: string;
   error?: string;
+  callbackUrl?: string;
   channelId?: string;
   channelTitle?: string;
   channelDirName?: string;
@@ -51,6 +54,7 @@ export type GlobalEvent =
 export type RunCreateRequest = {
   url: string;
   force?: boolean;
+  callbackUrl?: string;
   config?: Partial<AppConfig>;
 };
 
@@ -122,12 +126,37 @@ export class RunManager {
       inputUrl: req.url,
       force: Boolean(req.force),
       createdAt: new Date().toISOString(),
+      callbackUrl: req.callbackUrl,
     };
     this.runs.set(runId, record);
     this.buffers.set(runId, new EventBuffer<PipelineEvent>(this.options.maxBufferedEventsPerRun));
     this.listeners.set(runId, new Set());
     this.persistRun(record);
     this.emitGlobal({ type: "run:created", run: record, timestamp: new Date().toISOString() });
+    return record;
+  }
+
+  createCachedRun(req: RunCreateRequest, plan: RunPlan): RunRecord {
+    const record = this.createRun(req);
+    const now = new Date().toISOString();
+
+    record.status = "done";
+    record.startedAt = now;
+    record.finishedAt = now;
+    record.channelId = plan.channelId;
+    record.channelTitle = plan.channelTitle;
+    record.channelDirName = makeChannelDirName(plan.channelId, plan.channelTitle);
+
+    const only = plan.videos[0];
+    if (only) {
+      record.previewVideoId = only.id;
+      record.previewTitle = only.title;
+      record.stats = { succeeded: 0, failed: 0, skipped: 1, total: 1 };
+    }
+
+    this.persistRun(record);
+    this.emitGlobal({ type: "run:updated", run: record, timestamp: now });
+    void deliverRunTerminalWebhook(record, "run:done");
     return record;
   }
 
@@ -217,6 +246,7 @@ export class RunManager {
             run: updated,
             timestamp: new Date().toISOString(),
           });
+          void deliverRunTerminalWebhook(updated, "run:done");
         }
       })
       .catch((error) => {
@@ -231,6 +261,7 @@ export class RunManager {
           run: updated,
           timestamp: new Date().toISOString(),
         });
+        void deliverRunTerminalWebhook(updated, "run:error");
       });
   }
 

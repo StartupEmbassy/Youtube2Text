@@ -64,7 +64,7 @@ Completed:
 - Docker image + docker compose for the API runner
 
 In progress:
-- Phase 2.1 Integration MVP (API-first for Docker/integration): X-API-Key auth is being implemented first, before planning/webhooks/cache-first.
+- Phase 2.1 Integration MVP (API-first for Docker/integration): adding webhooks (`callbackUrl`) next, then cache-first single-video + integration docs.
 - Phase 2: hosted single-tenant service (admin) - PLANNED
 
 ## Roadmap / Milestones (Do in order)
