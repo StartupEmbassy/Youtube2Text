@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { apiBaseUrlClient, apiGetJson } from "../../../lib/api";
+import { apiGetJson } from "../../../lib/api";
 import type { RunRecord } from "../../../lib/apiSchema";
 import { RunEvents } from "./RunEvents";
 
@@ -60,7 +60,6 @@ function getFirstArtifactVideo(artifacts: unknown): { videoId?: string; title?: 
 
 export default async function RunPage({ params }: { params: { runId: string } }) {
   const { runId } = params;
-  const base = apiBaseUrlClient();
   const runData = await apiGetJson<RunResponse>(`/runs/${runId}`);
   const artifactsData = await apiGetJson<ArtifactsResponse>(`/runs/${runId}/artifacts`);
   const channelLink = runData.run.channelDirName
@@ -163,22 +162,22 @@ export default async function RunPage({ params }: { params: { runId: string } })
                   </div>
                   <div className="spacer10" />
                   <div className="row">
-                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
+                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
                       TXT
                     </a>
-                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/md`} target="_blank" rel="noreferrer">
+                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/md`} target="_blank" rel="noreferrer">
                       MD
                     </a>
-                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/jsonl`} target="_blank" rel="noreferrer">
+                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/jsonl`} target="_blank" rel="noreferrer">
                       JSONL
                     </a>
-                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/json`} target="_blank" rel="noreferrer">
+                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/json`} target="_blank" rel="noreferrer">
                       JSON
                     </a>
-                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/comments`} target="_blank" rel="noreferrer">
+                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/comments`} target="_blank" rel="noreferrer">
                       Comments
                     </a>
-                    <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/audio`} target="_blank" rel="noreferrer">
+                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/audio`} target="_blank" rel="noreferrer">
                       Audio
                     </a>
                   </div>
@@ -190,7 +189,7 @@ export default async function RunPage({ params }: { params: { runId: string } })
           )}
         </div>
         <div className="card">
-          <RunEvents apiBaseUrl={base} runId={runId} />
+          <RunEvents runId={runId} />
         </div>
       </div>
     </div>

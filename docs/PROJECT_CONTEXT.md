@@ -44,7 +44,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (2025-12-14)
+## Current Status (2025-12-15)
 MVP CLI is functional. The core is being hardened so it can be embedded as a service later without breaking CLI usage.
 
 Completed:
@@ -64,7 +64,7 @@ Completed:
 - Docker image + docker compose for the API runner
 
 In progress:
-- Phase 1: local-first web UI (Next.js) - DONE (reads `output/` via API, consumes SSE/JSON events; runs list uses global SSE `/events`)
+- Phase 2.1 Integration MVP (API-first for Docker/integration): X-API-Key auth is being implemented first, before planning/webhooks/cache-first.
 - Phase 2: hosted single-tenant service (admin) - PLANNED
 
 ## Roadmap / Milestones (Do in order)
@@ -77,10 +77,10 @@ In progress:
    - DONE: Global SSE (`GET /events`) for live runs list
    - DONE: Additional artifacts `.md` + `.jsonl`
 6. Phase 2: hosted single-tenant service (admin)
-   - auth for admin workspace
-   - run/job persistence policies
-   - background worker/queue
-   - optional scheduler/cron for followed channels
+   - Phase 2.1 Integration MVP: API key auth, `POST /runs/plan`, webhooks, cache-first single-video, integration docs
+   - Phase 2.2 Ops hardening: extended healthcheck, CORS allowlist, retention/cleanup
+   - Phase 2.3 Scheduler/watchlist (cron): followed channels list + global/per-channel interval, uses `POST /runs/plan` to decide
+   - Phase 2.4 Control: cancel run, rate limiting, optional worker/queue
 7. Phase 3+: optional multi-tenant cloud platform
 
 ## References

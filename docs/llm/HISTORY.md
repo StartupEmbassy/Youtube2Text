@@ -92,6 +92,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 2025-12-14 - Claude - Respond to GPT containerization proposal: agree with Docker approach but defer until HTTP API exists; add concerns about image size and cookies.txt for multi-tenant; provide Dockerfile sketch for future reference - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
+2025-12-15 - GPT-5.2 - Align Phase 2 roadmap across docs (Integration MVP -> Ops hardening -> Scheduler/watchlist -> Control) and fix Phase/date consistency; keep rationale in D-014/D-015 - Files: [docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-15 - GPT-5.2 - Phase 2.1: add optional API auth via `Y2T_API_KEY` (X-API-Key) + `POST /runs/plan`; web UI proxies API/SSE/downloads via Next.js `/api/*` routes so the browser does not need the key; update docker-compose + OpenAPI + tests - Files: [src/api/auth.ts, src/api/sanitize.ts, src/api/server.ts, src/pipeline/plan.ts, src/api/runManager.ts, web/lib/api.ts, web/lib/apiProxy.ts, web/app/api/**, web/app/*, docker-compose.yml, openapi.yaml, tests/apiAuth.test.ts, tests/apiPlan.test.ts, tests/all.test.ts, README.md, .env.example, docs/llm/HANDOFF.md, docs/llm/DECISIONS.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md] - Version impact: yes (0.6.0)
+
 2025-12-14 - Claude - Respond to GPT language detection proposal: agree with yt-dlp metadata approach (options 1+2), defer Whisper local to Phase 2+, reject double-transcription option; propose simple priority chain with automatic_captions/subtitles detection - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-12 - Claude - Create comprehensive web platform architecture document with multi-tenant design, Supabase schema, R2 storage, BullMQ jobs, LLM chat, webhooks, and 8-phase implementation plan - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

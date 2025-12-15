@@ -151,6 +151,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Plan a run (enumerate + skip counts, no transcription)
+         * @description Enumerates the input URL and computes how many videos are already processed vs remaining,
+         *     without downloading audio or calling the transcription provider.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RunCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RunPlanResponse"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{runId}": {
         parameters: {
             query?: never;
@@ -541,6 +594,31 @@ export interface components {
         RunCreateResponse: {
             run: components["schemas"]["RunRecord"];
             links: components["schemas"]["RunCreateLinks"];
+        };
+        PlannedVideo: {
+            id: string;
+            title: string;
+            url: string;
+            uploadDate?: string;
+            basename: string;
+            processed: boolean;
+        };
+        RunPlan: {
+            inputUrl: string;
+            force: boolean;
+            channelId: string;
+            channelTitle?: string;
+            totalVideos: number;
+            alreadyProcessed: number;
+            toProcess: number;
+            filters: {
+                afterDate?: string;
+                maxVideos?: number;
+            };
+            videos: components["schemas"]["PlannedVideo"][];
+        };
+        RunPlanResponse: {
+            plan: components["schemas"]["RunPlan"];
         };
         ChannelInfo: {
             channelId: string;

@@ -7,3 +7,5 @@ import "./apiEventBuffer.test.js";
 import "./apiPersistence.test.js";
 import "./storageFsAdapter.test.js";
 import "./apiGlobalEvents.test.js";
+import "./apiAuth.test.js";
+import "./apiPlan.test.js";

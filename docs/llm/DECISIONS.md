@@ -231,3 +231,34 @@ Rationale:
 Non-goals (for now):
 - Do not compress `.json` by default (`.json.gz`) until disk pressure is a real problem.
 - Do not require any web/UI changes to keep CLI usable (CLI remains primary workflow).
+
+## D-014 - Phase 2 Integration MVP (API-first)
+
+Decision (in progress):
+- Treat the HTTP API + `openapi.yaml` as the primary integration surface for Phase 2.
+- Keep the web UI as a minimal admin panel (not the integration surface).
+
+Phase 2.1 scope (planned; do in order):
+1) X-API-Key auth (env `Y2T_API_KEY`) for API + admin UI (implemented in v0.6.0)
+2) `POST /runs/plan` (enumerate + skip counts + estimate) without transcribing (implemented in v0.6.0)
+3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`)
+4) Cache-first for single-video URLs (return cached artifacts unless `force`)
+5) Integration docs (`INTEGRATION.md`) with curl + n8n examples
+
+Rationale:
+- Enables n8n/external backends to orchestrate runs without depending on UI behavior.
+- Prevents accidental spend: planning endpoint + cache-first reduce redundant transcription.
+- Keeps CLI unchanged and avoids premature multi-tenant complexity.
+
+Operational rule:
+- Any API change must update `openapi.yaml` and keep `npm run api:contract:check` passing.
+
+## D-015 - Scheduler/watchlist (cron) should use planning endpoint
+
+Decision (planned):
+- Implement "followed channels" + scheduler as a separate Phase 2 step that calls `POST /runs/plan` to decide whether to enqueue a run.
+- Support a global interval with optional per-channel overrides.
+
+Rationale:
+- Avoids running expensive pipelines when there are no new videos.
+- Keeps scheduling logic simple and auditable (plan -> decide -> run).

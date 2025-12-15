@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-14 - GPT-5.2
+- Last Updated: 2025-12-15 - GPT-5.2
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2 hosted single-tenant service planning (keep CLI intact)
+- Goal: Phase 2.1 Integration MVP execution (keep CLI intact)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -17,11 +17,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Web UX: "Open downloads" shortcuts, more descriptive run labels, thumbnails across Runs/Library.
 - Run detail: summarized status/progress + downloads list (no raw artifacts JSON) and improved error display.
 - Ops: contract check (`npm run api:contract:check`) + docker smoke test (`npm run test:docker-smoke`).
+- Phase 2.1 started: optional API auth via `Y2T_API_KEY` (X-API-Key) + web UI proxies API requests via Next.js route handlers (so the browser does not need the key).
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
 2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - DONE
-3. Phase 2: hosted single-tenant service (admin) - PLANNED
+3. Phase 2: hosted single-tenant service (admin) - IN PROGRESS (Phase 2.1)
 4. Phase 3+: multi-tenant cloud platform - OPTIONAL
 
 ## Phase 1 Next Steps (Do In Order)
@@ -40,11 +41,26 @@ Recently completed follow-ups:
 Goal: run Youtube2Text on a server for one admin workspace (no public signups yet), still keeping the CLI working.
 
 Proposed steps (do in order):
-1. Deploy/runtime hardening: server config, HTTPS reverse proxy, healthchecks, logs, backups, upgrades.
-2. Auth (admin): protect web/API with a single admin login (or network allowlist) and CSRF basics.
-3. Persistent store: move run state from filesystem-only to a small DB (or keep filesystem but add an index DB); define retention policies.
-4. Background jobs/queue: decouple run execution from HTTP request lifecycle (worker process).
-5. Scheduler: optional cron to watch followed channels and enqueue new videos.
+1. Phase 2.1 Integration MVP: secure + callable from other systems.
+2. Phase 2.2 Ops hardening: health/deps, CORS, retention, deploy playbook.
+3. Phase 2.3 Scheduler/watchlist (cron): plan-first "followed channels" automation.
+4. Phase 2.4 Control + robustness: cancel, rate limiting, queue/worker (if needed).
+
+Phase 2.1 Integration MVP (do in order):
+1) X-API-Key auth (`Y2T_API_KEY`) for API + admin UI - DONE (v0.6.0)
+2) `POST /runs/plan` (enumerate + skip counts + estimate) without download/transcribe - DONE (v0.6.0)
+3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`, retries + optional signature)
+4) Cache-first for single-video URLs (return cached artifacts immediately unless `force`; channel/playlist runs already skip via idempotency)
+5) Integration docs: `INTEGRATION.md` (curl + n8n examples + artifact download patterns)
+
+Phase 2.3 Scheduler/watchlist (planned; per-channel or global interval):
+- Maintain a "followed channels" list (per channel URL + optional interval override).
+- Scheduler runs every N minutes:
+  - for each followed channel, call `POST /runs/plan`
+  - only create a run if `toProcess > 0`
+- Two config options:
+  - Global interval: one `intervalMinutes` for all channels (simpler)
+  - Per-channel interval: each channel overrides the global default (more flexible)
 
 ## Phase 0 Notes (implemented)
 - yt-dlp errors are classified (access vs transient vs unavailable) and only retryable failures are retried.
@@ -73,3 +89,5 @@ Proposed steps (do in order):
 
 ## Open Questions
 - None currently. Track new unknowns in `docs/llm/HISTORY.md` and convert stable choices into `docs/llm/DECISIONS.md`.
+
+Note: deeper rationale/tradeoffs for Phase 2 integration live in `docs/llm/DECISIONS.md` (D-014 / D-015).

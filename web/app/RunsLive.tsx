@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { GlobalRunEvent, RunRecord } from "../lib/apiSchema";
 
 type Props = {
-  apiBaseUrl: string;
   initialRuns: RunRecord[];
 };
 
@@ -57,10 +56,10 @@ function upsertRun(runs: RunRecord[], run: RunRecord): RunRecord[] {
   return next;
 }
 
-export function RunsLive({ apiBaseUrl, initialRuns }: Props) {
+export function RunsLive({ initialRuns }: Props) {
   const [runs, setRuns] = useState<RunRecord[]>(initialRuns);
   const [connected, setConnected] = useState(false);
-  const url = useMemo(() => `${apiBaseUrl}/events`, [apiBaseUrl]);
+  const url = useMemo(() => `/api/events`, []);
 
   useEffect(() => {
     const es = new EventSource(url);

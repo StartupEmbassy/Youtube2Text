@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
-  apiBaseUrl: string;
   runId: string;
 };
 
@@ -95,12 +94,12 @@ function formatEventLine(item: EventItem): string {
   return `${t} ${item.type} ${JSON.stringify(item.data)}`.trimEnd();
 }
 
-export function RunEvents({ apiBaseUrl, runId }: Props) {
+export function RunEvents({ runId }: Props) {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [connected, setConnected] = useState(false);
   const lastIdRef = useRef<number>(0);
 
-  const url = useMemo(() => `${apiBaseUrl}/runs/${runId}/events`, [apiBaseUrl, runId]);
+  const url = useMemo(() => `/api/runs/${encodeURIComponent(runId)}/events`, [runId]);
 
   useEffect(() => {
     const es = new EventSource(url);

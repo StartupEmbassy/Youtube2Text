@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.4-draft
-> Last Updated: 2025-12-14
+> Version: 1.1.6-draft
+> Last Updated: 2025-12-15
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
@@ -162,11 +162,29 @@ Screens:
 Goal: deploy Youtube2Text for one admin workspace (no public signup) while keeping the CLI unchanged.
 
 Add:
-- auth for the admin UI/API (simple login or network allowlist)
-- durable run/job store + retention policies
-- background worker/queue for runs
-- operational guardrails (rate limits, quotas, backups, upgrades)
-- optional scheduler/cron (follow channels and enqueue new videos)
+
+Phase 2.1 - Integration MVP (API-first; do in order):
+1) X-API-Key auth for API + admin UI (env `Y2T_API_KEY`)
+2) `POST /runs/plan` to enumerate + skip counts + estimate without transcribing
+3) Webhooks via `callbackUrl` on `POST /runs` (`run:done` / `run:error`)
+4) Cache-first for single-video URLs (return cached artifacts unless `force`)
+5) Integration docs (`INTEGRATION.md`) with curl + n8n examples
+
+Phase 2.2 - Ops hardening:
+- extended healthcheck (deps + disk)
+- configurable CORS allowlist
+- retention/cleanup policy for runs + audio
+
+Phase 2.3 - Scheduler/watchlist (cron):
+- maintain a followed-channels list (global interval, optional per-channel override)
+- scheduler runs every N minutes:
+  - call `POST /runs/plan` for each followed channel
+  - only create a run if there are new videos to process
+
+Phase 2.4 - Control + robustness:
+- cancel run endpoint
+- rate limiting (per API key/IP)
+- optional worker/queue if synchronous execution becomes limiting
 
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 

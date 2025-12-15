@@ -4,11 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RunCreateResponse } from "../lib/apiSchema";
 
-type Props = {
-  apiBaseUrl: string;
-};
-
-export function CreateRunForm({ apiBaseUrl }: Props) {
+export function CreateRunForm() {
   const [url, setUrl] = useState("");
   const [force, setForce] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "error" | "done">("idle");
@@ -22,7 +18,7 @@ export function CreateRunForm({ apiBaseUrl }: Props) {
     setStatus("submitting");
     setMessage("");
     try {
-      const res = await fetch(`${apiBaseUrl}/runs`, {
+      const res = await fetch(`/api/runs`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: trimmed, force }),

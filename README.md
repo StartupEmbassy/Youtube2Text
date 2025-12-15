@@ -164,9 +164,15 @@ Persistence (default enabled):
 - Disable with `Y2T_API_PERSIST_RUNS=false`.
 - Override directory with `Y2T_API_PERSIST_DIR=...`.
 
+Auth (optional, recommended for server/Docker):
+- Set `Y2T_API_KEY` to require `X-API-Key: ...` on all endpoints (except `GET /health`).
+- Example:
+  - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
+
 Endpoints:
 - `GET /health`
 - `GET /events` (SSE global stream for run updates)
+- `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "config": { ... } }` (enumerate + skip counts, no transcription)
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "config": { ... } }`
 - `GET /runs`
 - `GET /runs/:id`
@@ -189,6 +195,7 @@ Run:
 
 ```powershell
 $env:ASSEMBLYAI_API_KEY="your_key_here"
+$env:Y2T_API_KEY="your_admin_key_here"
 docker compose up --build
 ```
 

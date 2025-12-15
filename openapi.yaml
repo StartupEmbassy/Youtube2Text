@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.5.4
+  version: 0.6.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -9,7 +9,8 @@ info:
     - SSE endpoints are documented as text/event-stream.
 servers:
   - url: http://127.0.0.1:8787
-security: []
+security:
+  - ApiKeyAuth: []
 paths:
   /events:
     get:
@@ -30,6 +31,7 @@ paths:
   /health:
     get:
       summary: Health check
+      security: []
       responses:
         "200":
           description: OK
@@ -63,6 +65,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RunCreateResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /runs/plan:
+    post:
+      summary: Plan a run (enumerate + skip counts, no transcription)
+      description: |
+        Enumerates the input URL and computes how many videos are already processed vs remaining,
+        without downloading audio or calling the transcription provider.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunCreateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunPlanResponse"
         "400":
           description: Bad request
           content:
@@ -204,6 +232,14 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        Optional when `Y2T_API_KEY` is unset. If `Y2T_API_KEY` is set on the server,
+        all endpoints require this header (except `/health`).
   parameters:
     RunId:
       name: runId
@@ -320,6 +356,54 @@ components:
       properties:
         run: { $ref: "#/components/schemas/RunRecord" }
         links: { $ref: "#/components/schemas/RunCreateLinks" }
+
+    PlannedVideo:
+      type: object
+      required: [id, title, url, basename, processed]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        url: { type: string }
+        uploadDate: { type: string }
+        basename: { type: string }
+        processed: { type: boolean }
+
+    RunPlan:
+      type: object
+      required:
+        [
+          inputUrl,
+          force,
+          channelId,
+          totalVideos,
+          alreadyProcessed,
+          toProcess,
+          filters,
+          videos
+        ]
+      properties:
+        inputUrl: { type: string }
+        force: { type: boolean }
+        channelId: { type: string }
+        channelTitle: { type: string }
+        totalVideos: { type: integer }
+        alreadyProcessed: { type: integer }
+        toProcess: { type: integer }
+        filters:
+          type: object
+          required: []
+          properties:
+            afterDate: { type: string }
+            maxVideos: { type: integer }
+        videos:
+          type: array
+          items: { $ref: "#/components/schemas/PlannedVideo" }
+
+    RunPlanResponse:
+      type: object
+      required: [plan]
+      properties:
+        plan: { $ref: "#/components/schemas/RunPlan" }
 
     ChannelInfo:
       type: object

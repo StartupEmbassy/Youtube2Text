@@ -8,6 +8,9 @@ import { RunManager } from "./runManager.js";
 import { badRequest, json, notFound, readJsonBody } from "./http.js";
 import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
 import { FileSystemStorageAdapter } from "../storage/index.js";
+import { requireApiKey } from "./auth.js";
+import { sanitizeConfigOverrides } from "./sanitize.js";
+import { planRun } from "../pipeline/plan.js";
 
 type ServerOptions = {
   port: number;
@@ -20,7 +23,10 @@ type ServerOptions = {
 function setCors(res: ServerResponse) {
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
-  res.setHeader("access-control-allow-headers", "content-type,last-event-id");
+  res.setHeader(
+    "access-control-allow-headers",
+    "content-type,last-event-id,x-api-key"
+  );
 }
 
 function segments(req: IncomingMessage): string[] {
@@ -82,6 +88,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       return;
     }
 
+    if (!requireApiKey(req, res)) return;
+
     const seg = segments(req);
 
     try {
@@ -92,6 +100,37 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
 
       if (req.method === "GET" && seg.length === 1 && seg[0] === "runs") {
         json(res, 200, { runs: manager.listRuns() });
+        return;
+      }
+
+      if (
+        req.method === "POST" &&
+        seg.length === 2 &&
+        seg[0] === "runs" &&
+        seg[1] === "plan"
+      ) {
+        let body: unknown;
+        try {
+          body = (await readJsonBody(req)) as unknown;
+        } catch {
+          badRequest(res, "Invalid JSON body");
+          return;
+        }
+        if (!body || typeof body !== "object") {
+          badRequest(res, "Expected JSON body");
+          return;
+        }
+        const url = (body as any).url;
+        const force = Boolean((body as any).force);
+        const configOverrides = (body as any).config;
+        if (typeof url !== "string" || url.trim().length === 0) {
+          badRequest(res, "Missing url");
+          return;
+        }
+        const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
+        const mergedConfig = { ...config, ...sanitizedOverrides };
+        const plan = await planRun(url, mergedConfig, { force });
+        json(res, 200, { plan });
         return;
       }
 

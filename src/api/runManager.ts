@@ -6,7 +6,7 @@ import type { PipelineEvent, PipelineEventEmitter } from "../pipeline/events.js"
 import { EventBuffer } from "./eventBuffer.js";
 import { FileSystemStorageAdapter } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
-import { configSchema } from "../config/schema.js";
+import { sanitizeConfigOverrides } from "./sanitize.js";
 import {
   appendEvent,
   createRunPersistence,
@@ -193,7 +193,7 @@ export class RunManager {
     if (!run) throw new Error("Unknown run");
     if (run.status !== "queued") throw new Error("Run already started");
 
-    const sanitizedOverrides = this.sanitizeOverrides(req.config);
+    const sanitizedOverrides = sanitizeConfigOverrides(req.config);
     const config = { ...this.baseConfig, ...sanitizedOverrides };
     const emitter: PipelineEventEmitter = {
       emit: (event) => this.onEvent(runId, event),
@@ -284,14 +284,6 @@ export class RunManager {
     const handlers = this.listeners.get(runId);
     if (!handlers) return;
     for (const handler of handlers) handler(buffered);
-  }
-
-  private sanitizeOverrides(overrides: Partial<AppConfig> | undefined) {
-    if (!overrides) return {};
-    const copy: Record<string, unknown> = { ...overrides };
-    delete copy.assemblyAiApiKey;
-    const parsed = configSchema.partial().safeParse(copy);
-    return parsed.success ? parsed.data : {};
   }
 
   private emitGlobal(event: GlobalEvent) {

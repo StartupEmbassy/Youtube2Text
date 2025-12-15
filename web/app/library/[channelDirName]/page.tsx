@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { apiBaseUrlClient, apiGetJson } from "../../../lib/api";
+import { apiGetJson } from "../../../lib/api";
 import type { VideosResponse, VideoInfo } from "../../../lib/apiSchema";
 
 function youtubeThumb(videoId: string): string {
@@ -20,7 +20,6 @@ export default async function ChannelPage({
   const data = await apiGetJson<VideosResponse>(
     `/library/channels/${encodeURIComponent(channelDirName)}/videos`,
   );
-  const base = apiBaseUrlClient();
 
   const renderVideo = (v: VideoInfo) => {
     const meta = v.meta;
@@ -54,19 +53,19 @@ export default async function ChannelPage({
             {desc && <div className="muted mt8">{truncate(desc, 220)}</div>}
             <div className="spacer10" />
             <div className="row">
-              <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
+              <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
                 TXT
               </a>
-              <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/md`} target="_blank" rel="noreferrer">
+              <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/md`} target="_blank" rel="noreferrer">
                 MD
               </a>
-              <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/json`} target="_blank" rel="noreferrer">
+              <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/json`} target="_blank" rel="noreferrer">
                 JSON
               </a>
-              <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/jsonl`} target="_blank" rel="noreferrer">
+              <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/jsonl`} target="_blank" rel="noreferrer">
                 JSONL
               </a>
-              <a href={`${base}/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/audio`} target="_blank" rel="noreferrer">
+              <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/audio`} target="_blank" rel="noreferrer">
                 Audio
               </a>
             </div>
