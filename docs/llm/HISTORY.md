@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-16 - GPT-5.2 - Phase 2.2.1: add deep health check via `GET /health?deep=true` (deps: yt-dlp/ffmpeg, disk free, persistence dir writable) and document the contract; bump version to 0.9.4 - Files: [src/api/health.ts, src/api/server.ts, openapi.yaml, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json, tests/apiHealth.test.ts, tests/all.test.ts, docs/llm/DECISIONS.md] - Version impact: yes (package.json 0.9.3 -> 0.9.4)
+
 2025-12-16 - Claude Opus 4.5 - Fix channel thumbnails not appearing for cached single-video runs: add fire-and-forget thumbnail update in cache-first path (server.ts), prefer square avatars over banners (channel.ts isSquareish function); bump version to 0.9.3 - Files: [src/api/server.ts, src/youtube/channel.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json] - Version impact: yes (package.json 0.9.2 -> 0.9.3)
 
 2025-12-15 - GPT-5.2 - Fix channel avatars for channels created from single-video runs by fetching channel metadata via `https://www.youtube.com/channel/<channelId>` and persisting `channelUrl` in `_channel.json`; bump version to 0.9.2 - Files: [src/pipeline/run.ts, src/storage/index.ts, docs/llm/HANDOFF.md, docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, openapi.yaml, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.9.1 -> 0.9.2)

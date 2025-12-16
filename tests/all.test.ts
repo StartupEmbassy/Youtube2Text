@@ -12,3 +12,4 @@ import "./apiPlan.test.js";
 import "./apiWebhooks.test.js";
 import "./apiCacheFirst.test.js";
 import "./channelThumbs.test.js";
+import "./apiHealth.test.js";

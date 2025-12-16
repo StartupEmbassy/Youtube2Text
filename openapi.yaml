@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.9.3
+  version: 0.9.4
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -32,6 +32,12 @@ paths:
     get:
       summary: Health check
       security: []
+      parameters:
+        - name: deep
+          in: query
+          required: false
+          schema: { type: boolean }
+          description: When true, returns a best-effort deep health check (deps + disk + persistence).
       responses:
         "200":
           description: OK
@@ -288,6 +294,40 @@ components:
           type: boolean
         service:
           type: string
+        version:
+          type: string
+        deps:
+          type: object
+          properties:
+            ytDlp:
+              type: object
+              required: [ok]
+              properties:
+                ok: { type: boolean }
+                version: { type: string }
+                error: { type: string }
+            ffmpeg:
+              type: object
+              required: [ok]
+              properties:
+                ok: { type: boolean }
+                error: { type: string }
+            disk:
+              type: object
+              required: [ok]
+              properties:
+                ok: { type: boolean }
+                freeBytes: { type: number }
+                freeGb: { type: number }
+                error: { type: string }
+            persist:
+              type: object
+              required: [ok, dir, writable]
+              properties:
+                ok: { type: boolean }
+                dir: { type: string }
+                writable: { type: boolean }
+                error: { type: string }
 
     RunStatus:
       type: string

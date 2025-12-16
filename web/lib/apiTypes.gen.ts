@@ -56,7 +56,10 @@ export interface paths {
         /** Health check */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description When true, returns a best-effort deep health check (deps + disk + persistence). */
+                    deep?: boolean;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -551,6 +554,30 @@ export interface components {
         HealthResponse: {
             ok: boolean;
             service: string;
+            version?: string;
+            deps?: {
+                ytDlp?: {
+                    ok: boolean;
+                    version?: string;
+                    error?: string;
+                };
+                ffmpeg?: {
+                    ok: boolean;
+                    error?: string;
+                };
+                disk?: {
+                    ok: boolean;
+                    freeBytes?: number;
+                    freeGb?: number;
+                    error?: string;
+                };
+                persist?: {
+                    ok: boolean;
+                    dir: string;
+                    writable: boolean;
+                    error?: string;
+                };
+            };
         };
         /** @enum {string} */
         RunStatus: "queued" | "running" | "done" | "error";

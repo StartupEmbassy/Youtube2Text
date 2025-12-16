@@ -44,7 +44,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (2025-12-15)
+## Current Status (2025-12-16)
 MVP CLI is functional. The core is being hardened so it can be embedded as a service later without breaking CLI usage.
 
 Completed:

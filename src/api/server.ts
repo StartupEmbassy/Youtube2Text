@@ -15,6 +15,7 @@ import { planRun } from "../pipeline/plan.js";
 import { tryExtractVideoIdFromUrl } from "../youtube/url.js";
 import { fetchChannelMetadata, safeChannelThumbnailUrl } from "../youtube/index.js";
 import { join } from "node:path";
+import { getDeepHealth, getHealth } from "./health.js";
 
 type ServerOptions = {
   port: number;
@@ -98,7 +99,22 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
 
     try {
       if (req.method === "GET" && seg.length === 1 && seg[0] === "health") {
-        json(res, 200, { ok: true, service: "youtube2text-api" });
+        const parsed = parseUrl(req.url ?? "/health", true);
+        const deepRaw = parsed.query?.deep;
+        const deep =
+          deepRaw === "true" ||
+          deepRaw === "1" ||
+          (Array.isArray(deepRaw) && (deepRaw.includes("true") || deepRaw.includes("1")));
+        const body = deep
+          ? await getDeepHealth(config, {
+              persistRuns: opts.persistRuns,
+              persistDir: opts.persistDir,
+            })
+          : await getHealth(config, {
+              persistRuns: opts.persistRuns,
+              persistDir: opts.persistDir,
+            });
+        json(res, 200, body);
         return;
       }
 

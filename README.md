@@ -185,6 +185,7 @@ Webhooks (optional):
 
 Endpoints:
 - `GET /health`
+- `GET /health?deep=true` (best-effort deps + disk + persistence checks)
 - `GET /events` (SSE global stream for run updates)
 - `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "config": { ... } }` (enumerate + skip counts, no transcription)
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "callbackUrl": "https://...", "config": { ... } }` (cache-first for single-video URLs)
