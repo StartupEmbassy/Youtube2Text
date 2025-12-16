@@ -3,7 +3,8 @@ import type { RunRecord } from "./runManager.js";
 
 export type RunWebhookEvent =
   | { type: "run:done"; run: RunRecord; timestamp: string }
-  | { type: "run:error"; run: RunRecord; timestamp: string };
+  | { type: "run:error"; run: RunRecord; timestamp: string }
+  | { type: "run:cancelled"; run: RunRecord; timestamp: string };
 
 export type WebhookDeliveryResult =
   | { ok: true; status: number }
@@ -134,4 +135,3 @@ export async function deliverRunTerminalWebhook(
   };
   return deliverWebhook(run.callbackUrl, event);
 }
-

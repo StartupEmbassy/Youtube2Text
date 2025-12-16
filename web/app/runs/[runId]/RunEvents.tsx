@@ -86,6 +86,14 @@ function formatEventLine(item: EventItem): string {
     return `${t} run:done total=${total ?? "?"} ok=${succeeded ?? "?"} skipped=${skipped ?? "?"} failed=${failed ?? "?"}`;
   }
 
+  if (item.type === "run:cancelled") {
+    const succeeded = data ? getNumber(data, "succeeded") : undefined;
+    const failed = data ? getNumber(data, "failed") : undefined;
+    const skipped = data ? getNumber(data, "skipped") : undefined;
+    const total = data ? getNumber(data, "total") : undefined;
+    return `${t} run:cancelled total=${total ?? "?"} ok=${succeeded ?? "?"} skipped=${skipped ?? "?"} failed=${failed ?? "?"}`;
+  }
+
   if (item.type === "run:error") {
     const err = data ? getString(data, "error") : undefined;
     return `${t} run:error ${err ?? ""}`.trimEnd();
@@ -122,6 +130,7 @@ export function RunEvents({ runId }: Props) {
     const anyEs = es as any;
     anyEs.addEventListener("run:start", handler);
     anyEs.addEventListener("run:done", handler);
+    anyEs.addEventListener("run:cancelled", handler);
     anyEs.addEventListener("run:error", handler);
     anyEs.addEventListener("video:start", handler);
     anyEs.addEventListener("video:stage", handler);

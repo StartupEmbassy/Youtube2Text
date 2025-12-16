@@ -491,6 +491,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
                   run: `/runs/${record.runId}`,
                   events: `/runs/${record.runId}/events`,
                   artifacts: `/runs/${record.runId}/artifacts`,
+                  cancel: `/runs/${record.runId}/cancel`,
                 },
               });
               return;
@@ -506,6 +507,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             run: `/runs/${record.runId}`,
             events: `/runs/${record.runId}/events`,
             artifacts: `/runs/${record.runId}/artifacts`,
+            cancel: `/runs/${record.runId}/cancel`,
           },
         });
         return;
@@ -513,6 +515,19 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
 
       if (req.method === "GET" && seg.length === 2 && seg[0] === "runs") {
         const run = manager.getRun(seg[1]!);
+        if (!run) return notFound(res);
+        json(res, 200, { run });
+        return;
+      }
+
+      if (
+        req.method === "POST" &&
+        seg.length === 3 &&
+        seg[0] === "runs" &&
+        seg[2] === "cancel"
+      ) {
+        const runId = seg[1]!;
+        const run = manager.cancelRun(runId);
         if (!run) return notFound(res);
         json(res, 200, { run });
         return;

@@ -182,9 +182,10 @@ Phase 2.3 - Scheduler/watchlist (cron):
   - only create a run if there are new videos to process
 
 Phase 2.4 - Control + robustness:
-- cancel run endpoint
+- cancel run endpoint (DONE)
 - rate limiting (per API key/IP)
 - optional worker/queue if synchronous execution becomes limiting
+- tighten input validation (watchlist URLs should be channel/playlist only; avoid accepting arbitrary URLs)
 
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 
@@ -194,3 +195,6 @@ Add:
 - object storage for artifacts
 - workers/queues for background processing
 - usage tracking + admin controls (foundation for future billing)
+
+Future input mode (not implemented yet):
+- Accept direct audio file input (skip yt-dlp) for automation use cases.

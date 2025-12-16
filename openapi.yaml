@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.10.0
+  version: 0.11.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -292,6 +292,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /runs/{runId}/cancel:
+    post:
+      summary: Request cancellation of a run
+      description: |
+        Cooperative cancellation. If the run is running, the pipeline stops starting new work and ends as soon as practical.
+        In-flight video work may finish. Queued runs are cancelled immediately.
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunGetResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /runs/{runId}/artifacts:
     get:
       summary: Get artifacts for a run (channel videos listing)
@@ -316,7 +338,7 @@ paths:
       summary: Stream run events (SSE)
       description: |
         Server-Sent Events stream. Event names include:
-        - run:start, run:done, run:error
+        - run:start, run:done, run:cancelled, run:error
         - video:start, video:stage, video:done, video:skip, video:error
       parameters:
         - $ref: "#/components/parameters/RunId"
@@ -606,7 +628,7 @@ components:
 
     RunStatus:
       type: string
-      enum: [queued, running, done, error]
+      enum: [queued, running, done, error, cancelled]
 
     RunStats:
       type: object
@@ -628,6 +650,7 @@ components:
         createdAt: { type: string }
         startedAt: { type: string }
         finishedAt: { type: string }
+        cancelRequested: { type: boolean }
         error: { type: string }
         callbackUrl: { type: string }
         channelId: { type: string }
@@ -663,6 +686,7 @@ components:
             Optional. If set, the API sends a POST webhook when the run ends:
             - `run:done` when status becomes done
             - `run:error` when status becomes error
+            - `run:cancelled` when status becomes cancelled
             If `Y2T_WEBHOOK_SECRET` is set on the server, requests include:
             - `X-Y2T-Timestamp` (ISO)
             - `X-Y2T-Signature` (HMAC-SHA256 of `${timestamp}.${body}`)
@@ -672,11 +696,12 @@ components:
 
     RunCreateLinks:
       type: object
-      required: [run, events, artifacts]
+      required: [run, events, artifacts, cancel]
       properties:
         run: { type: string }
         events: { type: string }
         artifacts: { type: string }
+        cancel: { type: string }
 
     RunCreateResponse:
       type: object

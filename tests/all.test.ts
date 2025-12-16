@@ -17,3 +17,4 @@ import "./apiCors.test.js";
 import "./apiRetention.test.js";
 import "./watchlist.test.js";
 import "./scheduler.test.js";
+import "./apiCancel.test.js";

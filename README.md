@@ -206,6 +206,7 @@ Webhooks (optional):
 - `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
   - `run:done` when status becomes `done`
   - `run:error` when status becomes `error`
+  - `run:cancelled` when status becomes `cancelled`
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:
   - `X-Y2T-Timestamp` (ISO timestamp)
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`
@@ -221,6 +222,7 @@ Endpoints:
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "callbackUrl": "https://...", "config": { ... } }` (cache-first for single-video URLs)
 - `GET /runs`
 - `GET /runs/:id`
+- `POST /runs/:id/cancel`
 - `GET /runs/:id/events` (SSE, supports `Last-Event-ID`)
 - `GET /runs/:id/artifacts`
 - `GET /library/channels`

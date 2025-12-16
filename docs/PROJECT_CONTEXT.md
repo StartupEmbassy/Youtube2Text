@@ -62,10 +62,12 @@ Completed:
 - Minimal local HTTP API runner (SSE events + artifacts listing)
 - API run/event persistence on disk (restart-safe by default)
 - Docker image + docker compose for the API runner
+- Phase 2.3 Scheduler/watchlist (cron): plan-first followed-channels automation
+- Phase 2.4 Control: cancel runs (cooperative)
 
 In progress:
-- Phase 2.3 Scheduler/watchlist (cron): plan-first followed-channels automation.
-- Phase 2: hosted single-tenant service (admin) - IN PROGRESS
+- Phase 2.4 Control: rate limiting (optional), and queue/worker only if needed.
+- Watchlist URL validation (restrict to channel/playlist URLs; avoid accepting arbitrary URLs).
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE
@@ -79,9 +81,12 @@ In progress:
 6. Phase 2: hosted single-tenant service (admin)
    - Phase 2.1 Integration MVP: API key auth, `POST /runs/plan`, webhooks, cache-first single-video, integration docs
    - Phase 2.2 Ops hardening: extended healthcheck, CORS allowlist, retention/cleanup
-   - Phase 2.3 Scheduler/watchlist (cron): followed channels list + global/per-channel interval, uses `POST /runs/plan` to decide
-   - Phase 2.4 Control: cancel run, rate limiting, optional worker/queue
+    - Phase 2.3 Scheduler/watchlist (cron): followed channels list + global/per-channel interval, uses `POST /runs/plan` to decide
+    - Phase 2.4 Control: cancel run (DONE), rate limiting (optional), optional worker/queue
 7. Phase 3+: optional multi-tenant cloud platform
+
+Future input (not implemented yet):
+- Accept direct audio file input (skip yt-dlp download stage) via API, intended for n8n/automation use cases.
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/

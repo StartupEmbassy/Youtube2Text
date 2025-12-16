@@ -2,6 +2,7 @@ import Link from "next/link";
 import { apiGetJson } from "../../../lib/api";
 import type { RunRecord } from "../../../lib/apiSchema";
 import { RunEvents } from "./RunEvents";
+import { CancelRunButton } from "./CancelRunButton";
 
 type RunResponse = { run: RunRecord };
 type ArtifactVideo = {
@@ -82,6 +83,11 @@ export default async function RunPage({ params }: { params: { runId: string } })
               Open downloads
             </Link>
           )}
+          <CancelRunButton
+            runId={runId}
+            status={runData.run.status}
+            cancelRequested={(runData.run as any).cancelRequested}
+          />
           <Link href="/" className="pill">
             Back
           </Link>

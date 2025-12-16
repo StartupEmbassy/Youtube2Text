@@ -60,11 +60,13 @@ function getCreditsMinutesRemaining(
 export async function runPipeline(
   inputUrl: string,
   config: AppConfig,
-  options: { force: boolean; emitter?: PipelineEventEmitter }
+  options: { force: boolean; emitter?: PipelineEventEmitter; abortSignal?: AbortSignal }
 ) {
   const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
   let stopAll = false;
+  let cancelRequested = false;
   const emitter = options.emitter;
+  const abortSignal = options.abortSignal;
   const nowIso = () => new Date().toISOString();
   const emitStage = (
     stage: PipelineStage,
@@ -81,6 +83,16 @@ export async function runPipeline(
       timestamp: nowIso(),
     });
   };
+
+  const isCancelled = () => cancelRequested || abortSignal?.aborted === true;
+  if (abortSignal?.aborted) cancelRequested = true;
+  abortSignal?.addEventListener(
+    "abort",
+    () => {
+      cancelRequested = true;
+    },
+    { once: true }
+  );
   if (config.assemblyAiCreditsCheck !== "none") {
     try {
       const provider = new AssemblyAiProvider(config.assemblyAiApiKey);
@@ -232,22 +244,36 @@ export async function runPipeline(
         limit(async () => {
           let stageForError: PipelineStage = "download";
           let hintForError: string | undefined;
-          if (stopAll) {
-            skipped += 1;
+          const markSkip = (reason: string) => {
+            const wasAlreadyProcessed = alreadyProcessedByIndex[index - 1] === true;
+            if (!wasAlreadyProcessed) {
+              completedVideos += 1;
+              skipped += 1;
+            }
             const remaining = totalVideos - completedVideos;
-            logWarn(
-              `Skipping due to prior fatal error: Video ${index}/${totalVideos} (${video.id})`
+            logStep(
+              "skip",
+              `Video ${index}/${totalVideos} ${reason}: ${completedVideos}/${totalVideos} videos completed (${remaining} remaining)`
             );
             emitter?.emit({
               type: "video:skip",
               videoId: video.id,
-              reason: "stopped",
+              reason,
               index,
               total: totalVideos,
               completed: completedVideos,
               remaining,
               timestamp: nowIso(),
             });
+          };
+
+          if (isCancelled()) {
+            markSkip("cancelled");
+            stopAll = true;
+            return;
+          }
+          if (stopAll) {
+            markSkip("stopped");
             return;
           }
 
@@ -291,7 +317,6 @@ export async function runPipeline(
 
           try {
             if (!options.force && alreadyProcessedByIndex[index - 1]) {
-              skipped += 1;
               const remaining = totalVideos - completedVideos;
               logStep(
                 "skip",
@@ -330,6 +355,11 @@ export async function runPipeline(
               ytDlpCommand,
               ytDlpExtraArgs
             );
+            if (isCancelled()) {
+              markSkip("cancelled");
+              stopAll = true;
+              return;
+            }
 
             const language =
               config.languageDetection === "manual"
@@ -520,15 +550,27 @@ export async function runPipeline(
       )
     );
 
-    emitter?.emit({
-      type: "run:done",
-      channelId: listing.channelId,
-      total: totalVideos,
-      succeeded,
-      failed,
-      skipped,
-      timestamp: nowIso(),
-    });
+    if (isCancelled()) {
+      emitter?.emit({
+        type: "run:cancelled",
+        channelId: listing.channelId,
+        total: totalVideos,
+        succeeded,
+        failed,
+        skipped,
+        timestamp: nowIso(),
+      });
+    } else {
+      emitter?.emit({
+        type: "run:done",
+        channelId: listing.channelId,
+        total: totalVideos,
+        succeeded,
+        failed,
+        skipped,
+        timestamp: nowIso(),
+      });
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     emitter?.emit({

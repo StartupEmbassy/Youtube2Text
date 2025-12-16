@@ -46,6 +46,7 @@ function statusClass(status: RunRecord["status"]): string {
   if (status === "done") return "pill ok";
   if (status === "error") return "pill bad";
   if (status === "running") return "pill warn";
+  if (status === "cancelled") return "pill";
   return "pill";
 }
 

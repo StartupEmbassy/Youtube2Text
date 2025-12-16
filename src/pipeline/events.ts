@@ -75,6 +75,15 @@ export type PipelineEvent =
       timestamp: string;
     }
   | {
+      type: "run:cancelled";
+      channelId: string;
+      total: number;
+      succeeded: number;
+      failed: number;
+      skipped: number;
+      timestamp: string;
+    }
+  | {
       type: "run:error";
       channelId?: string;
       error: string;
@@ -84,4 +93,3 @@ export type PipelineEvent =
 export interface PipelineEventEmitter {
   emit(event: PipelineEvent): void;
 }
-

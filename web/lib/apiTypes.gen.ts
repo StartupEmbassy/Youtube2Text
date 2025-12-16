@@ -635,6 +635,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request cancellation of a run
+         * @description Cooperative cancellation. If the run is running, the pipeline stops starting new work and ends as soon as practical.
+         *     In-flight video work may finish. Queued runs are cancelled immediately.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    runId: components["parameters"]["RunId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RunGetResponse"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{runId}/artifacts": {
         parameters: {
             query?: never;
@@ -692,7 +743,7 @@ export interface paths {
         /**
          * Stream run events (SSE)
          * @description Server-Sent Events stream. Event names include:
-         *     - run:start, run:done, run:error
+         *     - run:start, run:done, run:cancelled, run:error
          *     - video:start, video:stage, video:done, video:skip, video:error
          */
         get: {
@@ -1023,7 +1074,7 @@ export interface components {
             };
         };
         /** @enum {string} */
-        RunStatus: "queued" | "running" | "done" | "error";
+        RunStatus: "queued" | "running" | "done" | "error" | "cancelled";
         RunStats: {
             succeeded: number;
             failed: number;
@@ -1039,6 +1090,7 @@ export interface components {
             createdAt: string;
             startedAt?: string;
             finishedAt?: string;
+            cancelRequested?: boolean;
             error?: string;
             callbackUrl?: string;
             channelId?: string;
@@ -1061,6 +1113,7 @@ export interface components {
              * @description Optional. If set, the API sends a POST webhook when the run ends:
              *     - `run:done` when status becomes done
              *     - `run:error` when status becomes error
+             *     - `run:cancelled` when status becomes cancelled
              *     If `Y2T_WEBHOOK_SECRET` is set on the server, requests include:
              *     - `X-Y2T-Timestamp` (ISO)
              *     - `X-Y2T-Signature` (HMAC-SHA256 of `${timestamp}.${body}`)
@@ -1074,6 +1127,7 @@ export interface components {
             run: string;
             events: string;
             artifacts: string;
+            cancel: string;
         };
         RunCreateResponse: {
             run: components["schemas"]["RunRecord"];

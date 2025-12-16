@@ -53,6 +53,14 @@ Notes:
 - For single-video URLs, `POST /runs` is cache-first: if artifacts already exist and `force=false`, it returns a `done` run immediately (no download/transcribe).
 - For channel/playlist runs, idempotency is handled by per-video skip checks.
 
+### 3b) Cancel a run
+
+Cancellation is cooperative. In-flight work may finish, but the run will stop as soon as practical and end with `status: cancelled`.
+
+```bash
+curl -sS -X POST http://127.0.0.1:8787/runs/<RUN_ID>/cancel
+```
+
 ### 4) Observe progress
 
 SSE (run events):
@@ -94,6 +102,7 @@ curl -L "http://127.0.0.1:8787/library/channels/<CHANNEL_DIR>/videos/<BASENAME>/
 `POST /runs` supports `callbackUrl`. When the run ends, the API sends a POST webhook:
 - `type: "run:done"` when status becomes `done`
 - `type: "run:error"` when status becomes `error`
+- `type: "run:cancelled"` when status becomes `cancelled`
 
 Payload:
 

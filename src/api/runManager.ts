@@ -19,7 +19,7 @@ import {
   ensureDir,
 } from "./persistence.js";
 
-export type RunStatus = "queued" | "running" | "done" | "error";
+export type RunStatus = "queued" | "running" | "done" | "error" | "cancelled";
 
 export type RunRecord = {
   runId: string;
@@ -29,6 +29,7 @@ export type RunRecord = {
   createdAt: string;
   startedAt?: string;
   finishedAt?: string;
+  cancelRequested?: boolean;
   error?: string;
   callbackUrl?: string;
   channelId?: string;
@@ -62,6 +63,7 @@ export type RunManagerOptions = {
   maxBufferedEventsPerRun: number;
   persistRuns: boolean;
   persistDir?: string;
+  deps?: { runPipeline?: typeof runPipeline };
 };
 
 export class RunManager {
@@ -77,6 +79,8 @@ export class RunManager {
   >();
   private persistence?: RunPersistence;
   private persistChain: Promise<void> = Promise.resolve();
+  private abortControllers = new Map<string, AbortController>();
+  private runPipelineFn: typeof runPipeline;
 
   constructor(
     private baseConfig: AppConfig,
@@ -89,6 +93,7 @@ export class RunManager {
       const dir = options.persistDir ?? join(baseConfig.outputDir, "_runs");
       this.persistence = createRunPersistence(dir);
     }
+    this.runPipelineFn = options.deps?.runPipeline ?? runPipeline;
   }
 
   async init(): Promise<void> {
@@ -164,6 +169,32 @@ export class RunManager {
     return this.runs.get(runId);
   }
 
+  cancelRun(runId: string): RunRecord | undefined {
+    const run = this.getRun(runId);
+    if (!run) return undefined;
+    const now = new Date().toISOString();
+
+    if (run.status === "queued") {
+      run.status = "cancelled";
+      run.cancelRequested = true;
+      run.finishedAt = now;
+      this.persistRun(run);
+      this.emitGlobal({ type: "run:updated", run, timestamp: now });
+      void deliverRunTerminalWebhook(run, "run:cancelled");
+      return run;
+    }
+
+    if (run.status === "running") {
+      run.cancelRequested = true;
+      this.persistRun(run);
+      this.emitGlobal({ type: "run:updated", run, timestamp: now });
+      this.abortControllers.get(runId)?.abort();
+      return run;
+    }
+
+    return run;
+  }
+
   listRuns(): RunRecord[] {
     return Array.from(this.runs.values()).sort((a, b) =>
       a.createdAt < b.createdAt ? 1 : -1
@@ -227,18 +258,25 @@ export class RunManager {
     const emitter: PipelineEventEmitter = {
       emit: (event) => this.onEvent(runId, event),
     };
+    const controller = new AbortController();
+    this.abortControllers.set(runId, controller);
 
     run.status = "running";
     run.startedAt = new Date().toISOString();
     this.persistRun(run);
     this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
 
-    void runPipeline(req.url, config, { force: Boolean(req.force), emitter })
+    void this.runPipelineFn(req.url, config, {
+      force: Boolean(req.force),
+      emitter,
+      abortSignal: controller.signal,
+    })
       .then(() => {
         const updated = this.runs.get(runId);
         if (!updated) return;
-        if (updated.status === "running") {
-          updated.status = "done";
+        if (updated.status !== "running") return;
+        if (updated.cancelRequested) {
+          updated.status = "cancelled";
           updated.finishedAt = new Date().toISOString();
           this.persistRun(updated);
           this.emitGlobal({
@@ -246,8 +284,18 @@ export class RunManager {
             run: updated,
             timestamp: new Date().toISOString(),
           });
-          void deliverRunTerminalWebhook(updated, "run:done");
+          void deliverRunTerminalWebhook(updated, "run:cancelled");
+          return;
         }
+        updated.status = "done";
+        updated.finishedAt = new Date().toISOString();
+        this.persistRun(updated);
+        this.emitGlobal({
+          type: "run:updated",
+          run: updated,
+          timestamp: new Date().toISOString(),
+        });
+        void deliverRunTerminalWebhook(updated, "run:done");
       })
       .catch((error) => {
         const updated = this.runs.get(runId);
@@ -262,6 +310,9 @@ export class RunManager {
           timestamp: new Date().toISOString(),
         });
         void deliverRunTerminalWebhook(updated, "run:error");
+      })
+      .finally(() => {
+        this.abortControllers.delete(runId);
       });
   }
 
@@ -301,6 +352,23 @@ export class RunManager {
         };
         this.persistRun(run);
         this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+        if (!run.previewTitle && run.channelDirName) {
+          void this.tryEnrichPreviewFromArtifacts(run);
+        }
+      }
+      if (event.type === "run:cancelled") {
+        run.cancelRequested = true;
+        run.status = "cancelled";
+        run.finishedAt = new Date().toISOString();
+        run.stats = {
+          succeeded: event.succeeded,
+          failed: event.failed,
+          skipped: event.skipped,
+          total: event.total,
+        };
+        this.persistRun(run);
+        this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+        void deliverRunTerminalWebhook(run, "run:cancelled");
         if (!run.previewTitle && run.channelDirName) {
           void this.tryEnrichPreviewFromArtifacts(run);
         }

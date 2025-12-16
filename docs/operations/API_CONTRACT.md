@@ -54,6 +54,7 @@ Start by covering what exists today (Phase 1):
   - `GET /runs`
   - `POST /runs`
   - `GET /runs/:id`
+  - `POST /runs/:id/cancel`
   - `GET /runs/:id/artifacts`
   - `GET /runs/:id/events` (SSE) (document as `text/event-stream`)
 - Library:
@@ -63,11 +64,10 @@ Start by covering what exists today (Phase 1):
   - `GET /library/channels/:channelDirName/videos/:basename/:kind`
 
 Future endpoints we likely want (admin-local):
-- `POST /runs/:id/cancel`
-- `POST /runs/:id/retry`
-- `DELETE /runs/:id`
-- `GET /config` (sanitized effective config, no secrets)
-- `POST /config/validate` (validate run overrides)
+ - `POST /runs/:id/retry`
+ - `DELETE /runs/:id`
+ - `GET /config` (sanitized effective config, no secrets)
+ - `POST /config/validate` (validate run overrides)
 
 ## Notes
 
