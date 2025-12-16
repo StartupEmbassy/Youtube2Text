@@ -7,11 +7,14 @@ import type { AppConfig } from "../config/schema.js";
 import { RunManager } from "./runManager.js";
 import { badRequest, json, notFound, readJsonBody } from "./http.js";
 import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
-import { FileSystemStorageAdapter } from "../storage/index.js";
+import { FileSystemStorageAdapter, saveChannelMetaJson } from "../storage/index.js";
+import { makeChannelDirName } from "../storage/naming.js";
 import { requireApiKey } from "./auth.js";
 import { sanitizeConfigOverrides } from "./sanitize.js";
 import { planRun } from "../pipeline/plan.js";
 import { tryExtractVideoIdFromUrl } from "../youtube/url.js";
+import { fetchChannelMetadata, safeChannelThumbnailUrl } from "../youtube/index.js";
+import { join } from "node:path";
 
 type ServerOptions = {
   port: number;
@@ -293,6 +296,39 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
                 { url, force: false, callbackUrl, config: configOverrides },
                 plan
               );
+
+              // Best-effort: update channel thumbnail if missing (fire-and-forget)
+              void (async () => {
+                try {
+                  const adapter = new FileSystemStorageAdapter({
+                    outputDir: mergedConfig.outputDir,
+                    audioDir: mergedConfig.audioDir,
+                    audioFormat: mergedConfig.audioFormat,
+                  });
+                  const channelDirName = makeChannelDirName(plan.channelId, plan.channelTitle);
+                  const existingMeta = await adapter.readChannelMeta(channelDirName);
+                  // Update if: (1) file doesn't exist, OR (2) file exists but missing thumbnail
+                  if (!existingMeta || !existingMeta.channelThumbnailUrl) {
+                    const channelUrl = `https://www.youtube.com/channel/${plan.channelId}`;
+                    const channelMeta = await fetchChannelMetadata(channelUrl);
+                    const thumbnailUrl = safeChannelThumbnailUrl(channelMeta);
+                    if (thumbnailUrl) {
+                      const metaPath = join(mergedConfig.outputDir, channelDirName, "_channel.json");
+                      await saveChannelMetaJson(metaPath, {
+                        channelId: plan.channelId,
+                        channelTitle: plan.channelTitle,
+                        ...existingMeta,
+                        channelThumbnailUrl: thumbnailUrl,
+                        channelUrl,
+                        updatedAt: new Date().toISOString(),
+                      });
+                    }
+                  }
+                } catch {
+                  // Best-effort only - ignore errors
+                }
+              })();
+
               json(res, 201, {
                 run: record,
                 links: {

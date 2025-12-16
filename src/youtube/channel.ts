@@ -20,6 +20,13 @@ function isLikelyChannelImageUrl(url: string): boolean {
   );
 }
 
+function isSquareish(width: number, height: number): boolean {
+  if (width === 0 || height === 0) return false;
+  const aspectRatio = width / height;
+  // Consider an image "square-ish" if aspect ratio is between 0.8 and 1.25
+  return aspectRatio >= 0.8 && aspectRatio <= 1.25;
+}
+
 function bestFromThumbnails(thumbnails: unknown): string | undefined {
   if (!Array.isArray(thumbnails)) return undefined;
   const parsed: ThumbnailCandidate[] = thumbnails
@@ -43,8 +50,13 @@ function bestFromThumbnails(thumbnails: unknown): string | undefined {
   );
   const usable = channelCandidates.length > 0 ? channelCandidates : usableAll;
 
-  usable.sort((a, b) => (a.width * a.height < b.width * b.height ? 1 : -1));
-  return usable[0]!.url as string;
+  // Prefer square images (avatars) over wide images (banners)
+  const squareImages = usable.filter((t) => isSquareish(t.width, t.height));
+  const candidates = squareImages.length > 0 ? squareImages : usable;
+
+  // Sort by area (largest first)
+  candidates.sort((a, b) => (a.width * a.height < b.width * b.height ? 1 : -1));
+  return candidates[0]!.url as string;
 }
 
 export function extractChannelThumbnailUrl(meta: unknown): string | undefined {

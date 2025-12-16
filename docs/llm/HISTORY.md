@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-16 - Claude Opus 4.5 - Fix channel thumbnails not appearing for cached single-video runs: add fire-and-forget thumbnail update in cache-first path (server.ts), prefer square avatars over banners (channel.ts isSquareish function); bump version to 0.9.3 - Files: [src/api/server.ts, src/youtube/channel.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json] - Version impact: yes (package.json 0.9.2 -> 0.9.3)
+
 2025-12-15 - GPT-5.2 - Fix channel avatars for channels created from single-video runs by fetching channel metadata via `https://www.youtube.com/channel/<channelId>` and persisting `channelUrl` in `_channel.json`; bump version to 0.9.2 - Files: [src/pipeline/run.ts, src/storage/index.ts, docs/llm/HANDOFF.md, docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, openapi.yaml, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.9.1 -> 0.9.2)
 
 2025-12-14 - GPT-5.2 - Web UX: make navbar brand link to `/`, and make Run detail actually usable (status/progress summary, per-video downloads list, and clearer error display instead of raw artifacts JSON); bump version to 0.5.4 - Files: [web/app/layout.tsx, web/app/runs/[runId]/page.tsx, docs/llm/HANDOFF.md, openapi.yaml, web/lib/apiTypes.gen.ts, docs/VERSIONING_RULES.md, package.json, package-lock.json, docs/llm/HISTORY.md] - Version impact: yes (package.json 0.5.3 -> 0.5.4)

@@ -6,7 +6,7 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-15 - GPT-5.2
+- Last Updated: 2025-12-16 - Claude Opus 4.5
 - Scope: Public YouTube videos only (no cookies support)
 - Goal: Phase 2.2 Ops hardening kickoff (keep CLI intact)
 
@@ -18,7 +18,20 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Run detail: summarized status/progress + downloads list (no raw artifacts JSON) and improved error display.
 - Ops: contract check (`npm run api:contract:check`) + docker smoke test (`npm run test:docker-smoke`).
 - Phase 2.1 DONE: integration MVP (API key auth + planning + webhooks + cache-first single-video + integration docs).
-- Library: channel avatars are best-effort from yt-dlp channel metadata (`channelThumbnailUrl` in `_channel.json`); existing channels may require a rerun to populate.
+- Library: channel avatars are best-effort from yt-dlp channel metadata (`channelThumbnailUrl` in `_channel.json`).
+- v0.9.3: Fixed channel thumbnails not appearing for cached single-video runs; now prefers square avatars over banners.
+
+### v0.9.3 Channel Thumbnail Fix Details
+
+Problem: Channel avatars were not showing in the Library page for videos processed before v0.9.2, even after re-running.
+
+Root cause: The cache-first logic for single-video URLs (`POST /runs` with `force=false`) returned `done` immediately without running the pipeline, so `_channel.json` files created before the thumbnail feature were never updated.
+
+Changes made:
+1. `src/api/server.ts`: Added fire-and-forget async function that updates `_channel.json` with thumbnail when cache-first triggers. Works for both missing files and files without `channelThumbnailUrl`.
+2. `src/youtube/channel.ts`: Added `isSquareish()` function to detect avatar images (aspect ratio 0.8-1.25). Updated `bestFromThumbnails()` to prefer square images (avatars) over wide images (banners).
+
+Result: Re-running any single video URL now populates the channel avatar (900x900 square) instead of the banner (2560x424 wide).
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
