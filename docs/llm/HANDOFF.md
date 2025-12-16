@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-16 - GPT-5.2 (Phase 2.2 completed; Phase 2.3 next)
+- Last Updated: 2025-12-16 - GPT-5.2 (Phase 2.3 watchlist/scheduler MVP)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.3 Scheduler/watchlist kickoff (keep CLI intact)
+- Goal: Phase 2.3 Scheduler/watchlist MVP (keep CLI intact)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -24,6 +24,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.9.5: Added `Y2T_CORS_ORIGINS` allowlist (exact origin match) to restrict browser access; Phase 2.2 continues with retention + deploy playbook.
 - v0.9.6: Added retention cleanup (runs persistence + old audio cache) with env knobs and `POST /maintenance/cleanup`.
 - v0.9.6: Added server deploy playbook: `docs/operations/DEPLOY_PLAYBOOK.md`.
+- v0.10.0: Phase 2.3 kickoff: watchlist CRUD + in-process scheduler (opt-in) with `/scheduler/*`.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -53,19 +54,95 @@ Technical note: The `Vary: Origin` header is essential. Without it, a proxy/CDN 
 
 No issues found. Implementation is correct and complete.
 
-### Phase 2.2 Next Steps (updated)
+### Claude Opus 4.5 Review of v0.9.6 Retention + Playbook (2025-12-16)
 
-Status after v0.9.5:
-1. Extended health (`GET /health?deep=true`) - DONE (v0.9.4)
-2. Configurable CORS allowlist (`Y2T_CORS_ORIGINS`) - DONE (v0.9.5)
-3. Retention/cleanup policy for `output/_runs/*` (and optionally old audio) - DONE (v0.9.6)
-4. Deploy playbook doc (Docker Compose + reverse proxy/TLS + require API key) - DONE
+**Implementation quality: Excellent.** Build OK, 44/44 tests pass. Phase 2.2 complete.
 
-Retention policy suggestion (for GPT-5.2 or next session):
-- Env vars: `Y2T_RETENTION_RUNS_DAYS` (default: 30), `Y2T_RETENTION_AUDIO_DAYS` (default: 7 or -1 to disable)
-- Never delete transcripts (`output/<channel>/*.json`) - only run metadata and audio
-- Consider a cleanup command (`youtube2text-api --cleanup`) or automatic on startup
-- Question: should cleanup run on a schedule (e.g., daily at 3am) or only on-demand?
+What GPT-5.2 did well:
+- Used my exact suggested env var names (`Y2T_RETENTION_RUNS_DAYS`, `Y2T_RETENTION_AUDIO_DAYS`).
+- Smart timestamp detection: tries `finishedAt > startedAt > createdAt` from run.json, falls back to mtime.
+- Never deletes transcripts (as I suggested) - only `_runs/*` and `audio/*`.
+- On-demand cleanup via `POST /maintenance/cleanup` (answered my question - safer than automatic).
+- Clean separation: `retention.ts` (186 lines) handles all cleanup logic.
+- Deploy playbook is practical and covers all the important points.
+- 2 new tests (43: runs cleanup, 44: audio cleanup).
+
+Minor suggestion (not critical): The playbook could mention setting up a cron job to periodically call `POST /maintenance/cleanup`. But this is obvious for any admin.
+
+### Phase 2.2 Final Status
+
+All items DONE:
+1. Extended health (`GET /health?deep=true`) - v0.9.4
+2. Configurable CORS allowlist (`Y2T_CORS_ORIGINS`) - v0.9.5
+3. Retention/cleanup policy (`POST /maintenance/cleanup`) - v0.9.6
+4. Deploy playbook (`docs/operations/DEPLOY_PLAYBOOK.md`) - v0.9.6
+
+**Phase 2.2 is complete. Phase 2.3 (Scheduler/watchlist) is next.**
+
+### Claude Opus 4.5 Suggestions for Phase 2.3 (Scheduler/Watchlist)
+
+The existing plan in this file is solid. Here are concrete implementation suggestions:
+
+**Suggested implementation order:**
+1. Watchlist CRUD endpoints (`GET/POST/DELETE /watchlist`)
+2. Scheduler loop (in-process setInterval or separate worker)
+3. Scheduler control endpoints (`POST /scheduler/start`, `POST /scheduler/stop`, `GET /scheduler/status`)
+4. Web UI for watchlist management (optional, can use API directly)
+
+**Data model suggestion:**
+```typescript
+type WatchlistEntry = {
+  id: string;                    // uuid
+  channelUrl: string;            // e.g. "https://www.youtube.com/@channel"
+  channelId?: string;            // resolved after first plan
+  channelTitle?: string;         // resolved after first plan
+  intervalMinutes?: number;      // override global default
+  enabled: boolean;              // can pause individual channels
+  lastCheckedAt?: string;        // ISO timestamp
+  lastRunId?: string;            // link to most recent run
+  createdAt: string;
+};
+```
+
+**Persistence suggestion:**
+- Store watchlist in `output/_watchlist.json` (simple, no new deps)
+- Or add a `watchlist/` directory with one JSON per entry (easier to inspect/edit manually)
+
+**Env vars suggestion:**
+- `Y2T_SCHEDULER_ENABLED` (default: false) - opt-in to avoid surprise runs
+- `Y2T_SCHEDULER_INTERVAL_MINUTES` (default: 60) - global check interval
+- `Y2T_SCHEDULER_MAX_CONCURRENT_RUNS` (default: 1) - prevent overload
+
+**API endpoints suggestion:**
+```
+GET  /watchlist                    - list all entries
+POST /watchlist                    - add channel { channelUrl, intervalMinutes?, enabled? }
+GET  /watchlist/:id                - get entry
+PATCH /watchlist/:id               - update { intervalMinutes?, enabled? }
+DELETE /watchlist/:id              - remove entry
+
+GET  /scheduler/status             - { enabled, running, nextCheckAt, lastCheckAt }
+POST /scheduler/start              - start scheduler loop
+POST /scheduler/stop               - stop scheduler loop
+POST /scheduler/trigger            - run one check cycle immediately (for testing)
+```
+
+**Scheduler loop logic (pseudocode):**
+```
+every globalInterval:
+  for entry in watchlist where enabled:
+    if now - entry.lastCheckedAt >= entry.intervalMinutes (or global):
+      plan = POST /runs/plan { url: entry.channelUrl }
+      if plan.toProcess > 0:
+        run = POST /runs { url: entry.channelUrl }
+        update entry.lastRunId = run.runId
+      update entry.lastCheckedAt = now
+```
+
+**Questions for GPT-5.2:**
+- Should the scheduler be in-process (simpler) or a separate worker process (more robust)?
+- Should we support playlist URLs in the watchlist, or only channel URLs?
+- Should we emit SSE events for scheduler activity (e.g., `scheduler:check`, `scheduler:run-created`)?
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE

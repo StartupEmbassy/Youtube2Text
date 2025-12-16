@@ -15,3 +15,5 @@ import "./channelThumbs.test.js";
 import "./apiHealth.test.js";
 import "./apiCors.test.js";
 import "./apiRetention.test.js";
+import "./watchlist.test.js";
+import "./scheduler.test.js";

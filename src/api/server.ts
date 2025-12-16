@@ -17,6 +17,8 @@ import { fetchChannelMetadata, safeChannelThumbnailUrl } from "../youtube/index.
 import { join } from "node:path";
 import { getDeepHealth, getHealth } from "./health.js";
 import { runRetentionCleanup } from "./retention.js";
+import { Scheduler, loadSchedulerConfigFromEnv } from "./scheduler.js";
+import { WatchlistStore } from "./watchlist.js";
 
 type ServerOptions = {
   port: number;
@@ -47,7 +49,7 @@ function setCors(req: IncomingMessage, res: ServerResponse) {
     res.setHeader("vary", "Origin");
   }
 
-  res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+  res.setHeader("access-control-allow-methods", "GET,POST,PATCH,DELETE,OPTIONS");
   res.setHeader(
     "access-control-allow-headers",
     "content-type,last-event-id,x-api-key"
@@ -99,6 +101,18 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   });
   await manager.init();
 
+  const watchlistStore = new WatchlistStore(config.outputDir);
+  const schedulerCfg = loadSchedulerConfigFromEnv();
+  const scheduler = new Scheduler(
+    schedulerCfg,
+    manager,
+    watchlistStore,
+    async (url) => planRun(url, config, { force: false }),
+    (req) => manager.createRun(req),
+    (runId, req) => manager.startRun(runId, req)
+  );
+  if (schedulerCfg.enabled) scheduler.start();
+
   const storage = new FileSystemStorageAdapter({
     outputDir: config.outputDir,
     audioDir: config.audioDir,
@@ -140,6 +154,95 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
 
       if (req.method === "GET" && seg.length === 1 && seg[0] === "runs") {
         json(res, 200, { runs: manager.listRuns() });
+        return;
+      }
+
+      if (req.method === "GET" && seg.length === 1 && seg[0] === "watchlist") {
+        const entries = await watchlistStore.list();
+        json(res, 200, { entries });
+        return;
+      }
+
+      if (req.method === "POST" && seg.length === 1 && seg[0] === "watchlist") {
+        let body: unknown;
+        try {
+          body = (await readJsonBody(req)) as unknown;
+        } catch {
+          badRequest(res, "Invalid JSON body");
+          return;
+        }
+        const channelUrl = (body as any)?.channelUrl;
+        const intervalMinutes = (body as any)?.intervalMinutes;
+        const enabled = (body as any)?.enabled;
+        if (typeof channelUrl !== "string" || channelUrl.trim().length === 0) {
+          badRequest(res, "Missing channelUrl");
+          return;
+        }
+        const entry = await watchlistStore.add({
+          channelUrl,
+          intervalMinutes: typeof intervalMinutes === "number" ? intervalMinutes : undefined,
+          enabled: enabled === undefined ? undefined : Boolean(enabled),
+        });
+        json(res, 201, { entry });
+        return;
+      }
+
+      if (seg.length === 2 && seg[0] === "watchlist") {
+        const id = decodePathSegment(seg[1]!);
+        if (!id) return badRequest(res, "Invalid id");
+
+        if (req.method === "GET") {
+          const entry = await watchlistStore.get(id);
+          if (!entry) return notFound(res);
+          json(res, 200, { entry });
+          return;
+        }
+
+        if (req.method === "PATCH") {
+          let body: unknown;
+          try {
+            body = (await readJsonBody(req)) as unknown;
+          } catch {
+            badRequest(res, "Invalid JSON body");
+            return;
+          }
+          const entry = await watchlistStore.update(id, {
+            intervalMinutes: (body as any)?.intervalMinutes,
+            enabled: (body as any)?.enabled,
+          });
+          if (!entry) return notFound(res);
+          json(res, 200, { entry });
+          return;
+        }
+
+        if (req.method === "DELETE") {
+          const removed = await watchlistStore.remove(id);
+          if (!removed) return notFound(res);
+          json(res, 200, { ok: true });
+          return;
+        }
+      }
+
+      if (req.method === "GET" && seg.length === 2 && seg[0] === "scheduler" && seg[1] === "status") {
+        json(res, 200, { status: scheduler.status() });
+        return;
+      }
+
+      if (req.method === "POST" && seg.length === 2 && seg[0] === "scheduler" && seg[1] === "start") {
+        scheduler.start();
+        json(res, 200, { status: scheduler.status() });
+        return;
+      }
+
+      if (req.method === "POST" && seg.length === 2 && seg[0] === "scheduler" && seg[1] === "stop") {
+        scheduler.stop();
+        json(res, 200, { status: scheduler.status() });
+        return;
+      }
+
+      if (req.method === "POST" && seg.length === 2 && seg[0] === "scheduler" && seg[1] === "trigger") {
+        const result = await scheduler.triggerOnce();
+        json(res, 200, { result, status: scheduler.status() });
         return;
       }
 

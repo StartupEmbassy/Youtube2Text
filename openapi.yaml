@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.9.6
+  version: 0.10.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -33,6 +33,150 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /watchlist:
+    get:
+      summary: List watchlist entries
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistListResponse"
+    post:
+      summary: Add watchlist entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistEntryResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /watchlist/{id}:
+    get:
+      summary: Get watchlist entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistEntryResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update watchlist entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistUpdateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistEntryResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Remove watchlist entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /scheduler/status:
+    get:
+      summary: Get scheduler status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchedulerStatusResponse"
+
+  /scheduler/start:
+    post:
+      summary: Start scheduler loop (in-process)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchedulerStatusResponse"
+
+  /scheduler/stop:
+    post:
+      summary: Stop scheduler loop (in-process)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchedulerStatusResponse"
+
+  /scheduler/trigger:
+    post:
+      summary: Trigger one scheduler check cycle
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchedulerTriggerResponse"
 
   /events:
     get:
@@ -308,6 +452,12 @@ components:
         message:
           type: string
 
+    OkResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+
     CleanupResponse:
       type: object
       required: [retention]
@@ -335,6 +485,81 @@ components:
                 deletedFiles: { type: integer }
                 keptFiles: { type: integer }
                 errors: { type: integer }
+
+    WatchlistEntry:
+      type: object
+      required: [id, channelUrl, enabled, createdAt]
+      properties:
+        id: { type: string }
+        channelUrl: { type: string }
+        channelId: { type: string }
+        channelTitle: { type: string }
+        intervalMinutes: { type: integer }
+        enabled: { type: boolean }
+        lastCheckedAt: { type: string }
+        lastRunId: { type: string }
+        createdAt: { type: string }
+
+    WatchlistCreateRequest:
+      type: object
+      required: [channelUrl]
+      properties:
+        channelUrl: { type: string }
+        intervalMinutes: { type: integer }
+        enabled: { type: boolean }
+
+    WatchlistUpdateRequest:
+      type: object
+      properties:
+        intervalMinutes: { type: integer }
+        enabled: { type: boolean }
+
+    WatchlistEntryResponse:
+      type: object
+      required: [entry]
+      properties:
+        entry:
+          $ref: "#/components/schemas/WatchlistEntry"
+
+    WatchlistListResponse:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/WatchlistEntry"
+
+    SchedulerStatus:
+      type: object
+      required: [enabled, running, intervalMinutes, maxConcurrentRuns]
+      properties:
+        enabled: { type: boolean }
+        running: { type: boolean }
+        intervalMinutes: { type: integer }
+        maxConcurrentRuns: { type: integer }
+        lastTickAt: { type: string }
+        nextTickAt: { type: string }
+
+    SchedulerStatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/SchedulerStatus"
+
+    SchedulerTriggerResponse:
+      type: object
+      required: [result, status]
+      properties:
+        result:
+          type: object
+          required: [checked, runsCreated]
+          properties:
+            checked: { type: integer }
+            runsCreated: { type: integer }
+        status:
+          $ref: "#/components/schemas/SchedulerStatus"
 
     HealthResponse:
       type: object

@@ -89,6 +89,24 @@ The web UI does not expose the key to the browser; it proxies API calls via `/ap
   - Best-effort automatic cleanup on API startup
   - Manual: `POST /maintenance/cleanup`
 
+## Scheduler / watchlist (Phase 2.3, optional)
+
+This is opt-in to avoid surprise runs.
+
+- Enable:
+  - `Y2T_SCHEDULER_ENABLED=true`
+  - `Y2T_SCHEDULER_INTERVAL_MINUTES=60` (default)
+  - `Y2T_SCHEDULER_MAX_CONCURRENT_RUNS=1` (default)
+- Watchlist endpoints:
+  - `POST /watchlist` with `{ "channelUrl": "https://www.youtube.com/@SomeChannel" }`
+  - `GET /watchlist`
+  - `PATCH /watchlist/<id>` to change `enabled` or `intervalMinutes`
+  - `DELETE /watchlist/<id>`
+- Scheduler endpoints:
+  - `GET /scheduler/status`
+  - `POST /scheduler/start`, `POST /scheduler/stop`
+  - `POST /scheduler/trigger` (run one cycle now)
+
 ## Integration
 
 See `INTEGRATION.md` for:

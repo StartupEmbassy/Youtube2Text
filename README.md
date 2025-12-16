@@ -192,6 +192,16 @@ Retention / cleanup (ops hardening):
   - Best-effort automatic cleanup on API startup
   - Manual: `POST /maintenance/cleanup`
 
+Scheduler / watchlist (Phase 2.3, opt-in):
+- Maintain a list of followed channels via `POST /watchlist`.
+- The in-process scheduler periodically calls `POST /runs/plan` and creates a run only when `toProcess > 0`.
+- Enable with:
+  - `Y2T_SCHEDULER_ENABLED=true`
+  - `Y2T_SCHEDULER_INTERVAL_MINUTES=60` (default)
+  - `Y2T_SCHEDULER_MAX_CONCURRENT_RUNS=1` (default)
+- Manual testing:
+  - `POST /scheduler/trigger`
+
 Webhooks (optional):
 - `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
   - `run:done` when status becomes `done`
@@ -204,6 +214,8 @@ Endpoints:
 - `GET /health`
 - `GET /health?deep=true` (best-effort deps + disk + persistence checks)
 - `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)
+- `GET /watchlist`, `POST /watchlist`, `PATCH /watchlist/:id`, `DELETE /watchlist/:id` (followed channels list)
+- `GET /scheduler/status`, `POST /scheduler/start|stop|trigger` (Phase 2.3, opt-in)
 - `GET /events` (SSE global stream for run updates)
 - `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "config": { ... } }` (enumerate + skip counts, no transcription)
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "callbackUrl": "https://...", "config": { ... } }` (cache-first for single-video URLs)
