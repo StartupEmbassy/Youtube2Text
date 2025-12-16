@@ -71,6 +71,24 @@ docker compose up --build
 
 The web UI does not expose the key to the browser; it proxies API calls via `/api/*`.
 
+## CORS (server deployments)
+
+- By default the API sends `Access-Control-Allow-Origin: *`.
+- To restrict browser access, set `Y2T_CORS_ORIGINS` to a comma-separated allowlist of origins (exact match), e.g.:
+  - `Y2T_CORS_ORIGINS=https://your-admin.example.com,http://localhost:3000`
+
+## Retention / cleanup (server deployments)
+
+- Configure via env:
+  - `Y2T_RETENTION_RUNS_DAYS` (default `30`, set `-1` to disable)
+  - `Y2T_RETENTION_AUDIO_DAYS` (default `7`, set `-1` to disable)
+- Cleanup scope:
+  - Deletes only API run persistence under `output/_runs/*` and old audio cache under `audio/*`
+  - Never deletes transcripts under `output/<channelDir>/*`
+- Triggers:
+  - Best-effort automatic cleanup on API startup
+  - Manual: `POST /maintenance/cleanup`
+
 ## Integration
 
 See `INTEGRATION.md` for:

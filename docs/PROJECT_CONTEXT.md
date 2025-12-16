@@ -64,7 +64,7 @@ Completed:
 - Docker image + docker compose for the API runner
 
 In progress:
-- Phase 2.2 Ops hardening: extended health/deps checks, CORS allowlist, retention/cleanup, deploy playbook.
+- Phase 2.3 Scheduler/watchlist (cron): plan-first followed-channels automation.
 - Phase 2: hosted single-tenant service (admin) - IN PROGRESS
 
 ## Roadmap / Milestones (Do in order)

@@ -12,6 +12,7 @@ Quick links:
 - Practical walkthrough: `HOW_TO_USE.md`
 - Integration guide (curl/n8n/webhooks): `INTEGRATION.md`
 - LLM snapshot/roadmap: `docs/llm/HANDOFF.md`
+- Deployment playbook (single-tenant admin): `docs/operations/DEPLOY_PLAYBOOK.md`
 
 ## Core Capabilities
 
@@ -175,6 +176,22 @@ Auth (optional, recommended for server/Docker):
 - Example:
   - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
 
+CORS (recommended for server deployments):
+- By default the API sends `Access-Control-Allow-Origin: *`.
+- To restrict browser access to specific origins, set `Y2T_CORS_ORIGINS` (comma-separated), e.g.:
+  - `Y2T_CORS_ORIGINS=https://your-admin.example.com,http://localhost:3000`
+
+Retention / cleanup (ops hardening):
+- Configure via env:
+  - `Y2T_RETENTION_RUNS_DAYS` (default `30`, set `-1` to disable)
+  - `Y2T_RETENTION_AUDIO_DAYS` (default `7`, set `-1` to disable)
+- Cleanup scope:
+  - Deletes only run persistence under `output/_runs/*` and old audio cache under `audio/*`
+  - Never deletes transcripts under `output/<channelDir>/*`
+- Cleanup triggers:
+  - Best-effort automatic cleanup on API startup
+  - Manual: `POST /maintenance/cleanup`
+
 Webhooks (optional):
 - `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
   - `run:done` when status becomes `done`
@@ -186,6 +203,7 @@ Webhooks (optional):
 Endpoints:
 - `GET /health`
 - `GET /health?deep=true` (best-effort deps + disk + persistence checks)
+- `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)
 - `GET /events` (SSE global stream for run updates)
 - `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "config": { ... } }` (enumerate + skip counts, no transcription)
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "callbackUrl": "https://...", "config": { ... } }` (cache-first for single-video URLs)

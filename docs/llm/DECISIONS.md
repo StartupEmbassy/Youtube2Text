@@ -79,26 +79,6 @@ Deferred (YAGNI until a second implementation exists):
 
 ## D-006 - AssemblyAI ALD fallback when yt-dlp has no language
 
-## D-016 - Channel avatars: cache-first backfill + prefer square images
-
-Problem:
-- The Library UI relies on `output/<channelDir>/_channel.json` containing `channelThumbnailUrl`.
-- With cache-first single-video runs (`POST /runs` with `force=false` and outputs already present), the API can return `done` immediately without running the pipeline. This means older channel folders created before the avatar feature can remain missing `channelThumbnailUrl` even if the user "re-runs" a single video URL.
-- yt-dlp channel metadata often contains both banner-like thumbnails (very wide) and avatar-like thumbnails (square). Picking the "largest" thumbnail can select a banner instead of an avatar.
-
-Decision:
-- Keep cache-first behavior (no unnecessary downloads/transcription), but add a best-effort "fire-and-forget" backfill step on the cache-first path to update `_channel.json` when missing `channelThumbnailUrl`.
-- When selecting a channel image from `thumbnails[]`, prefer "square-ish" candidates (aspect ratio ~0.8-1.25) over wide banners; then select the largest by area among candidates.
-
-Rationale:
-- Preserves the main goal of cache-first: do not spend credits or time when artifacts already exist.
-- Improves UX immediately without requiring a full channel re-run just to populate avatars.
-- Heuristic selection is simple, dependency-free, and robust enough for a best-effort UI enhancement.
-
-Implications:
-- Backfill is best-effort: failures are ignored and do not change run status.
-- `_channel.json` remains the single source of truth for channel metadata shown in the Library.
-
 Problem:
 - Some videos have no YouTube language metadata (`language` field is null, no subtitles, no automatic_captions).
 - Example: Chinese educational videos often lack this data.
@@ -282,3 +262,48 @@ Decision (planned):
 Rationale:
 - Avoids running expensive pipelines when there are no new videos.
 - Keeps scheduling logic simple and auditable (plan -> decide -> run).
+
+## D-016 - Channel avatars: cache-first backfill + prefer square images
+
+Problem:
+- The Library UI relies on `output/<channelDir>/_channel.json` containing `channelThumbnailUrl`.
+- With cache-first single-video runs (`POST /runs` with `force=false` and outputs already present), the API can return `done` immediately without running the pipeline. This means older channel folders created before the avatar feature can remain missing `channelThumbnailUrl` even if the user "re-runs" a single video URL.
+- yt-dlp channel metadata often contains both banner-like thumbnails (very wide) and avatar-like thumbnails (square). Picking the "largest" thumbnail can select a banner instead of an avatar.
+
+Decision:
+- Keep cache-first behavior (no unnecessary downloads/transcription), but add a best-effort "fire-and-forget" backfill step on the cache-first path to update `_channel.json` when missing `channelThumbnailUrl`.
+- When selecting a channel image from `thumbnails[]`, prefer "square-ish" candidates (aspect ratio ~0.8-1.25) over wide banners; then select the largest by area among candidates.
+
+Rationale:
+- Preserves the main goal of cache-first: do not spend credits or time when artifacts already exist.
+- Improves UX immediately without requiring a full channel re-run just to populate avatars.
+- Heuristic selection is simple, dependency-free, and robust enough for a best-effort UI enhancement.
+
+Implications:
+- Backfill is best-effort: failures are ignored and do not change run status.
+- `_channel.json` remains the single source of truth for channel metadata shown in the Library.
+
+## D-017 - Retention cleanup: operational data only
+
+Problem:
+- A long-running server accumulates operational state over time:
+  - API persisted runs/events under `output/_runs/*`
+  - audio cache files under `audio/*`
+- Unbounded growth can fill disk and break the service.
+
+Decision:
+- Implement retention cleanup that only targets:
+  - persisted run folders under `output/_runs/*`
+  - old audio cache files under `audio/*`
+- Never delete transcript artifacts under `output/<channelDir>/*`.
+- Provide both:
+  - best-effort cleanup on API startup
+  - an explicit API trigger (`POST /maintenance/cleanup`)
+- Configure via env (server-friendly):
+  - `Y2T_RETENTION_RUNS_DAYS` (default 30; `-1` disables)
+  - `Y2T_RETENTION_AUDIO_DAYS` (default 7; `-1` disables)
+
+Rationale:
+- Keeps the user-visible "library" immutable by default (transcripts are the product).
+- Keeps ops concerns (disk pressure) manageable without introducing a DB or cron subsystem yet.
+- Env-first config fits Docker deployments and avoids adding config-writing endpoints early.

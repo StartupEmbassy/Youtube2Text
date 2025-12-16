@@ -13,3 +13,5 @@ import "./apiWebhooks.test.js";
 import "./apiCacheFirst.test.js";
 import "./channelThumbs.test.js";
 import "./apiHealth.test.js";
+import "./apiCors.test.js";
+import "./apiRetention.test.js";

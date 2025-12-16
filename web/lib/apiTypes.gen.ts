@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/maintenance/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger retention cleanup (runs + audio cache)
+         * @description Runs best-effort retention cleanup based on environment configuration.
+         *     Notes:
+         *     - Never deletes transcripts under `output/<channelDir>/...`.
+         *     - Deletes only API run persistence under `output/_runs/*` (if enabled) and old audio cache files under `audio/*`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CleanupResponse"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -550,6 +601,25 @@ export interface components {
         ErrorResponse: {
             error: string;
             message?: string;
+        };
+        CleanupResponse: {
+            retention: {
+                nowIso: string;
+                runs: {
+                    enabled: boolean;
+                    days: number;
+                    deleted: number;
+                    kept: number;
+                    errors: number;
+                };
+                audio: {
+                    enabled: boolean;
+                    days: number;
+                    deletedFiles: number;
+                    keptFiles: number;
+                    errors: number;
+                };
+            };
         };
         HealthResponse: {
             ok: boolean;

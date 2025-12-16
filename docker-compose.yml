@@ -10,6 +10,9 @@ services:
       AUDIO_DIR: /data/audio
       Y2T_API_PERSIST_RUNS: "true"
       Y2T_API_KEY: ${Y2T_API_KEY}
+      Y2T_CORS_ORIGINS: ${Y2T_CORS_ORIGINS}
+      Y2T_RETENTION_RUNS_DAYS: ${Y2T_RETENTION_RUNS_DAYS:-30}
+      Y2T_RETENTION_AUDIO_DAYS: ${Y2T_RETENTION_AUDIO_DAYS:-7}
       ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY}
     volumes:
       - ./output:/data/output

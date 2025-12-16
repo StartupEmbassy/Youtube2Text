@@ -16,6 +16,7 @@ import { tryExtractVideoIdFromUrl } from "../youtube/url.js";
 import { fetchChannelMetadata, safeChannelThumbnailUrl } from "../youtube/index.js";
 import { join } from "node:path";
 import { getDeepHealth, getHealth } from "./health.js";
+import { runRetentionCleanup } from "./retention.js";
 
 type ServerOptions = {
   port: number;
@@ -25,8 +26,27 @@ type ServerOptions = {
   persistDir?: string;
 };
 
-function setCors(res: ServerResponse) {
-  res.setHeader("access-control-allow-origin", "*");
+function setCors(req: IncomingMessage, res: ServerResponse) {
+  const raw = process.env.Y2T_CORS_ORIGINS;
+  const allowList =
+    typeof raw === "string" && raw.trim().length > 0
+      ? raw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : ["*"];
+
+  const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
+  const allowsAny = allowList.includes("*");
+  const allowsOrigin = !!origin && allowList.includes(origin);
+
+  if (allowsAny) {
+    res.setHeader("access-control-allow-origin", "*");
+  } else if (allowsOrigin) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("vary", "Origin");
+  }
+
   res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
   res.setHeader(
     "access-control-allow-headers",
@@ -86,7 +106,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   });
 
   const server = createServer(async (req, res) => {
-    setCors(res);
+    setCors(req, res);
     if (req.method === "OPTIONS") {
       res.statusCode = 204;
       res.end();
@@ -120,6 +140,23 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
 
       if (req.method === "GET" && seg.length === 1 && seg[0] === "runs") {
         json(res, 200, { runs: manager.listRuns() });
+        return;
+      }
+
+      if (
+        req.method === "POST" &&
+        seg.length === 2 &&
+        seg[0] === "maintenance" &&
+        seg[1] === "cleanup"
+      ) {
+        const effectivePersistDir = opts.persistRuns
+          ? (opts.persistDir ?? join(config.outputDir, "_runs"))
+          : undefined;
+        const result = await runRetentionCleanup({
+          persistDir: effectivePersistDir,
+          audioDir: config.audioDir,
+        });
+        json(res, 200, { retention: result });
         return;
       }
 

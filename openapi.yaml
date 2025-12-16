@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.9.4
+  version: 0.9.6
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -12,6 +12,28 @@ servers:
 security:
   - ApiKeyAuth: []
 paths:
+  /maintenance/cleanup:
+    post:
+      summary: Trigger retention cleanup (runs + audio cache)
+      description: |
+        Runs best-effort retention cleanup based on environment configuration.
+        Notes:
+        - Never deletes transcripts under `output/<channelDir>/...`.
+        - Deletes only API run persistence under `output/_runs/*` (if enabled) and old audio cache files under `audio/*`.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /events:
     get:
       summary: Stream global events (SSE)
@@ -285,6 +307,34 @@ components:
           type: string
         message:
           type: string
+
+    CleanupResponse:
+      type: object
+      required: [retention]
+      properties:
+        retention:
+          type: object
+          required: [nowIso, runs, audio]
+          properties:
+            nowIso: { type: string }
+            runs:
+              type: object
+              required: [enabled, days, deleted, kept, errors]
+              properties:
+                enabled: { type: boolean }
+                days: { type: integer }
+                deleted: { type: integer }
+                kept: { type: integer }
+                errors: { type: integer }
+            audio:
+              type: object
+              required: [enabled, days, deletedFiles, keptFiles, errors]
+              properties:
+                enabled: { type: boolean }
+                days: { type: integer }
+                deletedFiles: { type: integer }
+                keptFiles: { type: integer }
+                errors: { type: integer }
 
     HealthResponse:
       type: object

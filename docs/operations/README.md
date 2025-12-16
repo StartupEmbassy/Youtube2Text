@@ -11,5 +11,6 @@ Suggested sections for each runbook:
 
 Create new documents in this directory as your operational footprint grows.
 
-Planned:
-- `docs/operations/API_CONTRACT.md` - OpenAPI + generated types/client + contract-check workflow to prevent endpoint/type drift.
+Index:
+- `API_CONTRACT.md` - OpenAPI + generated types/client + contract-check workflow to prevent endpoint/type drift.
+- `DEPLOY_PLAYBOOK.md` - Single-tenant server deployment guidance (Docker + reverse proxy + security).
