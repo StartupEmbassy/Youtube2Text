@@ -67,7 +67,7 @@ Completed:
 
 In progress:
 - Phase 2.4 Control: rate limiting (optional), and queue/worker only if needed.
-- Watchlist URL validation (restrict to channel/playlist URLs; avoid accepting arbitrary URLs).
+- Phase 2.4.x polish: OpenAPI operationId/license, watchlist URL validation, and regression tests.
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE

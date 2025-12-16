@@ -1,12 +1,15 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.11.0
+  version: 0.11.1
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
     - CLI remains the primary workflow; API/Web are shells around the same core.
     - SSE endpoints are documented as text/event-stream.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
   - url: http://127.0.0.1:8787
 security:
@@ -14,6 +17,7 @@ security:
 paths:
   /maintenance/cleanup:
     post:
+      operationId: triggerMaintenanceCleanup
       summary: Trigger retention cleanup (runs + audio cache)
       description: |
         Runs best-effort retention cleanup based on environment configuration.
@@ -36,6 +40,7 @@ paths:
 
   /watchlist:
     get:
+      operationId: listWatchlist
       summary: List watchlist entries
       responses:
         "200":
@@ -45,6 +50,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/WatchlistListResponse"
     post:
+      operationId: addWatchlistEntry
       summary: Add watchlist entry
       requestBody:
         required: true
@@ -68,6 +74,7 @@ paths:
 
   /watchlist/{id}:
     get:
+      operationId: getWatchlistEntry
       summary: Get watchlist entry
       parameters:
         - name: id
@@ -88,6 +95,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
+      operationId: updateWatchlistEntry
       summary: Update watchlist entry
       parameters:
         - name: id
@@ -114,6 +122,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     delete:
+      operationId: removeWatchlistEntry
       summary: Remove watchlist entry
       parameters:
         - name: id
@@ -136,6 +145,7 @@ paths:
 
   /scheduler/status:
     get:
+      operationId: getSchedulerStatus
       summary: Get scheduler status
       responses:
         "200":
@@ -147,6 +157,7 @@ paths:
 
   /scheduler/start:
     post:
+      operationId: startScheduler
       summary: Start scheduler loop (in-process)
       responses:
         "200":
@@ -158,6 +169,7 @@ paths:
 
   /scheduler/stop:
     post:
+      operationId: stopScheduler
       summary: Stop scheduler loop (in-process)
       responses:
         "200":
@@ -169,6 +181,7 @@ paths:
 
   /scheduler/trigger:
     post:
+      operationId: triggerSchedulerOnce
       summary: Trigger one scheduler check cycle
       responses:
         "200":
@@ -180,6 +193,7 @@ paths:
 
   /events:
     get:
+      operationId: streamGlobalEvents
       summary: Stream global events (SSE)
       description: |
         Server-Sent Events stream for global run updates. Event names include:
@@ -196,6 +210,7 @@ paths:
 
   /health:
     get:
+      operationId: getHealth
       summary: Health check
       security: []
       parameters:
@@ -214,6 +229,7 @@ paths:
 
   /runs:
     get:
+      operationId: listRuns
       summary: List runs
       responses:
         "200":
@@ -223,6 +239,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RunsResponse"
     post:
+      operationId: createRun
       summary: Create and start a run
       description: |
         Starts a run. For single-video URLs, the API is cache-first:
@@ -249,6 +266,7 @@ paths:
 
   /runs/plan:
     post:
+      operationId: planRun
       summary: Plan a run (enumerate + skip counts, no transcription)
       description: |
         Enumerates the input URL and computes how many videos are already processed vs remaining,
@@ -275,6 +293,7 @@ paths:
 
   /runs/{runId}:
     get:
+      operationId: getRun
       summary: Get a run
       parameters:
         - $ref: "#/components/parameters/RunId"
@@ -294,6 +313,7 @@ paths:
 
   /runs/{runId}/cancel:
     post:
+      operationId: cancelRun
       summary: Request cancellation of a run
       description: |
         Cooperative cancellation. If the run is running, the pipeline stops starting new work and ends as soon as practical.
@@ -316,6 +336,7 @@ paths:
 
   /runs/{runId}/artifacts:
     get:
+      operationId: getRunArtifacts
       summary: Get artifacts for a run (channel videos listing)
       parameters:
         - $ref: "#/components/parameters/RunId"
@@ -335,6 +356,7 @@ paths:
 
   /runs/{runId}/events:
     get:
+      operationId: streamRunEvents
       summary: Stream run events (SSE)
       description: |
         Server-Sent Events stream. Event names include:
@@ -352,6 +374,7 @@ paths:
 
   /library/channels:
     get:
+      operationId: listLibraryChannels
       summary: List channels from output directory
       responses:
         "200":
@@ -363,6 +386,7 @@ paths:
 
   /library/channels/{channelDirName}:
     get:
+      operationId: getLibraryChannelMeta
       summary: Get channel metadata
       parameters:
         - $ref: "#/components/parameters/ChannelDirName"
@@ -388,6 +412,7 @@ paths:
 
   /library/channels/{channelDirName}/videos:
     get:
+      operationId: listLibraryVideos
       summary: List videos for a channel
       parameters:
         - $ref: "#/components/parameters/ChannelDirName"
@@ -407,6 +432,7 @@ paths:
 
   /library/channels/{channelDirName}/videos/{basename}/{kind}:
     get:
+      operationId: getLibraryVideoArtifact
       summary: Fetch a specific video artifact
       parameters:
         - $ref: "#/components/parameters/ChannelDirName"
@@ -526,7 +552,9 @@ components:
       type: object
       required: [channelUrl]
       properties:
-        channelUrl: { type: string }
+        channelUrl:
+          type: string
+          description: YouTube channel or playlist URL (watchlist is for recurring sources, not single videos).
         intervalMinutes: { type: integer }
         enabled: { type: boolean }
 

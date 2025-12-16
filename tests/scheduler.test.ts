@@ -103,3 +103,58 @@ test("Scheduler trigger does not create run when plan.toProcess == 0", async () 
   assert.equal(manager.listRuns().length, 0);
 });
 
+test("Scheduler skips non-channel/playlist watchlist URLs by default", async () => {
+  const prev = process.env.Y2T_WATCHLIST_ALLOW_ANY_URL;
+  delete process.env.Y2T_WATCHLIST_ALLOW_ANY_URL;
+  try {
+    const dir = mkdtempSync(join(tmpdir(), "y2t-scheduler-validate-"));
+    const config = configSchema.parse({
+      assemblyAiApiKey: "test",
+      outputDir: dir,
+      audioDir: join(dir, "audio"),
+    });
+
+    const manager = new RunManager(config, { maxBufferedEventsPerRun: 10, persistRuns: false });
+    await manager.init();
+
+    const store = new WatchlistStore(dir);
+    const entry = await store.add({ channelUrl: "https://www.youtube.com/watch?v=abc" });
+
+    let planned = 0;
+    const planFn = async (_url: string): Promise<RunPlan> => {
+      planned += 1;
+      return {
+        inputUrl: _url,
+        force: false,
+        channelId: "UC123",
+        channelTitle: "Chan",
+        totalVideos: 1,
+        alreadyProcessed: 0,
+        toProcess: 1,
+        filters: {},
+        videos: [{ id: "v", title: "t", url: "u", basename: "b", processed: false }],
+      };
+    };
+
+    const scheduler = new Scheduler(
+      { enabled: false, intervalMinutes: 60, maxConcurrentRuns: 1 },
+      manager,
+      store,
+      planFn,
+      (req) => manager.createRun(req),
+      () => {}
+    );
+
+    const res = await scheduler.triggerOnce();
+    assert.equal(res.checked, 1);
+    assert.equal(res.runsCreated, 0);
+    assert.equal(planned, 0);
+    assert.equal(manager.listRuns().length, 0);
+
+    const after = await store.get(entry.id);
+    assert.ok(after?.lastCheckedAt);
+  } finally {
+    if (prev === undefined) delete process.env.Y2T_WATCHLIST_ALLOW_ANY_URL;
+    else process.env.Y2T_WATCHLIST_ALLOW_ANY_URL = prev;
+  }
+});

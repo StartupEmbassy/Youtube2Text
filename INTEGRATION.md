@@ -143,6 +143,11 @@ Goal: run -> wait -> fetch artifacts -> send to next system.
 - For server-to-server calls inside the compose network, use `Y2T_API_BASE_URL=http://youtube2text-api:8787`.
 - For browser-visible URLs, prefer going through the web UI `http://localhost:3000` which proxies `/api/*` to the API and does not expose secrets to the browser.
 
+## Watchlist URL safety
+
+The watchlist is meant for recurring sources (channels/playlists). By default, `POST /watchlist` rejects single-video URLs.
+Override (not recommended): set `Y2T_WATCHLIST_ALLOW_ANY_URL=true`.
+
 ## Channel avatars in Library (best-effort)
 
 The web UI Library page can show a small channel avatar.

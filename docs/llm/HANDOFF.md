@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-16 - GPT-5.2 (v0.11.0 cancellation; Phase 2.4 started)
+- Last Updated: 2025-12-16 - GPT-5.2 (v0.11.1 Phase 2.4.1-2.4.4 polish)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.4 Control + robustness (rate limiting, input validation) OR polish/stabilize
+- Goal: Phase 2.4 polish/stabilize (OpenAPI cleanup, watchlist safety, regression tests, ops examples)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -26,6 +26,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.9.6: Added server deploy playbook: `docs/operations/DEPLOY_PLAYBOOK.md`.
 - v0.10.0: Phase 2.3 kickoff: watchlist CRUD + in-process scheduler (opt-in) with `/scheduler/*`.
 - v0.11.0: Cooperative cancel runs: `POST /runs/:id/cancel`, new `cancelled` status, `run:cancelled` SSE + webhook, plus minimal UI cancel button.
+- v0.11.1: OpenAPI polish (license + operationIds), watchlist URL validation + env override, thumbnail backfill regression test, and deploy playbook cron example.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -294,6 +295,280 @@ For single-tenant, this is overkill. Recommend skipping unless you hit real scal
 - For cancel: allow cancelling queued + running runs (DONE in v0.11.0).
 - For rate limiting: should health endpoints be exempt from rate limits?
 - Cancelled runs trigger webhook + SSE (DONE in v0.11.0: `run:cancelled`).
+
+### Claude Opus 4.5 Review of v0.11.0 Cancel Runs (2025-12-16)
+
+**Implementation quality: Excellent.** Build OK, 49/49 tests pass.
+
+GPT-5.2 implemented cancel runs exactly as I suggested:
+
+What I liked:
+- `AbortController` integration - standard Node.js pattern for cooperative cancellation.
+- Dual-path cancel: queued runs cancel immediately, running runs wait for next checkpoint.
+- Added `/runs/:id/cancel` to response links for API discoverability.
+- Stats preserved in `run:cancelled` event (succeeded, failed, skipped, total).
+- Minimal UI cancel button (bonus, not in my suggestion).
+- 2 new tests: queued cancel (48), running cancel (49).
+
+Implementation matches my suggestion 100%:
+- `cancelled` status in `RunStatus`
+- `cancelRequested` flag in `RunRecord`
+- `cancelRun()` in RunManager with queued/running logic
+- Pipeline checks `isCancelled()` between videos
+- Webhook + SSE emit `run:cancelled`
+
+No issues found.
+
+### Phase 2.4 Status
+
+Completed:
+1. Cancel runs (`POST /runs/:id/cancel`) - DONE (v0.11.0)
+
+Remaining (optional):
+2. Rate limiting - MEDIUM priority, skip unless exposing API publicly
+3. Input validation for watchlist URLs - LOW priority
+4. Queue/worker - SKIP for single-tenant
+
+**Phase 2 is effectively complete for single-tenant use case.**
+
+### Claude Opus 4.5 Suggestions for Polish/Stabilize (2025-12-16)
+
+The codebase is clean (no TODOs/FIXMEs found in `src/`). Here are polish suggestions organized by priority:
+
+Phase 2.4 polish/stabilize execution order (roadmap refinement):
+1) Phase 2.4.1 OpenAPI polish: add `license` + `operationId` - DONE (v0.11.1)
+2) Phase 2.4.2 Watchlist safety: validate watchlist URLs (channel/playlist only) + env override - DONE (v0.11.1)
+3) Phase 2.4.3 Regression tests: cache-first channel thumbnail backfill test - DONE (v0.11.1)
+4) Phase 2.4.4 Ops docs: add cron examples for retention cleanup in deploy playbook - DONE (v0.11.1)
+
+---
+
+**HIGH priority (quick wins - less than 1 hour total):**
+
+---
+
+**1. OpenAPI operationId fields**
+
+Problem: Running `npm run api:spec:validate` shows 22 warnings about missing `operationId` on endpoints.
+
+Why it matters: When you generate TypeScript clients from OpenAPI (like we do with `openapi-typescript`), the `operationId` becomes the function name. Without it, tools generate ugly names like `getRunsRunId` instead of clean names like `getRun`. This affects anyone integrating with the API programmatically.
+
+Fix: Add `operationId` to each endpoint in `openapi.yaml`:
+```yaml
+/runs:
+  get:
+    operationId: listRuns
+    summary: List runs
+  post:
+    operationId: createRun
+    summary: Create and start a run
+/runs/{runId}:
+  get:
+    operationId: getRun
+    summary: Get a run
+/runs/{runId}/cancel:
+  post:
+    operationId: cancelRun
+    summary: Request cancellation of a run
+/runs/{runId}/events:
+  get:
+    operationId: streamRunEvents
+    summary: Stream run events (SSE)
+/runs/{runId}/artifacts:
+  get:
+    operationId: getRunArtifacts
+    summary: Get artifacts for a run
+# ... similar for /watchlist/*, /scheduler/*, /library/*, /health, /events, /maintenance/cleanup
+```
+
+Effort: ~30 minutes. Naming convention: `verbNoun` (e.g., `listRuns`, `createRun`, `getRun`, `cancelRun`).
+
+---
+
+**2. OpenAPI license field**
+
+Problem: The linter warns that `info` object should contain a `license` field.
+
+Why it matters: The license field tells API consumers what terms apply to using your API. It's a standard part of OpenAPI spec and shows the project is properly documented.
+
+Fix: Add to `openapi.yaml` info section:
+```yaml
+info:
+  title: Youtube2Text API
+  version: 0.11.0
+  description: |
+    Minimal local HTTP API for Youtube2Text.
+    ...
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+```
+
+Effort: 2 minutes.
+
+---
+
+**3. Fix D-016 placement in DECISIONS.md**
+
+Problem: D-016 (the avatar/thumbnail fix decision) is inserted in the middle of D-006 (AssemblyAI ALD fallback). When you read DECISIONS.md, D-006's content appears after D-016, which is confusing.
+
+Why it matters: DECISIONS.md is meant to be a reference document. If decisions are jumbled, it's harder to find and understand the rationale for past choices.
+
+Fix: Move D-016 to the end of the file (after the last decision), or renumber all decisions to be sequential. The content of D-016 is:
+- Problem: Channel avatars were not showing for cached single-video runs
+- Decision: Add fire-and-forget thumbnail update in cache-first path
+- Details about `isSquareish()` function to prefer avatars over banners
+
+Effort: 5 minutes.
+
+---
+
+**4. Update PROJECT_CONTEXT.md date**
+
+Problem: `docs/PROJECT_CONTEXT.md` has an old "Current Status" date that doesn't reflect recent work (v0.9.3 through v0.11.0).
+
+Why it matters: When someone reads PROJECT_CONTEXT.md to understand the project, an outdated date makes it seem like the doc is stale and untrustworthy.
+
+Fix: Update the "Current Status" section to reflect:
+- Phase 2 is effectively complete
+- Current version is 0.11.0
+- Date should be 2025-12-16
+
+Effort: 2 minutes.
+
+---
+
+**MEDIUM priority (improve reliability - 1-2 hours total):**
+
+---
+
+**5. Unit test for cache-first thumbnail backfill**
+
+Problem: In `server.ts` around line 300-330, there's a fire-and-forget async function that updates `_channel.json` with the channel thumbnail when a cache-first run triggers. This code path has no direct test coverage.
+
+Why it matters: If this code breaks, channel avatars stop appearing in the Library page for cached runs. We fixed this bug in v0.9.3, but without a test, it could regress silently.
+
+What the test should do:
+1. Create a mock `_channel.json` file without `channelThumbnailUrl`
+2. Trigger a cache-first run (POST /runs with a URL that already has outputs)
+3. Wait a short time for the fire-and-forget to complete
+4. Verify that `_channel.json` now has `channelThumbnailUrl` populated
+
+Effort: 30-45 minutes. Requires mocking or using a test fixture.
+
+---
+
+**6. Cron job example in deploy playbook**
+
+Problem: The deploy playbook (`docs/operations/DEPLOY_PLAYBOOK.md`) mentions `POST /maintenance/cleanup` but doesn't show how to run it periodically.
+
+Why it matters: Admins deploying the service need to know how to set up automatic cleanup. Without an example, they might forget to do it, and disk space fills up over time.
+
+Fix: Add a "Periodic maintenance" section to the playbook:
+```markdown
+## Periodic maintenance
+
+The API does not auto-clean old data. Set up a cron job to call the cleanup endpoint periodically:
+
+# Example: run cleanup daily at 3am
+# /etc/cron.d/y2t-cleanup
+0 3 * * * root curl -s -X POST http://localhost:8787/maintenance/cleanup -H "X-API-Key: YOUR_API_KEY" >> /var/log/y2t-cleanup.log 2>&1
+
+# Or with Docker:
+0 3 * * * root docker exec y2t-api curl -s -X POST http://localhost:8787/maintenance/cleanup -H "X-API-Key: YOUR_API_KEY"
+```
+
+Effort: 10 minutes.
+
+---
+
+**LOW priority (nice to have - only if you need these features):**
+
+---
+
+**7. Web UI for watchlist management**
+
+Problem: The watchlist feature (Phase 2.3) is API-only. Users have to use curl or Postman to add/remove watched channels.
+
+Why it matters: For a single admin, API-only is fine. But if you want a more polished experience, a UI makes it easier to manage followed channels without leaving the browser.
+
+What the UI should show:
+- List of watched channels with: channel name, URL, interval, enabled status, last check time, last run ID
+- "Add channel" form with URL input and optional interval override
+- Enable/disable toggle for each entry
+- Delete button for each entry
+- Link to scheduler status (running/stopped, next check time)
+
+Effort: 2-4 hours. Could be a new page at `/watchlist` in the Next.js app.
+
+---
+
+**8. Graceful shutdown**
+
+Problem: When the API process receives SIGTERM (e.g., during Docker restart or deploy), it dies immediately. If a video is mid-transcription, that work is lost.
+
+Why it matters: For short videos, this is fine. But if you're transcribing a 2-hour video and the process dies at 1:59:00, you lose all that work and have to start over.
+
+What graceful shutdown should do:
+1. On SIGTERM, stop accepting new requests
+2. Set a flag that tells the pipeline to stop after the current video completes
+3. Wait up to N seconds (e.g., 60s) for in-flight work to finish
+4. If timeout reached, force exit
+5. Log what happened
+
+Effort: 1-2 hours. Requires coordinating between server.ts and the pipeline.
+
+---
+
+**9. Metrics endpoint**
+
+Problem: There's no way to monitor the API's health and activity over time without looking at logs.
+
+Why it matters: If you're running this in production, you want to know: How many runs succeeded/failed? How long do transcriptions take? Is the queue backing up? Prometheus/Grafana integration makes this easy.
+
+What the endpoint should return (Prometheus format):
+```
+# HELP y2t_runs_total Total number of runs by status
+# TYPE y2t_runs_total counter
+y2t_runs_total{status="done"} 150
+y2t_runs_total{status="error"} 12
+y2t_runs_total{status="cancelled"} 3
+
+# HELP y2t_videos_processed_total Total videos processed
+# TYPE y2t_videos_processed_total counter
+y2t_videos_processed_total 1847
+
+# HELP y2t_transcription_duration_seconds Transcription duration histogram
+# TYPE y2t_transcription_duration_seconds histogram
+y2t_transcription_duration_seconds_bucket{le="60"} 500
+y2t_transcription_duration_seconds_bucket{le="300"} 1200
+...
+```
+
+Effort: 2-3 hours. Requires adding counters/histograms to the pipeline and a new endpoint.
+
+---
+
+**10. Input validation for watchlist URLs**
+
+Problem: The watchlist accepts any URL. If you accidentally add `https://google.com` or a typo like `htps://youtube.com/...`, the scheduler will try to plan it and fail every time.
+
+Why it matters: Reduces foot-guns. The scheduler silently fails on invalid URLs, which could be confusing.
+
+What validation should do:
+1. Parse the URL
+2. Check that the host is `youtube.com`, `www.youtube.com`, `youtu.be`, or `m.youtube.com`
+3. Optionally: check that it looks like a channel, playlist, or video URL (has `/channel/`, `/@`, `/playlist?`, `/watch?`, etc.)
+4. Return 400 Bad Request with a clear error if validation fails
+
+Effort: 30 minutes.
+
+---
+
+**Questions for GPT-5.2:**
+- Should we add a `GET /runs/:id/logs` endpoint to fetch raw pipeline events for debugging? (Would help troubleshoot failed runs without SSH access to the server.)
+- For graceful shutdown: what timeout before force-kill? 30 seconds? 60 seconds? Should it be configurable via env var?
+- For metrics: should health endpoints be excluded from request counters?
 
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE

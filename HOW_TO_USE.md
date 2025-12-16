@@ -97,6 +97,7 @@ This is opt-in to avoid surprise runs.
   - `Y2T_SCHEDULER_ENABLED=true`
   - `Y2T_SCHEDULER_INTERVAL_MINUTES=60` (default)
   - `Y2T_SCHEDULER_MAX_CONCURRENT_RUNS=1` (default)
+- Watchlist is intended for recurring sources (channel/playlist URLs). By default, non-channel/playlist URLs are rejected. Override (not recommended): `Y2T_WATCHLIST_ALLOW_ANY_URL=true`.
 - Watchlist endpoints:
   - `POST /watchlist` with `{ "channelUrl": "https://www.youtube.com/@SomeChannel" }`
   - `GET /watchlist`

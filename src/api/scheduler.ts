@@ -1,6 +1,7 @@
 import type { RunPlan } from "../pipeline/plan.js";
 import type { RunManager, RunCreateRequest, RunRecord } from "./runManager.js";
 import { WatchlistEntry, WatchlistStore } from "./watchlist.js";
+import { classifyYoutubeUrl } from "../youtube/url.js";
 
 export type SchedulerStatus = {
   enabled: boolean;
@@ -33,6 +34,17 @@ function parseIntEnv(v: string | undefined, fallback: number): number {
   if (v === undefined) return fallback;
   const n = Number(v);
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
+}
+
+function allowAnyWatchlistUrl(): boolean {
+  const raw = (process.env.Y2T_WATCHLIST_ALLOW_ANY_URL ?? "").trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes";
+}
+
+function isRunnableWatchlistUrl(url: string): boolean {
+  if (allowAnyWatchlistUrl()) return true;
+  const kind = classifyYoutubeUrl(url).kind;
+  return kind === "channel" || kind === "playlist";
 }
 
 export function loadSchedulerConfigFromEnv(): SchedulerConfig {
@@ -117,6 +129,12 @@ export class Scheduler {
       if (!shouldCheckEntry(entry, nowMs, this.cfg.intervalMinutes)) continue;
       checked += 1;
 
+      if (!isRunnableWatchlistUrl(entry.channelUrl)) {
+        entry.lastCheckedAt = nowIso();
+        await this.store.upsert(entry);
+        continue;
+      }
+
       // Global overload protection (includes user-triggered runs).
       const active = this.manager
         .listRuns()
@@ -154,4 +172,3 @@ export class Scheduler {
     return { checked, runsCreated };
   }
 }
-

@@ -56,6 +56,20 @@ Terminate TLS in a reverse proxy (Caddy/Nginx/Traefik) and forward:
 - Deep health (deps + disk + persistence): `GET /health?deep=true`
 - Manual retention cleanup: `POST /maintenance/cleanup`
 
+## Periodic maintenance (cron example)
+
+Retention cleanup is safe by default (it never deletes transcripts under `output/<channelDir>/*`), but you still need to run it periodically on long-lived servers.
+
+Linux cron example (daily at 03:15):
+
+```cron
+15 3 * * * curl -sS -X POST "http://127.0.0.1:8787/maintenance/cleanup" -H "X-API-Key: $Y2T_API_KEY" >/dev/null 2>&1
+```
+
+Notes:
+- If `Y2T_API_KEY` is unset on the server, you can omit the header (not recommended on public servers).
+- If the API is not exposed publicly, run this on the same host/container network (or via your reverse proxy if you intentionally expose it).
+
 ## Suggested deployment steps (high level)
 
 1) Copy `docker-compose.yml` to your server.
@@ -68,4 +82,3 @@ Terminate TLS in a reverse proxy (Caddy/Nginx/Traefik) and forward:
    - Web loads at your domain
    - `GET /health?deep=true` reports `ok: true`
 5) Periodically check disk usage and retention settings.
-

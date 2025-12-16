@@ -12,7 +12,7 @@ import { makeChannelDirName } from "../storage/naming.js";
 import { requireApiKey } from "./auth.js";
 import { sanitizeConfigOverrides } from "./sanitize.js";
 import { planRun } from "../pipeline/plan.js";
-import { tryExtractVideoIdFromUrl } from "../youtube/url.js";
+import { classifyYoutubeUrl, tryExtractVideoIdFromUrl } from "../youtube/url.js";
 import { fetchChannelMetadata, safeChannelThumbnailUrl } from "../youtube/index.js";
 import { join } from "node:path";
 import { getDeepHealth, getHealth } from "./health.js";
@@ -26,6 +26,11 @@ type ServerOptions = {
   maxBufferedEventsPerRun: number;
   persistRuns: boolean;
   persistDir?: string;
+  deps?: {
+    planRun?: typeof planRun;
+    fetchChannelMetadata?: typeof fetchChannelMetadata;
+    safeChannelThumbnailUrl?: typeof safeChannelThumbnailUrl;
+  };
 };
 
 function setCors(req: IncomingMessage, res: ServerResponse) {
@@ -94,6 +99,10 @@ async function streamFile(res: ServerResponse, path: string, contentType: string
 }
 
 export async function startApiServer(config: AppConfig, opts: ServerOptions) {
+  const planRunFn = opts.deps?.planRun ?? planRun;
+  const fetchChannelMetadataFn = opts.deps?.fetchChannelMetadata ?? fetchChannelMetadata;
+  const safeChannelThumbnailUrlFn = opts.deps?.safeChannelThumbnailUrl ?? safeChannelThumbnailUrl;
+
   const manager = new RunManager(config, {
     maxBufferedEventsPerRun: opts.maxBufferedEventsPerRun,
     persistRuns: opts.persistRuns,
@@ -177,6 +186,15 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         if (typeof channelUrl !== "string" || channelUrl.trim().length === 0) {
           badRequest(res, "Missing channelUrl");
           return;
+        }
+        const allowAny = (process.env.Y2T_WATCHLIST_ALLOW_ANY_URL ?? "").trim().toLowerCase();
+        const allowAnyUrl = allowAny === "true" || allowAny === "1" || allowAny === "yes";
+        if (!allowAnyUrl) {
+          const kind = classifyYoutubeUrl(channelUrl).kind;
+          if (kind !== "channel" && kind !== "playlist") {
+            badRequest(res, "watchlist.channelUrl must be a YouTube channel or playlist URL (set Y2T_WATCHLIST_ALLOW_ANY_URL=true to override)");
+            return;
+          }
         }
         const entry = await watchlistStore.add({
           channelUrl,
@@ -446,7 +464,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         if (!force) {
           const videoId = tryExtractVideoIdFromUrl(url);
           if (videoId) {
-            const plan = await planRun(url, mergedConfig, { force: false });
+            const plan = await planRunFn(url, mergedConfig, { force: false });
             if (plan.totalVideos === 1 && plan.toProcess === 0) {
               const record = manager.createCachedRun(
                 { url, force: false, callbackUrl, config: configOverrides },
@@ -466,8 +484,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
                   // Update if: (1) file doesn't exist, OR (2) file exists but missing thumbnail
                   if (!existingMeta || !existingMeta.channelThumbnailUrl) {
                     const channelUrl = `https://www.youtube.com/channel/${plan.channelId}`;
-                    const channelMeta = await fetchChannelMetadata(channelUrl);
-                    const thumbnailUrl = safeChannelThumbnailUrl(channelMeta);
+                    const channelMeta = await fetchChannelMetadataFn(channelUrl);
+                    const thumbnailUrl = safeChannelThumbnailUrlFn(channelMeta);
                     if (thumbnailUrl) {
                       const metaPath = join(mergedConfig.outputDir, channelDirName, "_channel.json");
                       await saveChannelMetaJson(metaPath, {

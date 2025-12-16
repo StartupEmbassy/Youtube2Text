@@ -199,6 +199,7 @@ Scheduler / watchlist (Phase 2.3, opt-in):
   - `Y2T_SCHEDULER_ENABLED=true`
   - `Y2T_SCHEDULER_INTERVAL_MINUTES=60` (default)
   - `Y2T_SCHEDULER_MAX_CONCURRENT_RUNS=1` (default)
+- By default, watchlist entries are intended to be channel/playlist URLs (recurring sources). Set `Y2T_WATCHLIST_ALLOW_ANY_URL=true` to override (not recommended).
 - Manual testing:
   - `POST /scheduler/trigger`
 

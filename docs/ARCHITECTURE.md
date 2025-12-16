@@ -187,6 +187,12 @@ Phase 2.4 - Control + robustness:
 - optional worker/queue if synchronous execution becomes limiting
 - tighten input validation (watchlist URLs should be channel/playlist only; avoid accepting arbitrary URLs)
 
+Phase 2.4.x (polish/stabilize, do in order):
+- 2.4.1 OpenAPI polish: add `license` + `operationId` (cleaner client generation, fewer lint warnings)
+- 2.4.2 Watchlist safety: validate watchlist URLs (channel/playlist only) + document override if needed
+- 2.4.3 Regression tests: cache-first channel thumbnail backfill
+- 2.4.4 Ops docs: add cron examples for retention cleanup in deploy playbook
+
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 
 Add:
