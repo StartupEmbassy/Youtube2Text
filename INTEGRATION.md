@@ -75,6 +75,14 @@ Example (bash/curl):
 curl -N http://127.0.0.1:8787/runs/<RUN_ID>/events
 ```
 
+### 4b) Fetch recent run logs (JSON)
+
+If you cannot use SSE (or want a quick debug snapshot), fetch the recent buffered events as JSON:
+
+```bash
+curl -sS "http://127.0.0.1:8787/runs/<RUN_ID>/logs?tail=200"
+```
+
 ### 5) Get produced artifacts
 
 List artifacts for a run:

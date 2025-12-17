@@ -81,6 +81,7 @@ export class RunManager {
   private persistChain: Promise<void> = Promise.resolve();
   private abortControllers = new Map<string, AbortController>();
   private runPipelineFn: typeof runPipeline;
+  private activeRunPromises = new Map<string, Promise<void>>();
 
   constructor(
     private baseConfig: AppConfig,
@@ -167,6 +168,20 @@ export class RunManager {
 
   getRun(runId: string): RunRecord | undefined {
     return this.runs.get(runId);
+  }
+
+  getActiveRunCount(): number {
+    return this.activeRunPromises.size;
+  }
+
+  async waitForIdle(timeoutMs: number): Promise<boolean> {
+    const waitAll = Promise.allSettled(Array.from(this.activeRunPromises.values())).then(
+      () => true
+    );
+    const timeout = new Promise<boolean>((resolve) =>
+      setTimeout(() => resolve(false), Math.max(0, timeoutMs))
+    );
+    return Promise.race([waitAll, timeout]);
   }
 
   cancelRun(runId: string): RunRecord | undefined {
@@ -266,7 +281,7 @@ export class RunManager {
     this.persistRun(run);
     this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
 
-    void this.runPipelineFn(req.url, config, {
+    const p = this.runPipelineFn(req.url, config, {
       force: Boolean(req.force),
       emitter,
       abortSignal: controller.signal,
@@ -313,7 +328,9 @@ export class RunManager {
       })
       .finally(() => {
         this.abortControllers.delete(runId);
+        this.activeRunPromises.delete(runId);
       });
+    this.activeRunPromises.set(runId, p);
   }
 
   private onEvent(runId: string, event: PipelineEvent) {

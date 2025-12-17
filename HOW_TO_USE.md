@@ -71,6 +71,13 @@ docker compose up --build
 
 The web UI does not expose the key to the browser; it proxies API calls via `/api/*`.
 
+## Graceful shutdown (servers)
+
+When the API process receives `SIGTERM`/`SIGINT` (Docker restart, deploy, Ctrl+C), it:
+- stops the scheduler
+- requests cancellation for queued/running runs
+- waits up to `Y2T_SHUTDOWN_TIMEOUT_SECONDS` (default `60`) before exiting
+
 ## CORS (server deployments)
 
 - By default the API sends `Access-Control-Allow-Origin: *`.

@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-16 - GPT-5.2 (v0.11.1 Phase 2.4.1-2.4.4 polish)
+- Last Updated: 2025-12-17 - GPT-5.2 (v0.12.0 OpenAPI fixed; contract-check passing)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.4 polish/stabilize (OpenAPI cleanup, watchlist safety, regression tests, ops examples)
+- Goal: Phase 2 complete (single-tenant). Next: optional rate limiting / metrics / watchlist UI.
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -27,6 +27,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.10.0: Phase 2.3 kickoff: watchlist CRUD + in-process scheduler (opt-in) with `/scheduler/*`.
 - v0.11.0: Cooperative cancel runs: `POST /runs/:id/cancel`, new `cancelled` status, `run:cancelled` SSE + webhook, plus minimal UI cancel button.
 - v0.11.1: OpenAPI polish (license + operationIds), watchlist URL validation + env override, thumbnail backfill regression test, and deploy playbook cron example.
+- v0.12.0: OpenAPI 4XX completeness, `GET /runs/:id/logs` endpoint, and API graceful shutdown on SIGTERM/SIGINT.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -340,6 +341,9 @@ Phase 2.4 polish/stabilize execution order (roadmap refinement):
 2) Phase 2.4.2 Watchlist safety: validate watchlist URLs (channel/playlist only) + env override - DONE (v0.11.1)
 3) Phase 2.4.3 Regression tests: cache-first channel thumbnail backfill test - DONE (v0.11.1)
 4) Phase 2.4.4 Ops docs: add cron examples for retention cleanup in deploy playbook - DONE (v0.11.1)
+5) Phase 2.4.5 OpenAPI completeness: add missing 4XX responses - DONE (v0.12.0)
+6) Phase 2.4.6 Graceful shutdown: stop scheduler + cancel runs on SIGTERM/SIGINT - DONE (v0.12.0)
+7) Phase 2.4.7 Debug logs endpoint: `GET /runs/:id/logs` - DONE (v0.12.0)
 
 ---
 
@@ -570,10 +574,240 @@ Effort: 30 minutes.
 - For graceful shutdown: what timeout before force-kill? 30 seconds? 60 seconds? Should it be configurable via env var?
 - For metrics: should health endpoints be excluded from request counters?
 
+### Claude Opus 4.5 Review of v0.11.1 Polish (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 53/53 tests pass. All 4 polish items implemented correctly.
+
+What GPT-5.2 did well:
+
+1. **OpenAPI license + operationId** - All endpoints now have `operationId` following `verbNoun` convention (e.g., `listRuns`, `createRun`, `cancelRun`, `streamRunEvents`). License field added with MIT. This matches my suggestion exactly.
+
+2. **Watchlist URL validation** - Added `isRunnableWatchlistUrl()` in scheduler.ts that restricts to channel/playlist URLs by default. Added `Y2T_WATCHLIST_ALLOW_ANY_URL` env override (my suggestion). Tests 49, 52, 53 cover all paths.
+
+3. **Thumbnail backfill regression test** - Test 37 ("Cache-first run backfills channelThumbnailUrl when missing") ensures the v0.9.3 fix doesn't regress. This was a gap I identified.
+
+4. **Cron example in deploy playbook** - Added "Periodic maintenance (cron example)" section with a practical `curl` example. Clear notes about API key and network access.
+
+Tests added: 4 new (37, 49, 52, 53). Total: 53.
+
+No issues found. Phase 2.4.1-2.4.4 complete.
+
+### Claude Opus 4.5 Review of v0.12.0 (was incomplete; now fixed) (2025-12-17)
+
+**Status: Work interrupted mid-implementation.** Build OK, 54/54 tests pass, BUT OpenAPI has a broken reference.
+
+What GPT-5.2 implemented (code is complete):
+1. **OpenAPI 4XX responses** - Added `401` to all authenticated endpoints. DONE.
+2. **`GET /runs/:id/logs` endpoint** - Code works (test 54 passes), returns buffered events as JSON. DONE.
+3. **Graceful shutdown** - `Y2T_SHUTDOWN_TIMEOUT_SECONDS` env var (default 60), stops scheduler + cancels runs on SIGTERM/SIGINT. DONE.
+
+**ISSUE FOUND - OpenAPI schema incomplete:**
+
+The endpoint `/runs/:id/logs` references `$ref: "#/components/schemas/PipelineEvent"` but the `PipelineEvent` schema is NOT defined in `components/schemas`.
+
+```
+npm run api:spec:validate
+ERROR: Can't resolve $ref at #/paths/~1runs~1{runId}~1logs/.../event
+```
+
+**To fix:** Add `PipelineEvent` schema to `openapi.yaml`. This is a union type of all pipeline events:
+- `run:start`, `run:done`, `run:cancelled`, `run:error`
+- `video:start`, `video:stage`, `video:done`, `video:skip`, `video:error`
+
+Simplest fix: use `type: object` with `additionalProperties: true` since events are variable.
+
+```yaml
+PipelineEvent:
+  type: object
+  required: [type]
+  properties:
+    type:
+      type: string
+      description: Event type (run:start, video:done, etc.)
+  additionalProperties: true
+```
+
+Also: `GlobalRunEvent` schema is defined but never used (warning). Can be removed or used in `/events` SSE docs.
+
+**Summary:** Code is 100% functional. Only the OpenAPI spec needs the missing schema added.
+
+### Phase 2.4 Final Status
+
+Completed items:
+1. Cancel runs (`POST /runs/:id/cancel`) - DONE (v0.11.0)
+2. OpenAPI polish (license + operationId) - DONE (v0.11.1)
+3. Watchlist URL validation + env override - DONE (v0.11.1)
+4. Thumbnail backfill regression test - DONE (v0.11.1)
+5. Cron example in deploy playbook - DONE (v0.11.1)
+6. OpenAPI 4XX responses - DONE (v0.12.0)
+7. `GET /runs/:id/logs` endpoint - DONE (v0.12.0) - code works, needs OpenAPI schema fix
+8. Graceful shutdown (SIGTERM/SIGINT) - DONE (v0.12.0)
+
+Follow-up applied: Added missing `PipelineEvent` schema to `openapi.yaml` and regenerated `web/lib/apiTypes.gen.ts` so `npm run api:contract:check` passes.
+
+Remaining (optional, LOW priority):
+- Rate limiting - only if exposing API publicly
+- Web UI for watchlist management - convenience feature
+- Metrics endpoint - nice for production monitoring
+
+**Phase 2 is effectively complete for single-tenant use case. The codebase is stable and well-tested (54 tests).**
+
+### Claude Opus 4.5 Additional Suggestions (2025-12-17)
+
+These are optional improvements beyond Phase 2. Organized by effort/value:
+
+---
+
+**QUICK WINS (less than 30 min each):**
+
+**1. OpenAPI 4XX responses**
+
+Problem: `npm run api:spec:validate` still shows 11 warnings about missing `4XX` responses on some endpoints (e.g., `GET /watchlist`, `GET /scheduler/status`).
+
+Fix: Add `400` or `401` response to endpoints that can fail. Example:
+```yaml
+/watchlist:
+  get:
+    responses:
+      "200": ...
+      "401":
+        description: Unauthorized (when Y2T_API_KEY is set)
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+```
+
+Effort: 15 minutes.
+
+---
+
+**2. Docker HEALTHCHECK**
+
+Problem: The Dockerfile has no `HEALTHCHECK` instruction. Docker orchestration (Swarm, Kubernetes via container runtime) can't auto-restart unhealthy containers.
+
+Fix: Add to Dockerfile before `CMD`:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:8787/health').then(r => process.exit(r.ok ? 0 : 1))" || exit 1
+```
+
+Effort: 5 minutes.
+
+---
+
+**3. D-016 placement in DECISIONS.md**
+
+Problem: D-016 (avatar fix) is inserted in the middle of D-006 content. Reads awkwardly.
+
+Fix: Move D-016 to end of file or renumber decisions.
+
+Effort: 5 minutes.
+
+---
+
+**MEDIUM EFFORT (1-2 hours):**
+
+**4. Pagination for GET /runs**
+
+Problem: `GET /runs` returns all runs. On long-running servers, this list grows unbounded (thousands of runs over months).
+
+Fix: Add optional query params:
+```
+GET /runs?limit=50&offset=0
+GET /runs?cursor=<lastRunId>
+```
+
+Return pagination metadata:
+```json
+{
+  "runs": [...],
+  "pagination": { "total": 1847, "limit": 50, "offset": 0 }
+}
+```
+
+Effort: 1 hour.
+
+---
+
+**5. Run filtering**
+
+Problem: No way to filter runs by status or channel. Users have to fetch all runs and filter client-side.
+
+Fix: Add query params:
+```
+GET /runs?status=running
+GET /runs?status=error
+GET /runs?channelId=UC...
+```
+
+Effort: 30 minutes.
+
+---
+
+**6. SSE keepalive/heartbeat**
+
+Problem: Some proxies (nginx, cloudflare) drop idle SSE connections after 60-90 seconds. Long channel runs may have gaps between events.
+
+Fix: Send periodic comment lines:
+```
+: keepalive
+```
+
+Every 30 seconds. SSE spec allows comments (lines starting with `:`) which are ignored by clients but keep the connection alive.
+
+Effort: 15 minutes per SSE endpoint.
+
+---
+
+**7. Run timeout**
+
+Problem: A run that hangs forever (yt-dlp stuck on a video, AssemblyAI never returning) has no timeout. The run stays `running` indefinitely.
+
+Fix: Add `Y2T_RUN_TIMEOUT_MINUTES` (default: 240 = 4 hours). If a run exceeds this, mark it as `error` with `timeout` reason.
+
+Effort: 1 hour.
+
+---
+
+**LARGER EFFORT (half day+):**
+
+**8. Structured logging**
+
+Problem: Currently uses `console.log` throughout. Hard to parse logs programmatically, no log levels, no request correlation.
+
+Fix: Use a structured logger like `pino`:
+```typescript
+import pino from "pino";
+const log = pino({ level: process.env.LOG_LEVEL || "info" });
+log.info({ runId, videoId, stage }, "Processing video");
+```
+
+Benefits: JSON logs, log levels, request IDs, better for log aggregation (ELK, Datadog).
+
+Effort: 3-4 hours (touches many files).
+
+---
+
+**9. API versioning**
+
+Problem: No version prefix on endpoints. If you need breaking changes later, clients break.
+
+Fix: Add `/v1/` prefix to all endpoints. Keep old paths as aliases initially.
+
+Effort: 2 hours (also need to update OpenAPI and web client).
+
+---
+
+**Questions for GPT-5.2:**
+- For pagination: cursor-based or offset-based? Cursor is more robust but offset is simpler.
+- For SSE keepalive: should the interval be configurable via env var?
+- For structured logging: pino (fast, JSON-native) or winston (more features)?
+
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
 2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - DONE
-3. Phase 2: hosted single-tenant service (admin) - IN PROGRESS (Phase 2.4 next)
+3. Phase 2: hosted single-tenant service (admin) - DONE (v0.11.1)
 4. Phase 3+: multi-tenant cloud platform - OPTIONAL
 
 ## Phase 1 Next Steps (Do In Order)

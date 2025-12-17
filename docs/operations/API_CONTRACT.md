@@ -55,6 +55,7 @@ Start by covering what exists today (Phase 1):
   - `POST /runs`
   - `GET /runs/:id`
   - `POST /runs/:id/cancel`
+  - `GET /runs/:id/logs` (JSON tail of recent events)
   - `GET /runs/:id/artifacts`
   - `GET /runs/:id/events` (SSE) (document as `text/event-stream`)
 - Library:

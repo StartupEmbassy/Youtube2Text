@@ -176,6 +176,9 @@ Auth (optional, recommended for server/Docker):
 - Example:
   - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
 
+Graceful shutdown (server/Docker):
+- On `SIGTERM`/`SIGINT`, the API stops the scheduler and requests cancellation for queued/running runs, then waits up to `Y2T_SHUTDOWN_TIMEOUT_SECONDS` before exiting.
+
 CORS (recommended for server deployments):
 - By default the API sends `Access-Control-Allow-Origin: *`.
 - To restrict browser access to specific origins, set `Y2T_CORS_ORIGINS` (comma-separated), e.g.:
@@ -224,6 +227,7 @@ Endpoints:
 - `GET /runs`
 - `GET /runs/:id`
 - `POST /runs/:id/cancel`
+- `GET /runs/:id/logs?tail=200` (JSON tail of recent events; convenience alternative to SSE)
 - `GET /runs/:id/events` (SSE, supports `Last-Event-ID`)
 - `GET /runs/:id/artifacts`
 - `GET /library/channels`

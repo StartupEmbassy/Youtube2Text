@@ -67,7 +67,7 @@ Completed:
 
 In progress:
 - Phase 2.4 Control: rate limiting (optional), and queue/worker only if needed.
-- Phase 2.4.x polish: OpenAPI operationId/license, watchlist URL validation, and regression tests.
+- Phase 2.4.x polish: OpenAPI 4XX completeness, graceful shutdown, debug logs endpoint.
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE

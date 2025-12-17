@@ -232,6 +232,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{runId}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get recent run events as JSON (tail)
+         * @description Returns the most recent buffered run events as JSON.
+         *     This is a convenience endpoint for debugging without SSE; it is not guaranteed to return the full history.
+         */
+        get: operations["getRunLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{runId}/cancel": {
         parameters: {
             query?: never;
@@ -370,6 +391,19 @@ export interface components {
         };
         OkResponse: {
             ok: boolean;
+        };
+        /**
+         * @description Best-effort schema for pipeline events (SSE and persisted events).
+         *     This is intentionally loose because the event payload varies by `type`.
+         */
+        PipelineEvent: {
+            /**
+             * @description Event type, e.g. `run:start`, `run:done`, `run:cancelled`, `run:error`,
+             *     `video:start`, `video:stage`, `video:done`, `video:skip`, `video:error`.
+             */
+            type: string;
+        } & {
+            [key: string]: unknown;
         };
         CleanupResponse: {
             retention: {
@@ -685,6 +719,15 @@ export interface operations {
                     "application/json": components["schemas"]["WatchlistListResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     addWatchlistEntry: {
@@ -835,6 +878,15 @@ export interface operations {
                     "application/json": components["schemas"]["SchedulerStatusResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     startScheduler: {
@@ -853,6 +905,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SchedulerStatusResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -875,6 +936,15 @@ export interface operations {
                     "application/json": components["schemas"]["SchedulerStatusResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     triggerSchedulerOnce: {
@@ -895,6 +965,15 @@ export interface operations {
                     "application/json": components["schemas"]["SchedulerTriggerResponse"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     streamGlobalEvents: {
@@ -913,6 +992,15 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -938,6 +1026,15 @@ export interface operations {
                     "application/json": components["schemas"]["HealthResponse"];
                 };
             };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     listRuns: {
@@ -956,6 +1053,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1044,6 +1150,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunGetResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getRunLogs: {
+        parameters: {
+            query?: {
+                /** @description Max events to return (default 200, max 2000). */
+                tail?: number;
+            };
+            header?: never;
+            path: {
+                runId: components["parameters"]["RunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        run: components["schemas"]["RunRecord"];
+                        events: {
+                            id: number;
+                            event: components["schemas"]["PipelineEvent"];
+                        }[];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not found */
@@ -1139,6 +1303,24 @@ export interface operations {
                     "text/event-stream": string;
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     listLibraryChannels: {
@@ -1157,6 +1339,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChannelsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

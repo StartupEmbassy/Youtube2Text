@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.11.1
+  version: 0.12.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -49,6 +49,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WatchlistListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     post:
       operationId: addWatchlistEntry
       summary: Add watchlist entry
@@ -154,6 +160,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SchedulerStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /scheduler/start:
     post:
@@ -166,6 +178,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SchedulerStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /scheduler/stop:
     post:
@@ -178,6 +196,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SchedulerStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /scheduler/trigger:
     post:
@@ -190,6 +214,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SchedulerTriggerResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /events:
     get:
@@ -207,6 +237,12 @@ paths:
             text/event-stream:
               schema:
                 type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /health:
     get:
@@ -226,6 +262,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /runs:
     get:
@@ -238,6 +280,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RunsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     post:
       operationId: createRun
       summary: Create and start a run
@@ -310,6 +358,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /runs/{runId}/logs:
+    get:
+      operationId: getRunLogs
+      summary: Get recent run events as JSON (tail)
+      description: |
+        Returns the most recent buffered run events as JSON.
+        This is a convenience endpoint for debugging without SSE; it is not guaranteed to return the full history.
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - name: tail
+          in: query
+          required: false
+          schema: { type: integer }
+          description: Max events to return (default 200, max 2000).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [run, events]
+                properties:
+                  run: { $ref: "#/components/schemas/RunRecord" }
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, event]
+                      properties:
+                        id: { type: integer }
+                        event: { $ref: "#/components/schemas/PipelineEvent" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /runs/{runId}/cancel:
     post:
@@ -371,6 +470,18 @@ paths:
             text/event-stream:
               schema:
                 type: string
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /library/channels:
     get:
@@ -383,6 +494,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /library/channels/{channelDirName}:
     get:
@@ -505,6 +622,20 @@ components:
       required: [ok]
       properties:
         ok: { type: boolean }
+
+    PipelineEvent:
+      type: object
+      description: |
+        Best-effort schema for pipeline events (SSE and persisted events).
+        This is intentionally loose because the event payload varies by `type`.
+      required: [type]
+      properties:
+        type:
+          type: string
+          description: |
+            Event type, e.g. `run:start`, `run:done`, `run:cancelled`, `run:error`,
+            `video:start`, `video:stage`, `video:done`, `video:skip`, `video:error`.
+      additionalProperties: true
 
     CleanupResponse:
       type: object

@@ -20,3 +20,4 @@ import "./watchlist.test.js";
 import "./scheduler.test.js";
 import "./apiCancel.test.js";
 import "./apiWatchlistValidation.test.js";
+import "./apiRunLogs.test.js";

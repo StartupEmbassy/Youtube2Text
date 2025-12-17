@@ -539,6 +539,32 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       }
 
       if (
+        req.method === "GET" &&
+        seg.length === 3 &&
+        seg[0] === "runs" &&
+        seg[2] === "logs"
+      ) {
+        const runId = seg[1]!;
+        const run = manager.getRun(runId);
+        if (!run) return notFound(res);
+
+        const parsed = parseUrl(req.url ?? `/runs/${runId}/logs`, true);
+        const tailRaw = parsed.query?.tail;
+        const tailN =
+          typeof tailRaw === "string"
+            ? Number.parseInt(tailRaw, 10)
+            : Array.isArray(tailRaw) && typeof tailRaw[0] === "string"
+              ? Number.parseInt(tailRaw[0], 10)
+              : NaN;
+        const tail = Number.isFinite(tailN) ? Math.max(1, Math.min(2000, tailN)) : 200;
+
+        const all = manager.listEventsAfter(runId, 0);
+        const events = all.slice(Math.max(0, all.length - tail));
+        json(res, 200, { run, events });
+        return;
+      }
+
+      if (
         req.method === "POST" &&
         seg.length === 3 &&
         seg[0] === "runs" &&
@@ -644,5 +670,5 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   });
 
   server.listen(opts.port, opts.host);
-  return { server, manager };
+  return { server, manager, scheduler };
 }

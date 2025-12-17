@@ -192,6 +192,9 @@ Phase 2.4.x (polish/stabilize, do in order):
 - 2.4.2 Watchlist safety: validate watchlist URLs (channel/playlist only) + document override if needed
 - 2.4.3 Regression tests: cache-first channel thumbnail backfill
 - 2.4.4 Ops docs: add cron examples for retention cleanup in deploy playbook
+- 2.4.5 OpenAPI completeness: add missing 4XX responses (reduce linter noise; clarifies auth/error surfaces)
+- 2.4.6 Graceful shutdown: handle SIGTERM/SIGINT without losing as much work
+- 2.4.7 Debug endpoint: `GET /runs/:id/logs` for non-SSE environments
 
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 
