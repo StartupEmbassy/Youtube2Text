@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RunCreateResponse, RunPlanResponse } from "../lib/apiSchema";
 
@@ -12,7 +12,7 @@ function parsePositiveInt(value: string): number | undefined {
   return Math.trunc(n);
 }
 
-export function CreateRunForm() {
+export function CreateRunForm({ initialUrl }: { initialUrl?: string } = {}) {
   const [url, setUrl] = useState("");
   const [force, setForce] = useState(false);
   const [advanced, setAdvanced] = useState(false);
@@ -23,6 +23,12 @@ export function CreateRunForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "error" | "done">("idle");
   const [message, setMessage] = useState<string>("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (!initialUrl) return;
+    setUrl((prev) => (prev.trim().length > 0 ? prev : initialUrl));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl]);
 
   const parsedMaxNewVideos = parsePositiveInt(maxNewVideos);
   const hasMaxNewVideos = parsedMaxNewVideos !== undefined;

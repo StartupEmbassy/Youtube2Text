@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { apiGetJson } from "../../../lib/api";
-import type { VideosResponse, VideoInfo } from "../../../lib/apiSchema";
+import type { ChannelMetaResponse, VideosResponse, VideoInfo } from "../../../lib/apiSchema";
+import { ChannelActions } from "./ChannelActions";
 
 function youtubeThumb(videoId: string): string {
   return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
@@ -17,9 +18,14 @@ export default async function ChannelPage({
   params: { channelDirName: string };
 }) {
   const channelDirName = decodeURIComponent(params.channelDirName);
-  const data = await apiGetJson<VideosResponse>(
-    `/library/channels/${encodeURIComponent(channelDirName)}/videos`,
-  );
+  const [videosData, metaData] = await Promise.all([
+    apiGetJson<VideosResponse>(`/library/channels/${encodeURIComponent(channelDirName)}/videos`),
+    apiGetJson<ChannelMetaResponse>(`/library/channels/${encodeURIComponent(channelDirName)}`).catch(() => undefined),
+  ]);
+
+  const channelTitle = metaData?.meta?.channelTitle;
+  const channelId = metaData?.meta?.channelId;
+  const channelUrl = metaData?.meta?.channelUrl;
 
   const renderVideo = (v: VideoInfo) => {
     const meta = v.meta;
@@ -78,14 +84,25 @@ export default async function ChannelPage({
   return (
     <div>
       <div className="row mb12">
-        <h1 className="m0">Channel</h1>
+        <h1 className="m0">{channelTitle ?? "Channel"}</h1>
         <Link className="pill" href="/library">
           Back
         </Link>
       </div>
-      <div className="muted mb12">{channelDirName}</div>
-      <div className="grid">{data.videos.map(renderVideo)}</div>
-      {data.videos.length === 0 && <p className="muted">No videos found.</p>}
+      <div className="flexWrap mb12">
+        <span className="pill">{channelId ?? channelDirName}</span>
+        <span className="muted break">{channelDirName}</span>
+      </div>
+
+      <ChannelActions
+        channelId={channelId}
+        channelUrl={channelUrl}
+        downloadedCount={videosData.videos.length}
+      />
+
+      <div className="spacer14" />
+      <div className="grid">{videosData.videos.map(renderVideo)}</div>
+      {videosData.videos.length === 0 && <p className="muted">No videos found.</p>}
     </div>
   );
 }

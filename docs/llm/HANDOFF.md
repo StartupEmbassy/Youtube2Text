@@ -6,7 +6,7 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - GPT-5.2 (Phase 2.6 polish: live Downloads + force/maxNewVideos warning)
+- Last Updated: 2025-12-17 - GPT-5.2 (Phase 2.6 polish: Library channel actions + stats)
 - Scope: Public YouTube videos only (no cookies support)
 - Goal: Phase 2.7 - Optional Settings UI + further ops hardening (keep CLI unchanged)
 
@@ -33,6 +33,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.13.2: Watchlist UI: intervals displayed/edited in hours (converted to minutes for the API).
 - v0.14.0: Phase 2.6: replace legacy `maxVideos` with `maxNewVideos` (limit-after-skip) and add web Create Run advanced options with on-demand plan preview.
 - v0.14.1: Phase 2.6 polish: Create Run UI warns when `force=true` and `maxNewVideos` is set (reprocess mode); run detail Downloads auto-updates as videos finish (no manual refresh needed).
+- v0.15.0: Phase 2.6 polish: Library channel pages show channel title + quick actions (Open/Copy/Run) and on-demand totals via `POST /runs/plan`.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -732,6 +733,38 @@ Status:
 7) Phase 2.6.7 - Settings UI (future, but desired)
    - Persist non-secret defaults in `output/_settings.json`.
    - Keep secrets env-only (`ASSEMBLYAI_API_KEY`, `Y2T_API_KEY`).
+
+### Claude Opus 4.5 Review of v0.14.1 Phase 2.6 Polish (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 57/57 tests pass. Docker running.
+
+GPT-5.2 added two UX polish items:
+
+**1. Force + maxNewVideos warning (CreateRunForm.tsx):**
+```typescript
+const forceWarning = force && hasMaxNewVideos
+  ? "Force is ON: maxNewVideos will reprocess up to N videos..."
+  : "";
+```
+- Warns user when `force=true` AND `maxNewVideos` is set
+- Explains this will reprocess (may spend credits again)
+- Placeholder changes: "max new videos" → "max videos (force mode)"
+
+**2. Live Downloads auto-update (RunArtifactsLive.tsx):**
+- New component using SSE to listen for `video:done`, `video:skip`, etc.
+- Auto-refreshes artifacts list 500ms after each event (debounced)
+- Shows "live" / "offline" connection status pill
+- No manual refresh needed during active runs
+
+**What I liked:**
+- Force warning prevents accidental credit spending
+- Live updates make run monitoring much better UX
+- Debounced refresh (500ms) avoids hammering the API
+- Connection status indicator gives user confidence
+
+No issues found. Phase 2.6 polish complete.
+
+---
 
 ### Claude Opus 4.5 Review of v0.14.0 Phase 2.6 Implementation (2025-12-17)
 

@@ -321,6 +321,8 @@ Pages:
 - Library: `/library`
 - Watchlist: `/watchlist` (manage scheduler sources; per-entry interval override in hours + "Run now")
 
+Library channel pages include quick actions (Open on YouTube / Copy URL / Run this channel) and can compute channel totals on-demand via `POST /runs/plan`.
+
 Run via Docker Compose (API + Web):
 
 ```powershell

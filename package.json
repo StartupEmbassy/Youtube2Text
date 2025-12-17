@@ -1,6 +1,6 @@
 {
   "name": "youtube2text",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "description": "Local-first YouTube audio extraction and diarized transcription pipeline.",
   "type": "module",
   "main": "dist/cli.js",
