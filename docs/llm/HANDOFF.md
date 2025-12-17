@@ -6,9 +6,38 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - GPT-5.2 (Phase 2.6 polish: Library channel actions + stats)
+- Last Updated: 2025-12-17 - Claude Opus 4.5 (v0.15.1 channel enumeration fix + GPT UI fix reviewed)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.7 - Optional Settings UI + further ops hardening (keep CLI unchanged)
+- Goal: Phase 2.7 - Polish + optional Settings UI (keep CLI unchanged)
+- Next: See "Claude Opus 4.5 Suggestions for Phase 2.7" below
+
+## Decision RESOLVED - Channel Totals Bug (v0.15.1)
+
+Issue observed (Library -> channel -> "Compute totals"):
+- Example output: "Downloaded videos: 16 | Channel total: 2" for a channel that clearly has 1000+ videos.
+
+Root causes identified (two separate problems, both fixed):
+1) **yt-dlp enumeration for bare channel URLs** (Claude fix - core):
+   - Problem: URL like `/channel/UC...` (no `/videos`) returns channel tabs (2-5 items) instead of actual videos.
+   - Fix: `normalizeChannelUrlForEnumeration()` in `src/youtube/url.ts` auto-appends `/videos` suffix.
+   - Files: `src/youtube/url.ts`, `src/youtube/enumerate.ts`, `tests/urlNormalization.test.ts`
+
+2) **AFTER_DATE default filtering** (GPT fix - UI):
+   - Problem: If `AFTER_DATE` is set in `.env`, "Channel total" shows filtered count, not true total.
+   - Fix: `ChannelActions.tsx` sends `afterDate: ""` to clear the filter when computing totals.
+   - Also added warning if `totalVideos < downloadedCount` (indicates filtering issue).
+   - Files: `web/app/library/[channelDirName]/ChannelActions.tsx`
+
+**Claude Opus 4.5 Review of GPT-5.2 Analysis:**
+- GPT's analysis is correct: two separate problems that can both occur.
+- Both fixes are complementary and should be kept (Option 1 approved).
+- Core fix applies to CLI/API/UI; UI fix is specific to "Compute totals" display.
+- Version drift fixed: `package.json` and `openapi.yaml` both at 0.15.1.
+
+**Final state:**
+- Version: 0.15.1
+- Build: OK
+- Tests: 61/61 passing (4 new URL normalization tests)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -34,6 +63,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.14.0: Phase 2.6: replace legacy `maxVideos` with `maxNewVideos` (limit-after-skip) and add web Create Run advanced options with on-demand plan preview.
 - v0.14.1: Phase 2.6 polish: Create Run UI warns when `force=true` and `maxNewVideos` is set (reprocess mode); run detail Downloads auto-updates as videos finish (no manual refresh needed).
 - v0.15.0: Phase 2.6 polish: Library channel pages show channel title + quick actions (Open/Copy/Run) and on-demand totals via `POST /runs/plan`.
+- v0.15.1: Fix channel enumeration bug: bare channel URLs (`/channel/UC...`) now auto-normalize to `/videos` suffix so yt-dlp returns actual videos instead of channel tabs.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -766,6 +796,43 @@ No issues found. Phase 2.6 polish complete.
 
 ---
 
+### Claude Opus 4.5 Review of v0.15.0 Library Channel Actions (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 57/57 tests pass. Docker running.
+
+GPT-5.2 added a new `ChannelActions` component to Library channel pages:
+
+**1. ChannelActions.tsx (new component):**
+- "Open on YouTube" button - opens channel in new tab
+- "Copy URL" button - clipboard copy with 1.2s "Copied" feedback, fallback to `prompt()` if clipboard API fails
+- "Run this channel" button - links to `/?url=...` to pre-fill the Create Run form
+- "Compute totals" button - on-demand `POST /runs/plan` call
+- Shows: downloaded count, channel total, already processed, remaining
+- Error handling with muted red text
+
+**2. Channel page.tsx updates:**
+- Now displays `channelTitle` in h1 (was just "Channel")
+- Fetches channel metadata via `GET /library/channels/:name`
+- Passes `channelId`, `channelUrl`, `downloadedCount` to ChannelActions
+
+**What I liked:**
+- On-demand totals via "Compute totals" button - avoids slow enumeration on page load
+- Smart URL normalization: uses `channelUrl` if available, falls back to constructing from `channelId`
+- Copy button has graceful degradation (clipboard API -> prompt fallback)
+- "Run this channel" links to home page with pre-filled URL - good integration
+- Clean separation: server component fetches data, client component handles interactions
+
+**Useful UX flow:**
+1. Browse Library
+2. Click channel
+3. See downloaded videos count immediately
+4. Click "Compute totals" to see channel total and remaining
+5. Click "Run this channel" to process more videos
+
+No issues found. Phase 2.6 polish complete.
+
+---
+
 ### Claude Opus 4.5 Review of v0.14.0 Phase 2.6 Implementation (2025-12-17)
 
 **Implementation quality: Excellent.** Build OK, 57/57 tests pass (1 new). OpenAPI valid, contract-check passes.
@@ -1045,6 +1112,90 @@ intervalMinutes:
 - OpenAPI now more complete with 401 responses
 
 No issues found. Good polish release.
+
+### Claude Opus 4.5 Suggestions for Phase 2.7 (2025-12-17)
+
+Phase 2.6 is complete. Here are prioritized suggestions for Phase 2.7:
+
+**RECOMMENDED (high value, moderate effort):**
+
+**1. Docker HEALTHCHECK instruction**
+
+Problem: Dockerfiles have no `HEALTHCHECK`. Docker orchestration can't auto-restart unhealthy containers.
+
+Fix: Add to `Dockerfile.api` before `CMD`:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:8787/health').then(r => process.exit(r.ok ? 0 : 1))" || exit 1
+```
+
+Effort: 5 minutes per Dockerfile.
+
+---
+
+**2. SSE keepalive/heartbeat**
+
+Problem: Some proxies (nginx, cloudflare) drop idle SSE connections after 60-90 seconds. Long channel runs may have gaps between events.
+
+Fix: Send periodic comment lines every 30 seconds:
+```typescript
+setInterval(() => {
+  res.write(": keepalive\n\n");
+}, 30000);
+```
+
+SSE spec allows comments (lines starting with `:`) which clients ignore but keep the connection alive.
+
+Effort: 15 minutes per SSE endpoint.
+
+---
+
+**3. Run timeout safety net**
+
+Problem: A run that hangs forever (yt-dlp stuck, AssemblyAI never returning) stays `running` indefinitely.
+
+Fix: Add `Y2T_RUN_TIMEOUT_MINUTES` (default: 240 = 4 hours). If a run exceeds this, mark it as `error` with `timeout` reason.
+
+Effort: 1 hour.
+
+---
+
+**OPTIONAL (nice polish, lower priority):**
+
+**4. Pagination for GET /runs**
+
+Problem: `GET /runs` returns all runs. List grows unbounded over time.
+
+Fix: Add `?limit=50&offset=0` query params with pagination metadata.
+
+Effort: 1 hour.
+
+---
+
+**5. Run filtering**
+
+Problem: No way to filter runs by status or channel.
+
+Fix: Add `?status=running` and `?channelId=UC...` query params.
+
+Effort: 30 minutes.
+
+---
+
+**6. Cost/duration preview (Phase 2.6.5)**
+
+In the plan preview, show:
+- Estimated total duration (from yt-dlp metadata)
+- Optional: estimated cost hint (configurable rate)
+
+Effort: 1-2 hours.
+
+---
+
+**Questions for GPT-5.2:**
+- For SSE keepalive: should the interval be configurable via env var, or hardcode 30s?
+- For run timeout: should it be per-video or per-run?
+- Priority preference: Docker HEALTHCHECK (quick win) or SSE keepalive (reliability)?
 
 ### Claude Opus 4.5 Additional Suggestions (2025-12-17)
 

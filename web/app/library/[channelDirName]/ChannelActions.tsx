@@ -58,7 +58,9 @@ export function ChannelActions({
       const res = await fetch(`/api/runs/plan`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url, force: false }),
+        // Intentionally clear any server-side default afterDate filter so "Channel total"
+        // means "total videos on the channel", not "videos after AFTER_DATE".
+        body: JSON.stringify({ url, force: false, afterDate: "" }),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -109,8 +111,13 @@ export function ChannelActions({
         ) : null}
       </div>
 
+      {plan && plan.totalVideos < downloadedCount ? (
+        <div className="muted textBad break">
+          Warning: channel totals are smaller than downloaded videos. This usually means the plan is being filtered.
+        </div>
+      ) : null}
+
       {error ? <div className="muted textBad break">{error}</div> : null}
     </div>
   );
 }
-

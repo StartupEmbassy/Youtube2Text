@@ -48,3 +48,32 @@ export function classifyYoutubeUrl(urlString: string): { kind: YoutubeUrlKind } 
   if (url.pathname.startsWith("/user/")) return { kind: "channel" };
   return { kind: "unknown" };
 }
+
+/**
+ * Normalize channel URLs to include /videos suffix.
+ * This ensures yt-dlp returns the actual video list instead of channel tabs.
+ *
+ * Examples:
+ * - https://www.youtube.com/channel/UC... → https://www.youtube.com/channel/UC.../videos
+ * - https://www.youtube.com/@handle → https://www.youtube.com/@handle/videos
+ * - https://www.youtube.com/@handle/videos → unchanged
+ * - https://www.youtube.com/playlist?list=... → unchanged (not a channel)
+ */
+export function normalizeChannelUrlForEnumeration(urlString: string): string {
+  const { kind } = classifyYoutubeUrl(urlString);
+  if (kind !== "channel") return urlString;
+
+  let url: URL;
+  try {
+    url = new URL(urlString);
+  } catch {
+    return urlString;
+  }
+
+  // Already has /videos suffix
+  if (url.pathname.endsWith("/videos")) return urlString;
+
+  // Remove trailing slash and append /videos
+  url.pathname = url.pathname.replace(/\/$/, "") + "/videos";
+  return url.toString();
+}

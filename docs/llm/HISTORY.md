@@ -6,6 +6,12 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-17 - Claude Opus 4.5 - Review GPT-5.2 UI fix for AFTER_DATE filtering in "Compute totals"; aligned version drift (openapi.yaml 0.15.0 -> 0.15.1); documented decision resolution in HANDOFF.md - Files: [openapi.yaml, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no (already 0.15.1)
+
+2025-12-17 - GPT-5.2 - UI fix: ChannelActions "Compute totals" now sends `afterDate: ""` to clear server default filter so totals reflect full channel; added warning if totalVideos < downloadedCount - Files: [web/app/library/[channelDirName]/ChannelActions.tsx, docs/llm/HANDOFF.md] - Version impact: no (part of 0.15.1)
+
+2025-12-17 - Claude Opus 4.5 - Bug fix: channel enumeration returned only channel tabs (2 entries) instead of actual videos (1000+). Root cause: bare channel URLs (`/channel/UC...`) need `/videos` suffix for yt-dlp to return the video list. Added `normalizeChannelUrlForEnumeration()` and 4 unit tests; bump version to 0.15.1 - Files: [src/youtube/url.ts, src/youtube/enumerate.ts, tests/urlNormalization.test.ts, tests/all.test.ts, package.json, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: yes (0.15.0 -> 0.15.1)
+
 2025-12-17 - GPT-5.2 - Phase 2.6 polish: Library channel page shows channel title and adds quick actions (Open on YouTube, Copy URL, Run this channel prefill) plus on-demand channel totals via `POST /runs/plan`; bump version to 0.15.0 - Files: [web/app/page.tsx, web/app/CreateRunForm.tsx, web/app/library/[channelDirName]/page.tsx, web/app/library/[channelDirName]/ChannelActions.tsx, README.md, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json, openapi.yaml] - Version impact: yes (0.14.1 -> 0.15.0)
 
 2025-12-17 - GPT-5.2 - Patch: run detail page Downloads auto-updates (SSE-triggered refetch), Create Run warns when `force=true` + `maxNewVideos`, and docs align; bump version to 0.14.1 - Files: [web/app/runs/[runId]/RunArtifactsLive.tsx, web/app/runs/[runId]/page.tsx, web/app/CreateRunForm.tsx, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.14.0 -> 0.14.1)

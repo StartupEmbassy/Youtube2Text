@@ -1,6 +1,7 @@
 import { execCommand } from "../utils/exec.js";
 import { logStep } from "../utils/logger.js";
 import { YoutubeListing, YoutubeVideo } from "./types.js";
+import { normalizeChannelUrlForEnumeration } from "./url.js";
 
 type YtDlpEntry = {
   id?: string;
@@ -36,12 +37,15 @@ export async function enumerateVideos(
   ytDlpCommand = "yt-dlp",
   ytDlpExtraArgs: string[] = []
 ): Promise<YoutubeListing> {
-  logStep("enumerate", `Enumerating videos from ${inputUrl} ...`);
+  // Normalize channel URLs to include /videos suffix.
+  // Without this, yt-dlp returns channel tabs (Videos, Shorts, etc.) instead of actual videos.
+  const normalizedUrl = normalizeChannelUrlForEnumeration(inputUrl);
+  logStep("enumerate", `Enumerating videos from ${normalizedUrl} ...`);
   const args = [
     ...ytDlpExtraArgs,
     "--flat-playlist",
     "--dump-single-json",
-    inputUrl,
+    normalizedUrl,
   ];
   const result = await execCommand(ytDlpCommand, args);
   if (result.exitCode !== 0) {
