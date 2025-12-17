@@ -32,7 +32,7 @@ function loadEnvConfig(): PartialConfig {
     languageDetection: env.LANGUAGE_DETECTION,
     languageCode: env.LANGUAGE_CODE,
     concurrency: env.CONCURRENCY ? Number(env.CONCURRENCY) : undefined,
-    maxVideos: env.MAX_VIDEOS ? Number(env.MAX_VIDEOS) : undefined,
+    maxNewVideos: env.MAX_NEW_VIDEOS ? Number(env.MAX_NEW_VIDEOS) : undefined,
     afterDate: env.AFTER_DATE,
     csvEnabled: env.CSV_ENABLED === "true",
     assemblyAiCreditsCheck: env.ASSEMBLYAI_CREDITS_CHECK,

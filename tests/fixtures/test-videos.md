@@ -16,13 +16,13 @@ Short videos in different languages for testing language detection and transcrip
 
 ```bash
 # Test single video
-npx tsx src/cli/index.ts --maxVideos 1 "VIDEO_URL"
+npx tsx src/cli/index.ts --maxNewVideos 1 "VIDEO_URL"
 
 # Test with JSON events
-npx tsx src/cli/index.ts --maxVideos 1 --json-events "VIDEO_URL"
+npx tsx src/cli/index.ts --maxNewVideos 1 --json-events "VIDEO_URL"
 
 # Force reprocess
-npx tsx src/cli/index.ts --maxVideos 1 --force "VIDEO_URL"
+npx tsx src/cli/index.ts --maxNewVideos 1 --force "VIDEO_URL"
 ```
 
 ## Expected Behavior

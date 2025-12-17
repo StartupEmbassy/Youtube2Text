@@ -386,13 +386,28 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const url = (body as any).url;
         const force = Boolean((body as any).force);
+        const maxNewVideos = (body as any).maxNewVideos;
+        const afterDate = (body as any).afterDate;
         const configOverrides = (body as any).config;
         if (typeof url !== "string" || url.trim().length === 0) {
           badRequest(res, "Missing url");
           return;
         }
+        if (maxNewVideos !== undefined && typeof maxNewVideos !== "number") {
+          badRequest(res, "Invalid maxNewVideos");
+          return;
+        }
+        if (afterDate !== undefined && typeof afterDate !== "string") {
+          badRequest(res, "Invalid afterDate");
+          return;
+        }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
-        const mergedConfig = { ...config, ...sanitizedOverrides };
+        const requestOverrides = {
+          ...sanitizedOverrides,
+          ...(typeof maxNewVideos === "number" ? { maxNewVideos } : {}),
+          ...(typeof afterDate === "string" ? { afterDate } : {}),
+        };
+        const mergedConfig = { ...config, ...requestOverrides };
         const plan = await planRun(url, mergedConfig, { force });
         json(res, 200, { plan });
         return;
@@ -535,17 +550,33 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const url = (body as any).url;
         const force = Boolean((body as any).force);
+        const maxNewVideos = (body as any).maxNewVideos;
+        const afterDate = (body as any).afterDate;
         const callbackUrl = (body as any).callbackUrl;
         const configOverrides = (body as any).config;
         if (typeof url !== "string" || url.trim().length === 0) {
           badRequest(res, "Missing url");
           return;
         }
+        if (maxNewVideos !== undefined && typeof maxNewVideos !== "number") {
+          badRequest(res, "Invalid maxNewVideos");
+          return;
+        }
+        if (afterDate !== undefined && typeof afterDate !== "string") {
+          badRequest(res, "Invalid afterDate");
+          return;
+        }
         if (callbackUrl !== undefined && typeof callbackUrl !== "string") {
           badRequest(res, "Invalid callbackUrl");
           return;
         }
-        const mergedConfig = { ...config, ...sanitizeConfigOverrides(configOverrides) };
+        const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
+        const requestOverrides = {
+          ...sanitizedOverrides,
+          ...(typeof maxNewVideos === "number" ? { maxNewVideos } : {}),
+          ...(typeof afterDate === "string" ? { afterDate } : {}),
+        };
+        const mergedConfig = { ...config, ...requestOverrides };
 
         if (!force) {
           const videoId = tryExtractVideoIdFromUrl(url);
@@ -553,7 +584,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             const plan = await planRunFn(url, mergedConfig, { force: false });
             if (plan.totalVideos === 1 && plan.toProcess === 0) {
               const record = manager.createCachedRun(
-                { url, force: false, callbackUrl, config: configOverrides },
+                { url, force: false, callbackUrl, config: requestOverrides },
                 plan
               );
 
@@ -603,8 +634,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           }
         }
 
-        const record = manager.createRun({ url, force, callbackUrl, config: configOverrides });
-        manager.startRun(record.runId, { url, force, callbackUrl, config: configOverrides });
+        const record = manager.createRun({ url, force, callbackUrl, config: requestOverrides });
+        manager.startRun(record.runId, { url, force, callbackUrl, config: requestOverrides });
         json(res, 201, {
           run: record,
           links: {

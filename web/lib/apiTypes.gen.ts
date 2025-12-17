@@ -555,6 +555,13 @@ export interface components {
             url: string;
             force?: boolean;
             /**
+             * @description Limit this run to at most N NEW (unprocessed) videos.
+             *     Applied AFTER skipping already-processed videos so repeated runs can backfill incrementally.
+             */
+            maxNewVideos?: number;
+            /** @description Only include videos after YYYY-MM-DD (best-effort; based on yt-dlp upload_date). */
+            afterDate?: string;
+            /**
              * @description Optional. If set, the API sends a POST webhook when the run ends:
              *     - `run:done` when status becomes done
              *     - `run:error` when status becomes error
@@ -593,12 +600,16 @@ export interface components {
             channelTitle?: string;
             totalVideos: number;
             alreadyProcessed: number;
+            /** @description Total unprocessed videos under the given filters (may be larger than `toProcess` when `maxNewVideos` is set). */
+            unprocessed: number;
             toProcess: number;
             filters: {
                 afterDate?: string;
-                maxVideos?: number;
+                maxNewVideos?: number;
             };
             videos: components["schemas"]["PlannedVideo"][];
+            /** @description Videos selected to be processed for this run (unprocessed + capped by `maxNewVideos`). */
+            selectedVideos: components["schemas"]["PlannedVideo"][];
         };
         RunPlanResponse: {
             plan: components["schemas"]["RunPlan"];

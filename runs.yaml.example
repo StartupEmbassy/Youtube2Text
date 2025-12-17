@@ -3,7 +3,7 @@
 
 runs:
   - url: "https://www.youtube.com/@somechannel"
-    maxVideos: 10
+    maxNewVideos: 10
     after: "2024-01-01"
     concurrency: 2
     csvEnabled: false
@@ -18,7 +18,7 @@ runs:
     ytDlpExtraArgs: []
 
   - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
-    maxVideos: 5
+    maxNewVideos: 5
     after: "2023-06-01"
     outDir: "output_custom"
     audioDir: "audio_custom"

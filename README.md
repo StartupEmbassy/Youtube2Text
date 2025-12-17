@@ -104,7 +104,7 @@ AUDIO_FORMAT=mp3
 LANGUAGE_CODE=en_us
 LANGUAGE_DETECTION=auto   # auto | manual
 CONCURRENCY=2
-MAX_VIDEOS=
+MAX_NEW_VIDEOS=
 AFTER_DATE=
 CSV_ENABLED=false
 ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
@@ -130,7 +130,7 @@ Options:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--maxVideos` | number | unset | Process at most N videos. |
+| `--maxNewVideos` | number | unset | Process at most N NEW (unprocessed) videos (limit is applied after skipping already-processed videos). |
 | `--after` | date | unset | Only process videos after YYYY-MM-DD. |
 | `--outDir` | path | `output` | Output root directory. |
 | `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
@@ -226,8 +226,8 @@ Endpoints:
 - `GET /watchlist`, `POST /watchlist`, `PATCH /watchlist/:id`, `DELETE /watchlist/:id` (followed channels list)
 - `GET /scheduler/status`, `POST /scheduler/start|stop|trigger` (Phase 2.3, opt-in)
 - `GET /events` (SSE global stream for run updates)
-- `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "config": { ... } }` (enumerate + skip counts, no transcription)
-- `POST /runs` with JSON body `{ "url": "...", "force": false, "callbackUrl": "https://...", "config": { ... } }` (cache-first for single-video URLs)
+- `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "maxNewVideos": 10, "afterDate": "2024-01-01" }` (enumerate + skip counts, no transcription)
+- `POST /runs` with JSON body `{ "url": "...", "force": false, "maxNewVideos": 10, "afterDate": "2024-01-01", "callbackUrl": "https://..." }` (cache-first for single-video URLs)
 - `GET /runs`
 - `GET /runs/:id`
 - `POST /runs/:id/cancel`
@@ -339,13 +339,13 @@ Example `runs.yaml`:
 ```yaml
 runs:
   - url: "https://www.youtube.com/@somechannel"
-    maxVideos: 10
+    maxNewVideos: 10
     after: "2024-01-01"
     concurrency: 2
     csvEnabled: false
 
   - url: "https://www.youtube.com/playlist?list=PLxxxx"
-    maxVideos: 5
+    maxNewVideos: 5
     after: "2023-06-01"
     outDir: "output_alt"
     audioDir: "audio_alt"

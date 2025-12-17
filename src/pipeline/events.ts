@@ -16,6 +16,9 @@ export type PipelineEvent =
       totalVideos: number;
       alreadyProcessed: number;
       remaining: number;
+      channelTotalVideos?: number;
+      channelAlreadyProcessed?: number;
+      channelUnprocessed?: number;
       timestamp: string;
     }
   | {

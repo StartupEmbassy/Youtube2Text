@@ -22,12 +22,14 @@ export type RunPlan = {
   channelTitle?: string;
   totalVideos: number;
   alreadyProcessed: number;
+  unprocessed: number;
   toProcess: number;
   filters: {
     afterDate?: string;
-    maxVideos?: number;
+    maxNewVideos?: number;
   };
   videos: PlannedVideo[];
+  selectedVideos: PlannedVideo[];
 };
 
 type IsProcessedFn = (jsonPath: string) => Promise<boolean>;
@@ -39,9 +41,9 @@ export async function planFromListing(
   options: { force: boolean },
   deps?: { isProcessed?: IsProcessedFn }
 ): Promise<RunPlan> {
-  const filteredVideos = listing.videos
-    .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
-    .slice(0, config.maxVideos ?? listing.videos.length);
+  const filteredVideos = listing.videos.filter((v) =>
+    isAfterDate(v.uploadDate, config.afterDate)
+  );
 
   const planned = filteredVideos.map((video) => {
     const basename = makeVideoBaseName(video.id, video.title, config.filenameStyle);
@@ -76,6 +78,15 @@ export async function planFromListing(
 
   const alreadyProcessed = videos.filter((v) => v.processed).length;
   const totalVideos = videos.length;
+  const unprocessed = totalVideos - alreadyProcessed;
+
+  const maxNewVideos = config.maxNewVideos;
+  const selectedVideos =
+    options.force
+      ? videos.slice(0, maxNewVideos ?? videos.length).map((v) => ({ ...v, processed: false }))
+      : videos
+          .filter((v) => !v.processed)
+          .slice(0, maxNewVideos ?? videos.length);
 
   return {
     inputUrl,
@@ -84,12 +95,14 @@ export async function planFromListing(
     channelTitle: listing.channelTitle,
     totalVideos,
     alreadyProcessed,
-    toProcess: totalVideos - alreadyProcessed,
+    unprocessed,
+    toProcess: selectedVideos.length,
     filters: {
       afterDate: config.afterDate,
-      maxVideos: config.maxVideos,
+      maxNewVideos: config.maxNewVideos,
     },
     videos,
+    selectedVideos,
   };
 }
 
@@ -103,4 +116,3 @@ export async function planRun(
   const listing = await enumerateVideos(inputUrl, ytDlpCommand, ytDlpExtraArgs);
   return planFromListing(inputUrl, listing, config, options);
 }
-

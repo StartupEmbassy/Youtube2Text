@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - GPT-5.2 (Phase 2.5 complete; watchlist per-entry run + hours UI)
+- Last Updated: 2025-12-17 - GPT-5.2 (started Phase 2.6: maxNewVideos + plan preview)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.6 - TBD (server hardening + service ergonomics)
+- Goal: Phase 2.6 - Run configuration UX (maxNewVideos + plan preview) and later optional Settings UI
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -31,6 +31,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.13.0: Phase 2.5: Watchlist web UI (`/watchlist`) + Prometheus metrics endpoint (`GET /metrics`).
 - v0.13.1: Watchlist UI: per-entry interval overrides editable + per-entry "Run now" (plan-first).
 - v0.13.2: Watchlist UI: intervals displayed/edited in hours (converted to minutes for the API).
+- v0.14.0: Phase 2.6 (partial): replace legacy `maxVideos` with `maxNewVideos` (limit-after-skip) and add web Create Run advanced options with on-demand plan preview.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -660,15 +661,15 @@ Goal: make it easier/safer to run partial channel backfills (eg "download 10 now
 
 Proposed behavior (important semantics):
 - Default enumeration order: newest-first.
-- `maxVideos` in UI/API should mean "max NEW (unprocessed) videos to process for this run" (apply the limit AFTER skipping already-processed videos).
-  - This avoids the "run #2 sees the same top 10 again and never advances" trap.
+- Use `maxNewVideos` (not `maxVideos`): "max NEW (unprocessed) videos to process for this run" (apply the limit AFTER skipping already-processed videos).
+  - This avoids the "run #2 sees the same top N again and never advances" trap.
   - Result: repeated runs naturally walk backwards in time until the backfill is complete, while still picking up newly published videos at the front.
 
 Roadmap placement (Phase 2.6, do in order):
 1) Phase 2.6.1 - Run creation: per-run controls
    - Web UI: add optional fields to Create Run: `maxNewVideos`, `afterDate` (and possibly `force`).
    - API: keep `POST /runs` compatible; pass the new options via the existing `config` override object.
-   - CLI/runs.yaml: decide whether to keep `maxVideos` name but change semantics, or introduce a new explicit name (eg `maxNewVideos`) and keep old behavior for backward compatibility.
+   - CLI/runs.yaml: add `maxNewVideos` support.
 
 2) Phase 2.6.2 - Preflight plan summary in UI (knowledge before spending credits)
    - When filling the Create Run form, call `POST /runs/plan` and show:
@@ -686,10 +687,9 @@ Roadmap placement (Phase 2.6, do in order):
    - API loads these defaults on startup (or via reload endpoint), but secrets remain env-only (`ASSEMBLYAI_API_KEY`, `Y2T_API_KEY`).
 
 Questions for Claude:
-- Do you agree that `maxVideos` should be interpreted as "max unprocessed videos" (post-skip) to allow incremental backfills?
-- If we change semantics, do we need a new explicit field name to avoid breaking existing users (CLI/runs.yaml)?
+- Do you agree that `maxNewVideos` should be "max unprocessed videos" (post-skip) to allow incremental backfills?
 - Should the UI always do plan-first, or only when advanced options are expanded (to reduce extra API calls)?
-- Should the API expose this as a top-level field on `POST /runs` (eg `maxNewVideos`) or only via `config` overrides (keeping `POST /runs` minimal)?
+- Should the API expose this as a top-level field on `POST /runs` or only via `config` overrides?
 
 ### Updated Phase 2.6 Roadmap (proposed order)
 
@@ -697,6 +697,10 @@ Phase 2.6 goal: "safer runs" + better UX for partial backfills, without breaking
 
 Note: This project is still pre-production. Breaking changes are acceptable. Preferred approach:
 - Add `maxNewVideos` and remove legacy `maxVideos` (no deprecation period).
+
+Status:
+- DONE in v0.14.0: Phase 2.6.1 (core), 2.6.2 (API/OpenAPI), 2.6.3 (web UI advanced options + on-demand plan preview), 2.6.4 (CLI + runs.yaml parity).
+- NEXT: 2.6.5 cost/duration preview, 2.6.6 optional catalog caching, 2.6.7 settings UI.
 
 1) Phase 2.6.1 - Core: implement incremental backfill semantics (correctness first)
    - Default enumeration order: newest-first.
@@ -835,7 +839,7 @@ Update OpenAPI accordingly.
 2.6.1 - Implement "limit after skip" in planner/pipeline (core)
 2.6.2 - Add maxNewVideos/afterDate to API (POST /runs, POST /runs/plan)
 2.6.3 - Web UI: advanced controls + plan preview
-2.6.4 - CLI/runs.yaml: add maxNewVideos, deprecate maxVideos
+2.6.4 - CLI/runs.yaml: add maxNewVideos, remove maxVideos
 ```
 
 **2. Skip 2.6.3 (catalog state):** Premature optimization. Plan endpoint already works. Only add caching if you see real perf problems.

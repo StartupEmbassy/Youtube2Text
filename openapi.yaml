@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.13.2
+  version: 0.14.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -861,6 +861,14 @@ components:
       properties:
         url: { type: string }
         force: { type: boolean }
+        maxNewVideos:
+          type: integer
+          description: |
+            Limit this run to at most N NEW (unprocessed) videos.
+            Applied AFTER skipping already-processed videos so repeated runs can backfill incrementally.
+        afterDate:
+          type: string
+          description: Only include videos after YYYY-MM-DD (best-effort; based on yt-dlp upload_date).
         callbackUrl:
           type: string
           description: |
@@ -911,9 +919,11 @@ components:
           channelId,
           totalVideos,
           alreadyProcessed,
+          unprocessed,
           toProcess,
           filters,
-          videos
+          videos,
+          selectedVideos
         ]
       properties:
         inputUrl: { type: string }
@@ -922,15 +932,22 @@ components:
         channelTitle: { type: string }
         totalVideos: { type: integer }
         alreadyProcessed: { type: integer }
+        unprocessed:
+          type: integer
+          description: Total unprocessed videos under the given filters (may be larger than `toProcess` when `maxNewVideos` is set).
         toProcess: { type: integer }
         filters:
           type: object
           required: []
           properties:
             afterDate: { type: string }
-            maxVideos: { type: integer }
+            maxNewVideos: { type: integer }
         videos:
           type: array
+          items: { $ref: "#/components/schemas/PlannedVideo" }
+        selectedVideos:
+          type: array
+          description: Videos selected to be processed for this run (unprocessed + capped by `maxNewVideos`).
           items: { $ref: "#/components/schemas/PlannedVideo" }
 
     RunPlanResponse:

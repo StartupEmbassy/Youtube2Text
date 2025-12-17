@@ -32,21 +32,23 @@ Use this to avoid wasted credits. It enumerates and counts what is already proce
 ```bash
 curl -sS -X POST http://127.0.0.1:8787/runs/plan \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://www.youtube.com/@SomeChannel","force":false}'
+  -d '{"url":"https://www.youtube.com/@SomeChannel","force":false,"maxNewVideos":10,"afterDate":"2024-01-01"}'
 ```
 
 Response includes:
 - `plan.totalVideos`
 - `plan.alreadyProcessed`
-- `plan.toProcess`
-- `plan.videos[]` with `processed: true|false`
+- `plan.unprocessed` (total unprocessed under filters)
+- `plan.toProcess` (selected for this run; capped by `maxNewVideos`)
+- `plan.videos[]` with `processed: true|false` (full list under filters)
+- `plan.selectedVideos[]` (the videos that will be processed)
 
 ### 3) Start a run
 
 ```bash
 curl -sS -X POST http://127.0.0.1:8787/runs \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://www.youtube.com/@SomeChannel","force":false}'
+  -d '{"url":"https://www.youtube.com/@SomeChannel","force":false,"maxNewVideos":10,"afterDate":"2024-01-01"}'
 ```
 
 Notes:

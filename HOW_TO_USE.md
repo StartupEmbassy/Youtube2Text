@@ -31,6 +31,12 @@ $env:ASSEMBLYAI_API_KEY="your_key_here"
 npm run dev -- https://www.youtube.com/@SomeChannel
 ```
 
+Optional: limit the run to N new (unprocessed) videos:
+
+```powershell
+npm run dev -- --maxNewVideos 10 https://www.youtube.com/@SomeChannel
+```
+
 Outputs go to `output/` and `audio/`.
 
 Note: the Library page shows channel avatars when available. These are best-effort from yt-dlp metadata (stored in `output/<channelDir>/_channel.json`). If a channel folder was created before avatars existed (or before v0.9.2), rerun that channel (or any video from it) once to populate the thumbnail URL.

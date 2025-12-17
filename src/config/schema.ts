@@ -9,7 +9,7 @@ export const configSchema = z.object({
   languageDetection: z.enum(["auto", "manual"]).default("auto"),
   languageCode: z.string().default("en_us"),
   concurrency: z.number().int().positive().default(2),
-  maxVideos: z.number().int().positive().optional(),
+  maxNewVideos: z.number().int().positive().optional(),
   afterDate: z.string().optional(),
   csvEnabled: z.boolean().default(false),
   assemblyAiCreditsCheck: z

@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const runSchema = z.object({
   url: z.string().url(),
-  maxVideos: z.number().int().positive().optional(),
+  maxNewVideos: z.number().int().positive().optional(),
   after: z.string().optional(),
   outDir: z.string().optional(),
   audioDir: z.string().optional(),

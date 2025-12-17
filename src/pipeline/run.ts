@@ -139,11 +139,51 @@ export async function runPipeline(
 
   const ytDlpExtraArgs = config.ytDlpExtraArgs ?? [];
   const listing = await enumerateVideos(inputUrl, ytDlpCommand, ytDlpExtraArgs);
-  const filteredVideos = listing.videos
-    .filter((v) => isAfterDate(v.uploadDate, config.afterDate))
-    .slice(0, config.maxVideos ?? listing.videos.length);
+  const candidateVideos = listing.videos.filter((v) =>
+    isAfterDate(v.uploadDate, config.afterDate)
+  );
 
-  const videoJobs = filteredVideos.map((video, index) => ({
+  const candidateJobs = candidateVideos.map((video) => ({
+    video,
+    paths: getOutputPaths(
+      listing.channelId,
+      listing.channelTitle,
+      video.id,
+      video.title,
+      {
+        outputDir: config.outputDir,
+        audioDir: config.audioDir,
+        audioFormat: config.audioFormat,
+      },
+      { filenameStyle: config.filenameStyle }
+    ),
+  }));
+
+  const candidateTotal = candidateJobs.length;
+  let candidateAlreadyProcessed = 0;
+  let candidateUnprocessed = candidateTotal;
+  let candidateProcessedFlags: boolean[] = [];
+
+  if (!options.force) {
+    candidateProcessedFlags = await Promise.all(
+      candidateJobs.map((j) => isProcessed(j.paths.jsonPath))
+    );
+    candidateAlreadyProcessed = candidateProcessedFlags.filter(Boolean).length;
+    candidateUnprocessed = candidateTotal - candidateAlreadyProcessed;
+  } else {
+    candidateProcessedFlags = new Array(candidateTotal).fill(false);
+    candidateAlreadyProcessed = 0;
+    candidateUnprocessed = candidateTotal;
+  }
+
+  const maxNewVideos = config.maxNewVideos;
+  const selectedVideos = options.force
+    ? candidateVideos.slice(0, maxNewVideos ?? candidateVideos.length)
+    : candidateVideos
+        .filter((_, idx) => !candidateProcessedFlags[idx])
+        .slice(0, maxNewVideos ?? candidateVideos.length);
+
+  const videoJobs = selectedVideos.map((video, index) => ({
     video,
     index: index + 1,
     paths: getOutputPaths(
@@ -167,22 +207,11 @@ export async function runPipeline(
   let failed = 0;
   let skipped = 0;
 
-  if (!options.force) {
-    const processedFlags = await Promise.all(
-      videoJobs.map((j) => isProcessed(j.paths.jsonPath))
-    );
-    alreadyProcessedByIndex.push(...processedFlags);
-    completedVideos = processedFlags.filter(Boolean).length;
-    skipped = completedVideos;
-  } else {
-    alreadyProcessedByIndex.push(
-      ...new Array(videoJobs.length).fill(false)
-    );
-  }
+  alreadyProcessedByIndex.push(...new Array(videoJobs.length).fill(false));
 
   logStep(
     "progress",
-    `Channel ${listing.channelId}: ${completedVideos}/${totalVideos} videos already processed (${totalVideos - completedVideos} remaining)`
+    `Channel ${listing.channelId}: ${candidateAlreadyProcessed}/${candidateTotal} already processed (${candidateUnprocessed} unprocessed); selected ${totalVideos} to process`
   );
 
   emitter?.emit({
@@ -191,8 +220,11 @@ export async function runPipeline(
     channelId: listing.channelId,
     channelTitle: listing.channelTitle,
     totalVideos,
-    alreadyProcessed: completedVideos,
-    remaining: totalVideos - completedVideos,
+    alreadyProcessed: 0,
+    remaining: totalVideos,
+    channelTotalVideos: candidateTotal,
+    channelAlreadyProcessed: candidateAlreadyProcessed,
+    channelUnprocessed: candidateUnprocessed,
     timestamp: nowIso(),
   });
 
@@ -207,11 +239,11 @@ export async function runPipeline(
       channelThumbnailUrl = safeChannelThumbnailUrl(channelMeta);
 
       if (!channelThumbnailUrl) {
-        const firstVideoUrl = filteredVideos[0]?.url;
-        if (firstVideoUrl) {
-          const videoMeta = await fetchVideoMetadata(firstVideoUrl, ytDlpCommand, ytDlpExtraArgs);
-          const uploaderUrl =
-            (videoMeta as any)?.uploader_url ||
+      const firstVideoUrl = selectedVideos[0]?.url;
+      if (firstVideoUrl) {
+        const videoMeta = await fetchVideoMetadata(firstVideoUrl, ytDlpCommand, ytDlpExtraArgs);
+        const uploaderUrl =
+          (videoMeta as any)?.uploader_url ||
             (videoMeta as any)?.channel_url ||
             undefined;
           if (typeof uploaderUrl === "string" && uploaderUrl.trim().length > 0) {

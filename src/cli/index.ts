@@ -20,7 +20,11 @@ program
   .name("youtube2text")
   .version(pkg.version)
   .argument("[url]", "YouTube channel, playlist, or video URL")
-  .option("--maxVideos <n>", "Maximum videos to process", (v) => Number(v))
+  .option(
+    "--maxNewVideos <n>",
+    "Maximum NEW (unprocessed) videos to process",
+    (v) => Number(v)
+  )
   .option("--after <date>", "Only videos after YYYY-MM-DD")
   .option("--outDir <path>", "Output directory")
   .option("--audioDir <path>", "Audio directory")
@@ -82,7 +86,7 @@ async function main() {
         (opts.language ? "manual" : baseConfig.languageDetection),
       languageCode: opts.language ?? baseConfig.languageCode,
       concurrency: opts.concurrency ?? baseConfig.concurrency,
-      maxVideos: opts.maxVideos ?? baseConfig.maxVideos,
+      maxNewVideos: opts.maxNewVideos ?? baseConfig.maxNewVideos,
       afterDate: opts.after ?? baseConfig.afterDate,
       csvEnabled: opts.csv ?? baseConfig.csvEnabled,
       ytDlpPath: opts.ytDlpPath ?? baseConfig.ytDlpPath,
@@ -123,7 +127,7 @@ async function main() {
         run.languageDetection ?? baseConfig.languageDetection,
       languageCode: run.languageCode ?? baseConfig.languageCode,
       concurrency: run.concurrency ?? baseConfig.concurrency,
-      maxVideos: run.maxVideos ?? baseConfig.maxVideos,
+      maxNewVideos: run.maxNewVideos ?? baseConfig.maxNewVideos,
       afterDate: run.after ?? baseConfig.afterDate,
       csvEnabled: run.csvEnabled ?? baseConfig.csvEnabled,
       ytDlpPath: run.ytDlpPath ?? baseConfig.ytDlpPath,
