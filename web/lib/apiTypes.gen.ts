@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Prometheus metrics
+         * @description Returns Prometheus exposition format (text/plain; version=0.0.4).
+         */
+        get: operations["getMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/maintenance/cleanup": {
         parameters: {
             query?: never;
@@ -672,6 +692,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     triggerMaintenanceCleanup: {
         parameters: {
             query?: never;

@@ -16,6 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/"><strong>Youtube2Text</strong></Link>
             <Link href="/">Runs</Link>
             <Link href="/library">Library</Link>
+            <Link href="/watchlist">Watchlist</Link>
             <span className="muted mlAuto">
               API: {process.env.NEXT_PUBLIC_Y2T_API_BASE_URL ?? "http://127.0.0.1:8787"}
             </span>

@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - GPT-5.2 (v0.12.0 OpenAPI fixed; contract-check passing)
+- Last Updated: 2025-12-17 - GPT-5.2 (implemented Phase 2.5: Watchlist UI + Metrics)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2 complete (single-tenant). Next: optional rate limiting / metrics / watchlist UI.
+- Goal: Phase 2.6 - TBD (server hardening + service ergonomics)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -28,6 +28,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.11.0: Cooperative cancel runs: `POST /runs/:id/cancel`, new `cancelled` status, `run:cancelled` SSE + webhook, plus minimal UI cancel button.
 - v0.11.1: OpenAPI polish (license + operationIds), watchlist URL validation + env override, thumbnail backfill regression test, and deploy playbook cron example.
 - v0.12.0: OpenAPI 4XX completeness, `GET /runs/:id/logs` endpoint, and API graceful shutdown on SIGTERM/SIGINT.
+- v0.13.0: Phase 2.5: Watchlist web UI (`/watchlist`) + Prometheus metrics endpoint (`GET /metrics`).
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -592,9 +593,11 @@ Tests added: 4 new (37, 49, 52, 53). Total: 53.
 
 No issues found. Phase 2.4.1-2.4.4 complete.
 
-### Claude Opus 4.5 Review of v0.12.0 (was incomplete; now fixed) (2025-12-17)
+### Claude Opus 4.5 Review of v0.12.0 (2025-12-17)
 
-**Status: Work interrupted mid-implementation.** Build OK, 54/54 tests pass, BUT OpenAPI has a broken reference.
+**Initial status:** Work interrupted mid-implementation. OpenAPI had broken `$ref` to `PipelineEvent`.
+
+**Final status after GPT-5.2 fix:** Build OK, 54/54 tests pass, OpenAPI valid, contract-check passes.
 
 What GPT-5.2 implemented (code is complete):
 1. **OpenAPI 4XX responses** - Added `401` to all authenticated endpoints. DONE.
@@ -640,17 +643,14 @@ Completed items:
 4. Thumbnail backfill regression test - DONE (v0.11.1)
 5. Cron example in deploy playbook - DONE (v0.11.1)
 6. OpenAPI 4XX responses - DONE (v0.12.0)
-7. `GET /runs/:id/logs` endpoint - DONE (v0.12.0) - code works, needs OpenAPI schema fix
+7. `GET /runs/:id/logs` endpoint - DONE (v0.12.0)
 8. Graceful shutdown (SIGTERM/SIGINT) - DONE (v0.12.0)
+9. OpenAPI `PipelineEvent` schema - DONE (v0.12.0 fix)
 
-Follow-up applied: Added missing `PipelineEvent` schema to `openapi.yaml` and regenerated `web/lib/apiTypes.gen.ts` so `npm run api:contract:check` passes.
+Remaining:
+- Rate limiting - only if exposing API publicly (OPTIONAL)
 
-Remaining (optional, LOW priority):
-- Rate limiting - only if exposing API publicly
-- Web UI for watchlist management - convenience feature
-- Metrics endpoint - nice for production monitoring
-
-**Phase 2 is effectively complete for single-tenant use case. The codebase is stable and well-tested (54 tests).**
+**Phase 2.5 complete. Next: Phase 2.6 (TBD) - see detailed suggestions below.**
 
 ### Claude Opus 4.5 Additional Suggestions (2025-12-17)
 
@@ -807,8 +807,175 @@ Effort: 2 hours (also need to update OpenAPI and web client).
 ## Roadmap (Do In Order)
 1. Phase 0: core service hardening - DONE
 2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - DONE
-3. Phase 2: hosted single-tenant service (admin) - DONE (v0.11.1)
-4. Phase 3+: multi-tenant cloud platform - OPTIONAL
+3. Phase 2: hosted single-tenant service (admin) - DONE (v0.12.0)
+4. Phase 2.5: Watchlist UI + Metrics - DONE (v0.13.0)
+5. Phase 3+: multi-tenant cloud platform - OPTIONAL
+
+## Phase 2.5 - Watchlist UI + Metrics (DONE)
+
+Goal: Add visual management for watchlist and production monitoring capabilities.
+
+### Phase 2.5.1 - Watchlist UI
+
+**What it is:** A new page in the Next.js admin UI to manage followed channels visually instead of via curl/API.
+
+**Page location:** `/watchlist` in the web app.
+
+**UI components needed:**
+
+1. **Watchlist table** showing:
+   - Channel name/title (from `channelTitle`)
+   - Channel URL (clickable link)
+   - Interval (minutes, or "global default")
+   - Enabled/disabled status (toggle)
+   - Last checked timestamp
+   - Last run ID (link to run detail)
+   - Delete button
+
+2. **Add channel form:**
+   - URL input (required)
+   - Interval override input (optional, number)
+   - Enabled checkbox (default: true)
+   - Submit button
+
+3. **Scheduler status panel:**
+   - Running/Stopped indicator
+   - Start/Stop buttons (call `POST /scheduler/start` and `POST /scheduler/stop`)
+   - Next check time
+   - Interval setting
+
+**API calls needed (all exist already):**
+```typescript
+GET  /watchlist                 // list all entries
+POST /watchlist                 // add { channelUrl, intervalMinutes?, enabled? }
+PATCH /watchlist/:id            // update { intervalMinutes?, enabled? }
+DELETE /watchlist/:id           // remove entry
+GET  /scheduler/status          // get scheduler state
+POST /scheduler/start           // start scheduler
+POST /scheduler/stop            // stop scheduler
+POST /scheduler/trigger         // manual trigger (optional button)
+```
+
+**Implementation order:**
+1. Create `web/app/watchlist/page.tsx`
+2. Add navigation link in sidebar/header
+3. Implement list view with data fetching
+4. Add "Add channel" form
+5. Add enable/disable toggle (PATCH call)
+6. Add delete button with confirmation
+7. Add scheduler status panel
+
+**Effort:** 3-4 hours.
+
+---
+
+### Phase 2.5.2 - Metrics Endpoint
+
+**What it is:** A `/metrics` endpoint returning Prometheus-format metrics for monitoring.
+
+**Endpoint:** `GET /metrics` (no auth required, like `/health`)
+
+**Metrics to expose:**
+
+```prometheus
+# Counters (cumulative)
+y2t_runs_total{status="done"} 150
+y2t_runs_total{status="error"} 12
+y2t_runs_total{status="cancelled"} 3
+y2t_videos_processed_total 1847
+y2t_videos_skipped_total 423
+y2t_webhook_deliveries_total{status="success"} 140
+y2t_webhook_deliveries_total{status="failed"} 2
+
+# Gauges (current value)
+y2t_active_runs 2
+y2t_queued_runs 0
+y2t_scheduler_running 1
+y2t_watchlist_entries 5
+
+# Histograms (distribution)
+y2t_run_duration_seconds_bucket{le="60"} 50
+y2t_run_duration_seconds_bucket{le="300"} 120
+y2t_run_duration_seconds_bucket{le="900"} 145
+y2t_run_duration_seconds_bucket{le="3600"} 150
+y2t_run_duration_seconds_bucket{le="+Inf"} 150
+y2t_run_duration_seconds_sum 45000
+y2t_run_duration_seconds_count 150
+```
+
+**Implementation approach:**
+
+Option A: Use `prom-client` library (recommended)
+```typescript
+import { Registry, Counter, Gauge, Histogram } from "prom-client";
+
+const registry = new Registry();
+const runsTotal = new Counter({
+  name: "y2t_runs_total",
+  help: "Total runs by status",
+  labelNames: ["status"],
+  registers: [registry],
+});
+
+// In pipeline events:
+runsTotal.inc({ status: "done" });
+
+// Endpoint:
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", registry.contentType);
+  res.send(await registry.metrics());
+});
+```
+
+Option B: Manual formatting (no deps, simpler)
+```typescript
+function formatMetrics(): string {
+  const lines: string[] = [];
+  lines.push("# HELP y2t_runs_total Total runs by status");
+  lines.push("# TYPE y2t_runs_total counter");
+  for (const [status, count] of Object.entries(runCounts)) {
+    lines.push(`y2t_runs_total{status="${status}"} ${count}`);
+  }
+  // ... more metrics
+  return lines.join("\n");
+}
+```
+
+**Where to track metrics:**
+- `RunManager`: increment counters on status changes
+- `webhooks.ts`: track delivery success/failure
+- `scheduler.ts`: track scheduler state
+
+**OpenAPI addition:**
+```yaml
+/metrics:
+  get:
+    operationId: getMetrics
+    summary: Prometheus metrics
+    responses:
+      "200":
+        description: Prometheus text format
+        content:
+          text/plain:
+            schema:
+              type: string
+```
+
+Notes:
+- `/metrics` requires `X-API-Key` if `Y2T_API_KEY` is set (unlike `/health`).
+
+**Effort:** 2-3 hours.
+
+---
+
+### Phase 2.5 Implementation Order
+
+1. **v0.13.0** - Watchlist UI + Metrics (Phase 2.5.1 + 2.5.2)
+
+**Questions for GPT-5.2:**
+- For Watchlist UI: should we add real-time updates via SSE when scheduler creates runs?
+- For Metrics: use `prom-client` library or manual formatting?
+- Should `/metrics` be protected by API key or public like `/health`?
 
 ## Phase 1 Next Steps (Do In Order)
 1. UI error handling when API is down (Next.js error boundaries + user feedback) - DONE

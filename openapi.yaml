@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.12.0
+  version: 0.13.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -15,6 +15,26 @@ servers:
 security:
   - ApiKeyAuth: []
 paths:
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Get Prometheus metrics
+      description: |
+        Returns Prometheus exposition format (text/plain; version=0.0.4).
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /maintenance/cleanup:
     post:
       operationId: triggerMaintenanceCleanup

@@ -33,6 +33,36 @@ type ServerOptions = {
   };
 };
 
+function escapePromLabelValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/"/g, '\\"');
+}
+
+function promLine(name: string, labels: Record<string, string> | undefined, value: number): string {
+  const labelPart =
+    labels && Object.keys(labels).length > 0
+      ?
+        "{" +
+        Object.entries(labels)
+          .map(([k, v]) => `${k}="${escapePromLabelValue(v)}"`)
+          .join(",") +
+        "}"
+      : "";
+  return `${name}${labelPart} ${value}`;
+}
+
+let cachedBuildVersion: string | undefined;
+async function getBuildVersion(): Promise<string> {
+  if (cachedBuildVersion) return cachedBuildVersion;
+  try {
+    const raw = await fs.readFile(join(process.cwd(), "package.json"), "utf8");
+    const parsed = JSON.parse(raw) as { version?: string };
+    cachedBuildVersion = typeof parsed.version === "string" ? parsed.version : "unknown";
+  } catch {
+    cachedBuildVersion = "unknown";
+  }
+  return cachedBuildVersion;
+}
+
 function setCors(req: IncomingMessage, res: ServerResponse) {
   const raw = process.env.Y2T_CORS_ORIGINS;
   const allowList =
@@ -158,6 +188,62 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
               persistDir: opts.persistDir,
             });
         json(res, 200, body);
+        return;
+      }
+
+      if (req.method === "GET" && seg.length === 1 && seg[0] === "metrics") {
+        const runs = manager.listRuns();
+        const byStatus = new Map<string, number>();
+        for (const run of runs) {
+          byStatus.set(run.status, (byStatus.get(run.status) ?? 0) + 1);
+        }
+
+        const entries = await watchlistStore.list();
+        const enabledEntries = entries.filter((e) => e.enabled).length;
+        const schedulerStatus = scheduler.status();
+
+        const lines: string[] = [];
+        lines.push("# HELP y2t_build_info Build information.");
+        lines.push("# TYPE y2t_build_info gauge");
+        lines.push(promLine("y2t_build_info", { version: await getBuildVersion() }, 1));
+
+        lines.push("# HELP y2t_runs Runs currently known to the API (persisted runs may be cleaned up by retention).");
+        lines.push("# TYPE y2t_runs gauge");
+        const knownStatuses = ["queued", "running", "done", "error", "cancelled"];
+        for (const status of knownStatuses) {
+          lines.push(promLine("y2t_runs", { status }, byStatus.get(status) ?? 0));
+        }
+        for (const [status, count] of [...byStatus.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+          if (knownStatuses.includes(status)) continue;
+          lines.push(promLine("y2t_runs", { status }, count));
+        }
+
+        lines.push("# HELP y2t_watchlist_entries Watchlist entries currently configured.");
+        lines.push("# TYPE y2t_watchlist_entries gauge");
+        lines.push(promLine("y2t_watchlist_entries", undefined, entries.length));
+
+        lines.push("# HELP y2t_watchlist_entries_enabled Enabled watchlist entries.");
+        lines.push("# TYPE y2t_watchlist_entries_enabled gauge");
+        lines.push(promLine("y2t_watchlist_entries_enabled", undefined, enabledEntries));
+
+        lines.push("# HELP y2t_scheduler_running Whether the in-process scheduler loop is running.");
+        lines.push("# TYPE y2t_scheduler_running gauge");
+        lines.push(promLine("y2t_scheduler_running", undefined, schedulerStatus.running ? 1 : 0));
+
+        lines.push("# HELP y2t_scheduler_next_tick_timestamp_seconds Next scheduler tick time as Unix timestamp.");
+        lines.push("# TYPE y2t_scheduler_next_tick_timestamp_seconds gauge");
+        const next = schedulerStatus.nextTickAt ? Date.parse(schedulerStatus.nextTickAt) : NaN;
+        lines.push(
+          promLine(
+            "y2t_scheduler_next_tick_timestamp_seconds",
+            undefined,
+            Number.isFinite(next) ? Math.floor(next / 1000) : 0
+          )
+        );
+
+        res.statusCode = 200;
+        res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
+        res.end(`${lines.join("\n")}\n`);
         return;
       }
 

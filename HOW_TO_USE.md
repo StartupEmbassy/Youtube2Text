@@ -115,6 +115,13 @@ This is opt-in to avoid surprise runs.
   - `POST /scheduler/start`, `POST /scheduler/stop`
   - `POST /scheduler/trigger` (run one cycle now)
 
+Web UI:
+- Use `/watchlist` in the Next.js admin UI for basic watchlist + scheduler controls (it proxies API calls via `/api/*`).
+
+## Monitoring
+
+- `GET /metrics` exposes Prometheus text metrics for server monitoring (requires `X-API-Key` if `Y2T_API_KEY` is set).
+
 ## Integration
 
 See `INTEGRATION.md` for:

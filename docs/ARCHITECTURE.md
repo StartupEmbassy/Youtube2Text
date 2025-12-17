@@ -196,6 +196,10 @@ Phase 2.4.x (polish/stabilize, do in order):
 - 2.4.6 Graceful shutdown: handle SIGTERM/SIGINT without losing as much work
 - 2.4.7 Debug endpoint: `GET /runs/:id/logs` for non-SSE environments
 
+Phase 2.5 - Admin UX + monitoring:
+- Watchlist UI page (`/watchlist`) for managing recurring sources and basic scheduler controls.
+- Prometheus metrics endpoint (`GET /metrics`) for production monitoring.
+
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 
 Add:

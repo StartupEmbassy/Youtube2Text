@@ -9,10 +9,19 @@ export type RunCreateResponse = components["schemas"]["RunCreateResponse"];
 export type RunArtifactsResponse = components["schemas"]["RunArtifactsResponse"];
 export type GlobalRunEvent = components["schemas"]["GlobalRunEvent"];
 
+export type WatchlistEntry = components["schemas"]["WatchlistEntry"];
+export type WatchlistCreateRequest = components["schemas"]["WatchlistCreateRequest"];
+export type WatchlistUpdateRequest = components["schemas"]["WatchlistUpdateRequest"];
+export type WatchlistEntryResponse = components["schemas"]["WatchlistEntryResponse"];
+export type WatchlistListResponse = components["schemas"]["WatchlistListResponse"];
+
+export type SchedulerStatus = components["schemas"]["SchedulerStatus"];
+export type SchedulerStatusResponse = components["schemas"]["SchedulerStatusResponse"];
+export type SchedulerTriggerResponse = components["schemas"]["SchedulerTriggerResponse"];
+
 export type ChannelInfo = components["schemas"]["ChannelInfo"];
 export type ChannelsResponse = components["schemas"]["ChannelsResponse"];
 export type ChannelMetaResponse = components["schemas"]["ChannelMetaResponse"];
 
 export type VideoInfo = components["schemas"]["VideoInfo"];
 export type VideosResponse = components["schemas"]["VideosResponse"];
-

@@ -206,6 +206,9 @@ Scheduler / watchlist (Phase 2.3, opt-in):
 - Manual testing:
   - `POST /scheduler/trigger`
 
+Monitoring:
+- `GET /metrics` exposes Prometheus text metrics (requires `X-API-Key` if `Y2T_API_KEY` is set).
+
 Webhooks (optional):
 - `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
   - `run:done` when status becomes `done`
@@ -218,6 +221,7 @@ Webhooks (optional):
 Endpoints:
 - `GET /health`
 - `GET /health?deep=true` (best-effort deps + disk + persistence checks)
+- `GET /metrics` (Prometheus text format)
 - `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)
 - `GET /watchlist`, `POST /watchlist`, `PATCH /watchlist/:id`, `DELETE /watchlist/:id` (followed channels list)
 - `GET /scheduler/status`, `POST /scheduler/start|stop|trigger` (Phase 2.3, opt-in)
@@ -300,6 +304,11 @@ npm run dev
 Defaults:
 - Web: `http://127.0.0.1:3000`
 - API: `http://127.0.0.1:8787`
+
+Pages:
+- Runs: `/`
+- Library: `/library`
+- Watchlist: `/watchlist` (manage scheduler sources)
 
 Run via Docker Compose (API + Web):
 

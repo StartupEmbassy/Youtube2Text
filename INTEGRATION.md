@@ -151,6 +151,14 @@ Goal: run -> wait -> fetch artifacts -> send to next system.
 - For server-to-server calls inside the compose network, use `Y2T_API_BASE_URL=http://youtube2text-api:8787`.
 - For browser-visible URLs, prefer going through the web UI `http://localhost:3000` which proxies `/api/*` to the API and does not expose secrets to the browser.
 
+## Monitoring (Prometheus)
+
+The API exposes a Prometheus-compatible metrics endpoint:
+
+- `GET /metrics` (text/plain; version=0.0.4)
+
+If `Y2T_API_KEY` is set, include `X-API-Key: ...`.
+
 ## Watchlist URL safety
 
 The watchlist is meant for recurring sources (channels/playlists). By default, `POST /watchlist` rejects single-video URLs.
