@@ -6,9 +6,9 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - GPT-5.2 (started Phase 2.6: maxNewVideos + plan preview)
+- Last Updated: 2025-12-17 - GPT-5.2 (Phase 2.6 polish: live Downloads + force/maxNewVideos warning)
 - Scope: Public YouTube videos only (no cookies support)
-- Goal: Phase 2.6 - Run configuration UX (maxNewVideos + plan preview) and later optional Settings UI
+- Goal: Phase 2.7 - Optional Settings UI + further ops hardening (keep CLI unchanged)
 
 ## What Changed Recently
 - Phase 0 DONE: core pipeline hardening + language detection + yt-dlp reliability + API runner + Docker.
@@ -31,7 +31,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.13.0: Phase 2.5: Watchlist web UI (`/watchlist`) + Prometheus metrics endpoint (`GET /metrics`).
 - v0.13.1: Watchlist UI: per-entry interval overrides editable + per-entry "Run now" (plan-first).
 - v0.13.2: Watchlist UI: intervals displayed/edited in hours (converted to minutes for the API).
-- v0.14.0: Phase 2.6 (partial): replace legacy `maxVideos` with `maxNewVideos` (limit-after-skip) and add web Create Run advanced options with on-demand plan preview.
+- v0.14.0: Phase 2.6: replace legacy `maxVideos` with `maxNewVideos` (limit-after-skip) and add web Create Run advanced options with on-demand plan preview.
+- v0.14.1: Phase 2.6 polish: Create Run UI warns when `force=true` and `maxNewVideos` is set (reprocess mode); run detail Downloads auto-updates as videos finish (no manual refresh needed).
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -731,6 +732,46 @@ Status:
 7) Phase 2.6.7 - Settings UI (future, but desired)
    - Persist non-secret defaults in `output/_settings.json`.
    - Keep secrets env-only (`ASSEMBLYAI_API_KEY`, `Y2T_API_KEY`).
+
+### Claude Opus 4.5 Review of v0.14.0 Phase 2.6 Implementation (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 57/57 tests pass (1 new). OpenAPI valid, contract-check passes.
+
+GPT-5.2 implemented all Phase 2.6.1-2.6.4 items correctly:
+
+**1. Core logic (plan.ts):**
+```typescript
+// Line 88-89: limit AFTER skip - exactly as I recommended
+videos.filter((v) => !v.processed).slice(0, maxNewVideos ?? videos.length)
+```
+- This ensures repeated runs progress naturally through the backfill
+
+**2. API (openapi.yaml):**
+- `maxNewVideos` and `afterDate` added as top-level fields on `POST /runs`
+- Same fields on `POST /runs/plan` so preview matches execution
+- Clear documentation: "Applied AFTER skipping already-processed videos"
+- `selectedVideos` array in plan response shows exactly what will be processed
+
+**3. Web UI (CreateRunForm.tsx):**
+- "Advanced options" collapsible section (exactly as I suggested)
+- `maxNewVideos` input with placeholder "max new videos (e.g. 10)"
+- `afterDate` input with placeholder "after date (YYYY-MM-DD)"
+- "Preview plan" button calls `/runs/plan` on-demand
+- Plan preview shows: total / processed / unprocessed / selected
+- Selected video IDs shown (first 8, then "...")
+
+**4. CLI/runs.yaml (verified in 7 files):**
+- `maxNewVideos` supported across: schema.ts, loader.ts, runs.ts, cli/index.ts, plan.ts, run.ts, server.ts
+
+**What I liked:**
+- Plan preview is on-demand (not automatic) - avoids slow enumeration on every keystroke
+- `selectedVideos` in plan response gives user exact preview before spending credits
+- Same fields on both endpoints ensures plan == execution
+- Clean separation: advanced options hidden by default
+
+No issues found. Phase 2.6.1-2.6.4 complete.
+
+---
 
 ### Claude Opus 4.5 Approval of Updated Phase 2.6 Roadmap (2025-12-17)
 

@@ -24,6 +24,13 @@ export function CreateRunForm() {
   const [message, setMessage] = useState<string>("");
   const router = useRouter();
 
+  const parsedMaxNewVideos = parsePositiveInt(maxNewVideos);
+  const hasMaxNewVideos = parsedMaxNewVideos !== undefined;
+  const forceWarning =
+    force && hasMaxNewVideos
+      ? "Force is ON: maxNewVideos will reprocess up to N videos (not 'new' videos). This may spend credits again."
+      : "";
+
   async function previewPlan() {
     const trimmed = url.trim();
     if (!trimmed) return;
@@ -33,8 +40,7 @@ export function CreateRunForm() {
     setStatus("idle");
     try {
       const body: any = { url: trimmed, force };
-      const n = parsePositiveInt(maxNewVideos);
-      if (n !== undefined) body.maxNewVideos = n;
+      if (parsedMaxNewVideos !== undefined) body.maxNewVideos = parsedMaxNewVideos;
       if (afterDate.trim().length > 0) body.afterDate = afterDate.trim();
 
       const res = await fetch(`/api/runs/plan`, {
@@ -65,8 +71,7 @@ export function CreateRunForm() {
     setMessage("");
     try {
       const body: any = { url: trimmed, force };
-      const n = parsePositiveInt(maxNewVideos);
-      if (n !== undefined) body.maxNewVideos = n;
+      if (parsedMaxNewVideos !== undefined) body.maxNewVideos = parsedMaxNewVideos;
       if (afterDate.trim().length > 0) body.afterDate = afterDate.trim();
 
       const res = await fetch(`/api/runs`, {
@@ -136,7 +141,7 @@ export function CreateRunForm() {
             <input
               className="input"
               style={{ flex: "0 0 220px" }}
-              placeholder="max new videos (e.g. 10)"
+              placeholder={force ? "max videos (force mode)" : "max new videos (e.g. 10)"}
               value={maxNewVideos}
               onChange={(e) => setMaxNewVideos(e.target.value)}
             />
@@ -156,6 +161,8 @@ export function CreateRunForm() {
               {planning ? "Planning..." : "Preview plan"}
             </button>
           </div>
+
+          {forceWarning ? <div className="muted textBad">{forceWarning}</div> : null}
 
           {plan ? (
             <div className="card">

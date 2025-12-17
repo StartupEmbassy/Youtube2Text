@@ -67,9 +67,11 @@ Completed:
 - Phase 2.4.x polish: OpenAPI 4XX completeness, graceful shutdown, debug logs endpoint
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
-In progress:
-- Phase 2.6: optional rate limiting and additional server hardening (only if exposing beyond single-tenant admin).
- - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
+In progress / next:
+- Phase 2.7: optional Settings UI for non-secret defaults (keep secrets env-only) and additional server hardening (rate limiting only if exposing beyond single-tenant admin).
+
+Done recently:
+- Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE

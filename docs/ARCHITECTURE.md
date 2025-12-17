@@ -200,11 +200,17 @@ Phase 2.5 - Admin UX + monitoring:
 - Watchlist UI page (`/watchlist`) for managing recurring sources and basic scheduler controls.
 - Prometheus metrics endpoint (`GET /metrics`) for production monitoring.
 
-Phase 2.6 - Run configuration UX (planned):
-- Add `maxNewVideos` semantics (limit AFTER skip) to support incremental backfills ("10 now, 10 later").
-- Add plan preview UX (total/processed/remaining) before spending credits.
-- Keep CLI + runs.yaml parity with API/web.
-- Future: cost/duration preview, optional channel catalog caching, optional settings UI for non-secret defaults.
+Phase 2.6 - Run configuration UX (DONE):
+- Implemented `maxNewVideos` semantics (limit AFTER skip) to support incremental backfills ("10 now, 10 later").
+- Implemented plan preview UX (total/processed/remaining) before spending credits.
+- Kept CLI + runs.yaml parity with API/web.
+- UX polish: Create Run warns about `force=true` + `maxNewVideos`; run detail Downloads auto-updates as videos finish.
+
+Phase 2.7 - Optional settings + ops hardening (planned):
+- Optional Settings UI for non-secret defaults (persist to `output/_settings.json`), secrets remain env-only.
+- Optional cost/duration preview (best-effort, non-blocking).
+- Optional channel catalog caching (only if needed for performance).
+- Optional rate limiting and additional server hardening if exposing beyond a single-tenant admin.
 
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 

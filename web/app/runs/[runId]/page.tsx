@@ -1,20 +1,11 @@
 import Link from "next/link";
 import { apiGetJson } from "../../../lib/api";
-import type { RunRecord } from "../../../lib/apiSchema";
+import type { RunArtifactsResponse, RunRecord } from "../../../lib/apiSchema";
 import { RunEvents } from "./RunEvents";
 import { CancelRunButton } from "./CancelRunButton";
+import { RunArtifactsLive } from "./RunArtifactsLive";
 
 type RunResponse = { run: RunRecord };
-type ArtifactVideo = {
-  videoId: string;
-  title?: string;
-  basename: string;
-  meta?: { description?: string };
-};
-type ArtifactsResponse = {
-  run: RunRecord;
-  artifacts: { channelDirName?: string; videos?: ArtifactVideo[] };
-};
 
 function youtubeThumb(videoId: string): string {
   return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
@@ -53,16 +44,14 @@ function getFirstArtifactVideo(artifacts: unknown): { videoId?: string; title?: 
     title:
       typeof first.title === "string"
         ? first.title
-        : typeof first?.meta?.title === "string"
-          ? first.meta.title
-          : undefined,
+        : undefined,
   };
 }
 
 export default async function RunPage({ params }: { params: { runId: string } }) {
   const { runId } = params;
   const runData = await apiGetJson<RunResponse>(`/runs/${runId}`);
-  const artifactsData = await apiGetJson<ArtifactsResponse>(`/runs/${runId}/artifacts`);
+  const artifactsData = await apiGetJson<RunArtifactsResponse>(`/runs/${runId}/artifacts`);
   const channelLink = runData.run.channelDirName
     ? `/library/${encodeURIComponent(runData.run.channelDirName)}`
     : undefined;
@@ -148,51 +137,11 @@ export default async function RunPage({ params }: { params: { runId: string } })
 
       <div className="stack">
         <div className="card">
-          <div className="row mb10">
-            <strong>Downloads</strong>
-            {channelLink && (
-              <Link className="pill" href={channelLink}>
-                Library
-              </Link>
-            )}
-          </div>
-          {!channelDirName ? (
-            <p className="muted">No channel artifacts yet (channelDirName unknown).</p>
-          ) : artifactsData.artifacts.videos && artifactsData.artifacts.videos.length > 0 ? (
-            <div className="grid">
-              {artifactsData.artifacts.videos.map((v) => (
-                <div key={v.basename} className="card">
-                  <div className="row">
-                    <strong className="break">{v.title ?? v.videoId}</strong>
-                    <span className="pill">{v.videoId}</span>
-                  </div>
-                  <div className="spacer10" />
-                  <div className="row">
-                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/txt`} target="_blank" rel="noreferrer">
-                      TXT
-                    </a>
-                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/md`} target="_blank" rel="noreferrer">
-                      MD
-                    </a>
-                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/jsonl`} target="_blank" rel="noreferrer">
-                      JSONL
-                    </a>
-                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/json`} target="_blank" rel="noreferrer">
-                      JSON
-                    </a>
-                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/comments`} target="_blank" rel="noreferrer">
-                      Comments
-                    </a>
-                    <a href={`/api/library/channels/${encodeURIComponent(channelDirName)}/videos/${encodeURIComponent(v.basename)}/audio`} target="_blank" rel="noreferrer">
-                      Audio
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="muted">No artifacts yet.</p>
-          )}
+          <RunArtifactsLive
+            runId={runId}
+            initialChannelDirName={artifactsData.artifacts?.channelDirName ?? channelDirName}
+            initialVideos={artifactsData.artifacts?.videos ?? []}
+          />
         </div>
         <div className="card">
           <RunEvents runId={runId} />

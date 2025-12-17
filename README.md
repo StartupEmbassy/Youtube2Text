@@ -288,6 +288,7 @@ npm run test:docker-smoke
 This repo includes an admin UI built with Next.js. It reads existing outputs via the API and streams run progress via SSE. It does not replace the CLI.
 It can also start runs via the API (`POST /runs`).
 The runs list auto-updates via the global SSE stream (`GET /events`).
+The run detail page auto-updates the Downloads list as videos finish (no manual refresh).
 
 Run locally (two terminals):
 
@@ -392,7 +393,9 @@ output/<channel_id>/_errors.jsonl
 
 - Alternative `TranscriptionProvider` implementations.
 - Semantic post-processing: summarization, topic clustering.
-- React dashboard to browse and interact with local outputs.
+- Optional Settings UI for non-secret defaults + additional ops hardening (if deployed beyond single-tenant admin).
+- Optional direct audio file input (skip yt-dlp download stage) for automation use cases.
+- Optional multi-tenant cloud platform (Phase 3+).
 
 ## Testing
 
