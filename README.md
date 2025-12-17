@@ -146,6 +146,13 @@ Options:
 | `--commentsMax` | number | unset | Limit comments per video when fetching. |
 | `--json-events` | boolean | false | Emit JSONL pipeline events to stdout (logs go to stderr). |
 
+### Incremental backfills (`maxNewVideos`)
+
+`maxNewVideos` is designed for incremental channel backfills:
+
+- The limit is applied **after** skipping already-processed videos, so repeated runs can naturally continue the backfill ("10 now, 10 later").
+- With `--force`, every video is treated as "unprocessed", so `--maxNewVideos` becomes "reprocess up to N videos" (typically the newest N). This can spend transcription credits again.
+
 ## HTTP API (experimental)
 
 This project also ships an optional local HTTP API runner. It does not replace the CLI.
@@ -217,6 +224,9 @@ Webhooks (optional):
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:
   - `X-Y2T-Timestamp` (ISO timestamp)
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`
+
+Run limiting:
+- `maxNewVideos` has the same semantics as the CLI: the limit is applied after skipping already-processed videos (incremental backfills). With `force=true`, it becomes "reprocess up to N videos".
 
 Endpoints:
 - `GET /health`
