@@ -6,7 +6,7 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - GPT-5.2 (implemented Phase 2.5: Watchlist UI + Metrics)
+- Last Updated: 2025-12-17 - GPT-5.2 (Phase 2.5 complete; watchlist per-entry run + hours UI)
 - Scope: Public YouTube videos only (no cookies support)
 - Goal: Phase 2.6 - TBD (server hardening + service ergonomics)
 
@@ -29,6 +29,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - v0.11.1: OpenAPI polish (license + operationIds), watchlist URL validation + env override, thumbnail backfill regression test, and deploy playbook cron example.
 - v0.12.0: OpenAPI 4XX completeness, `GET /runs/:id/logs` endpoint, and API graceful shutdown on SIGTERM/SIGINT.
 - v0.13.0: Phase 2.5: Watchlist web UI (`/watchlist`) + Prometheus metrics endpoint (`GET /metrics`).
+- v0.13.1: Watchlist UI: per-entry interval overrides editable + per-entry "Run now" (plan-first).
+- v0.13.2: Watchlist UI: intervals displayed/edited in hours (converted to minutes for the API).
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 
@@ -652,6 +654,110 @@ Remaining:
 
 **Phase 2.5 complete. Next: Phase 2.6 (TBD) - see detailed suggestions below.**
 
+### Claude Opus 4.5 Review of v0.13.0 Phase 2.5 (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 56/56 tests pass (2 new for metrics). OpenAPI valid.
+
+What GPT-5.2 implemented:
+
+**1. Watchlist UI (`/watchlist`)** - Matches my suggestion exactly:
+- Server component (`page.tsx`) fetches initial data
+- Client component (`WatchlistClient.tsx`) handles all interactions
+- Scheduler status panel with Start/Stop/Trigger buttons
+- Add channel form with URL, interval, enabled checkbox
+- Entries table with channel name, URL, interval, timestamps
+- Enable/disable toggle (PATCH call)
+- Delete button
+- Link to last run in run detail page
+- Navigation link added to layout.tsx
+
+**2. Metrics endpoint (`GET /metrics`)** - Clean implementation:
+- Prometheus exposition format (text/plain)
+- Metrics exposed:
+  - `y2t_build_info{version}` - version gauge
+  - `y2t_runs{status}` - runs by status (queued, running, done, error, cancelled)
+  - `y2t_watchlist_entries` - total entries
+  - `y2t_watchlist_entries_enabled` - enabled entries
+  - `y2t_scheduler_running` - scheduler state (0/1)
+  - `y2t_scheduler_next_tick_timestamp_seconds` - next check unix timestamp
+- Protected by API key (unlike `/health`)
+- Manual formatting (no `prom-client` dependency) - good choice for simplicity
+- 2 tests: unauthenticated access + API key enforcement
+
+**What I liked:**
+- UI follows existing patterns (cards, pills, buttons)
+- Client-side state management with optimistic updates
+- Error handling with retry button
+- Last trigger result display ("checked N, created M runs")
+- Helpful hint about `Y2T_WATCHLIST_ALLOW_ANY_URL`
+- OpenAPI documented with `text/plain` response type
+- Tests cover both auth scenarios
+
+**Minor observations (not issues):**
+- Metrics are gauges (current state), not cumulative counters. This is appropriate since runs can be deleted by retention cleanup. A counter would drift.
+- No histogram for run duration (would need tracking during pipeline). Fine for v1.
+
+No issues found. Phase 2.5 complete.
+
+### Claude Opus 4.5 Review of v0.13.1 Watchlist UX (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 56/56 tests pass.
+
+GPT-5.2 added two UX improvements to the Watchlist UI:
+
+**1. "Run now" button per entry:**
+- Plan-first approach: calls `POST /runs/plan` before creating a run
+- If `toProcess === 0`: just refreshes the list (no empty run created)
+- If videos to process: creates run and navigates to `/runs/{runId}`
+- Shows "Working..." while processing (busyEntryIds state)
+
+**2. Per-entry interval editing:**
+- Input field to change `intervalMinutes` per channel
+- "Save" button to persist changes via PATCH
+- Empty value = use global scheduler default
+- Validation: positive number or empty
+- Local draft state for pending edits
+
+**What I liked:**
+- Plan-first is smart: avoids creating useless runs when channel has no new videos
+- Navigation to run detail after creation is good UX
+- Busy state prevents double-clicks
+- Interval editing is inline, no modal needed
+
+No issues found.
+
+### Claude Opus 4.5 Review of v0.13.2 Polish (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 56/56 tests pass. OpenAPI valid (1 warning: unused GlobalRunEvent).
+
+GPT-5.2 made three polish improvements:
+
+**1. OpenAPI 401 responses** - Added `401 Unauthorized` to all authenticated endpoints:
+- `/watchlist`, `/scheduler/*`, `/runs`, `/events`, `/library/*`
+- This addresses my earlier suggestion about missing 4XX responses
+
+**2. Watchlist UI: minutes to hours** - UX improvement:
+- Input now shows "interval (hours)" instead of "(min)"
+- Added `minutesToHoursString()` helper for display
+- Scheduler panel shows "interval: 1h" instead of "60m"
+- Automatic conversion: `hours * 60` when saving to API
+- More intuitive for users (schedules are typically hourly/daily)
+
+**3. OpenAPI WatchlistUpdateRequest fix** - `intervalMinutes` now accepts `null`:
+```yaml
+intervalMinutes:
+  type: [integer, "null"]
+  description: Set to null to clear override and use scheduler global default.
+```
+- This properly documents the nullable field behavior
+
+**What I liked:**
+- Hours are more natural than minutes for scheduler intervals (1h vs 60m)
+- Kept internal API in minutes (no breaking change)
+- OpenAPI now more complete with 401 responses
+
+No issues found. Good polish release.
+
 ### Claude Opus 4.5 Additional Suggestions (2025-12-17)
 
 These are optional improvements beyond Phase 2. Organized by effort/value:
@@ -808,7 +914,7 @@ Effort: 2 hours (also need to update OpenAPI and web client).
 1. Phase 0: core service hardening - DONE
 2. Phase 1: local-first web UI (admin; reads `output/`, consumes JSON events) - DONE
 3. Phase 2: hosted single-tenant service (admin) - DONE (v0.12.0)
-4. Phase 2.5: Watchlist UI + Metrics - DONE (v0.13.0)
+4. Phase 2.5: Watchlist UI + Metrics - DONE (v0.13.2)
 5. Phase 3+: multi-tenant cloud platform - OPTIONAL
 
 ## Phase 2.5 - Watchlist UI + Metrics (DONE)

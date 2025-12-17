@@ -116,7 +116,10 @@ This is opt-in to avoid surprise runs.
   - `POST /scheduler/trigger` (run one cycle now)
 
 Web UI:
-- Use `/watchlist` in the Next.js admin UI for basic watchlist + scheduler controls (it proxies API calls via `/api/*`).
+- Use `/watchlist` in the Next.js admin UI for watchlist + scheduler controls (it proxies API calls via `/api/*`).
+- Per entry, you can:
+  - override the interval (hours) or clear it to use the scheduler global default
+  - click "Run now" (plan-first; only creates a run when there are new videos)
 
 ## Monitoring
 

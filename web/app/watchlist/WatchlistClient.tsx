@@ -2,10 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
   SchedulerStatus,
   SchedulerStatusResponse,
   SchedulerTriggerResponse,
+  RunCreateResponse,
+  RunPlanResponse,
   WatchlistEntry,
   WatchlistEntryResponse,
   WatchlistListResponse,
@@ -31,6 +34,14 @@ function formatIso(iso?: string): string {
   return new Date(ms).toLocaleString();
 }
 
+function minutesToHoursString(minutes?: number): string {
+  if (minutes === undefined) return "";
+  const hours = minutes / 60;
+  if (!Number.isFinite(hours)) return "";
+  const rounded = Math.round(hours * 100) / 100;
+  return String(rounded);
+}
+
 export function WatchlistClient({
   initialEntries,
   initialScheduler,
@@ -38,6 +49,7 @@ export function WatchlistClient({
   initialEntries: WatchlistEntry[];
   initialScheduler: SchedulerStatus;
 }) {
+  const router = useRouter();
   const [entries, setEntries] = useState<WatchlistEntry[]>(initialEntries);
   const [scheduler, setScheduler] = useState<SchedulerStatus>(initialScheduler);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -47,6 +59,15 @@ export function WatchlistClient({
   const [lastTrigger, setLastTrigger] = useState<{ checked: number; runsCreated: number } | undefined>(
     undefined
   );
+  const [busyEntryIds, setBusyEntryIds] = useState<Set<string>>(new Set());
+
+  const intervalDraftById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const e of entries) map.set(e.id, minutesToHoursString(e.intervalMinutes));
+    return map;
+  }, [entries]);
+
+  const [intervalEdits, setIntervalEdits] = useState<Record<string, string>>({});
   const sorted = useMemo(
     () =>
       [...entries].sort((a, b) =>
@@ -68,7 +89,13 @@ export function WatchlistClient({
   async function addEntry() {
     setError(undefined);
     const body: any = { channelUrl: addingUrl, enabled: addingEnabled };
-    if (addingInterval.trim().length > 0) body.intervalMinutes = Number(addingInterval);
+    if (addingInterval.trim().length > 0) {
+      const hours = Number(addingInterval);
+      if (!Number.isFinite(hours) || hours <= 0) {
+        throw new Error("intervalHours must be a positive number (or empty to use global default)");
+      }
+      body.intervalMinutes = Math.trunc(hours * 60);
+    }
     const res = await apiJson<WatchlistEntryResponse>("/api/watchlist", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -88,6 +115,62 @@ export function WatchlistClient({
       body: JSON.stringify(patch),
     });
     setEntries((prev) => prev.map((e) => (e.id === id ? res.entry : e)));
+  }
+
+  async function runEntryNow(entry: WatchlistEntry) {
+    setError(undefined);
+    setBusyEntryIds((prev) => new Set(prev).add(entry.id));
+    try {
+      const plan = await apiJson<RunPlanResponse>("/api/runs/plan", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url: entry.channelUrl, force: false }),
+      });
+      if (plan.plan.toProcess === 0) {
+        await refreshAll();
+        return;
+      }
+      const created = await apiJson<RunCreateResponse>("/api/runs", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url: entry.channelUrl, force: false }),
+      });
+      router.push(`/runs/${created.run.runId}`);
+    } finally {
+      setBusyEntryIds((prev) => {
+        const next = new Set(prev);
+        next.delete(entry.id);
+        return next;
+      });
+    }
+  }
+
+  function intervalValueFor(id: string): string {
+    if (Object.prototype.hasOwnProperty.call(intervalEdits, id)) return intervalEdits[id] ?? "";
+    return intervalDraftById.get(id) ?? "";
+  }
+
+  async function saveInterval(entry: WatchlistEntry) {
+    const raw = intervalValueFor(entry.id).trim();
+    if (raw.length === 0) {
+      await patchEntry(entry.id, { intervalMinutes: null });
+      setIntervalEdits((prev) => {
+        const next = { ...prev };
+        delete next[entry.id];
+        return next;
+      });
+      return;
+    }
+    const hours = Number(raw);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      throw new Error("intervalHours must be a positive number (or empty to use global default)");
+    }
+    await patchEntry(entry.id, { intervalMinutes: Math.trunc(hours * 60) });
+    setIntervalEdits((prev) => {
+      const next = { ...prev };
+      delete next[entry.id];
+      return next;
+    });
   }
 
   async function deleteEntry(id: string) {
@@ -139,7 +222,9 @@ export function WatchlistClient({
           <span className={pillClass(Boolean(scheduler.running))}>
             running: {String(Boolean(scheduler.running))}
           </span>
-          <span className="pill">interval: {scheduler.intervalMinutes}m</span>
+          <span className="pill">
+            interval: {Math.round((scheduler.intervalMinutes / 60) * 100) / 100}h
+          </span>
           <span className="pill">max concurrent: {scheduler.maxConcurrentRuns}</span>
         </div>
         <div className="flexWrap">
@@ -175,7 +260,7 @@ export function WatchlistClient({
           <input
             className="input"
             style={{ flex: "0 0 180px" }}
-            placeholder="interval (min)"
+            placeholder="interval (hours)"
             value={addingInterval}
             onChange={(e) => setAddingInterval(e.target.value)}
           />
@@ -220,12 +305,25 @@ export function WatchlistClient({
                   </div>
                   <div className="muted break mono">{e.channelUrl}</div>
                 </div>
-                <button
-                  className="button secondary"
-                  onClick={() => deleteEntry(e.id).catch((err) => setError(String(err?.message ?? err)))}
-                >
-                  Delete
-                </button>
+                <div className="flexWrap">
+                  <button
+                    className="button"
+                    disabled={busyEntryIds.has(e.id)}
+                    onClick={() =>
+                      runEntryNow(e).catch((err) => setError(String(err?.message ?? err)))
+                    }
+                  >
+                    {busyEntryIds.has(e.id) ? "Working..." : "Run now"}
+                  </button>
+                  <button
+                    className="button secondary"
+                    onClick={() =>
+                      deleteEntry(e.id).catch((err) => setError(String(err?.message ?? err)))
+                    }
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
 
               <div className="flexWrap">
@@ -242,7 +340,24 @@ export function WatchlistClient({
                   enabled
                 </label>
 
-                <span className="pill">interval: {e.intervalMinutes ?? "-"}m</span>
+                <div className="inlineRow">
+                  <span className="pill">interval (hours)</span>
+                  <input
+                    className="input"
+                    style={{ flex: "0 0 140px", minWidth: 120 }}
+                    placeholder="global"
+                    value={intervalValueFor(e.id)}
+                    onChange={(ev) =>
+                      setIntervalEdits((prev) => ({ ...prev, [e.id]: ev.target.value }))
+                    }
+                  />
+                  <button
+                    className="button secondary"
+                    onClick={() => saveInterval(e).catch((err) => setError(String(err?.message ?? err)))}
+                  >
+                    Save
+                  </button>
+                </div>
                 <span className="pill">created: {formatIso(e.createdAt)}</span>
                 <span className="pill">last checked: {formatIso(e.lastCheckedAt)}</span>
 

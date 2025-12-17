@@ -462,7 +462,8 @@ export interface components {
             enabled?: boolean;
         };
         WatchlistUpdateRequest: {
-            intervalMinutes?: number;
+            /** @description Optional. Set to null to clear override and use the scheduler global default. */
+            intervalMinutes?: number | null;
             enabled?: boolean;
         };
         WatchlistEntryResponse: {

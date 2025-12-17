@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.13.0
+  version: 0.13.2
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -712,7 +712,9 @@ components:
     WatchlistUpdateRequest:
       type: object
       properties:
-        intervalMinutes: { type: integer }
+        intervalMinutes:
+          description: Optional. Set to null to clear override and use the scheduler global default.
+          type: [integer, "null"]
         enabled: { type: boolean }
 
     WatchlistEntryResponse:

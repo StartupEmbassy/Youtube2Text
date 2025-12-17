@@ -6,6 +6,8 @@ export type RunsResponse = components["schemas"]["RunsResponse"];
 export type RunGetResponse = components["schemas"]["RunGetResponse"];
 export type RunCreateRequest = components["schemas"]["RunCreateRequest"];
 export type RunCreateResponse = components["schemas"]["RunCreateResponse"];
+export type RunPlan = components["schemas"]["RunPlan"];
+export type RunPlanResponse = components["schemas"]["RunPlanResponse"];
 export type RunArtifactsResponse = components["schemas"]["RunArtifactsResponse"];
 export type GlobalRunEvent = components["schemas"]["GlobalRunEvent"];
 

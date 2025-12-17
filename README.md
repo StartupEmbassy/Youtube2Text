@@ -308,7 +308,7 @@ Defaults:
 Pages:
 - Runs: `/`
 - Library: `/library`
-- Watchlist: `/watchlist` (manage scheduler sources)
+- Watchlist: `/watchlist` (manage scheduler sources; per-entry interval override in hours + "Run now")
 
 Run via Docker Compose (API + Web):
 
