@@ -69,6 +69,7 @@ Completed:
 
 In progress:
 - Phase 2.6: optional rate limiting and additional server hardening (only if exposing beyond single-tenant admin).
+ - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE

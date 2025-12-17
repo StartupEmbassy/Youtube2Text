@@ -200,6 +200,12 @@ Phase 2.5 - Admin UX + monitoring:
 - Watchlist UI page (`/watchlist`) for managing recurring sources and basic scheduler controls.
 - Prometheus metrics endpoint (`GET /metrics`) for production monitoring.
 
+Phase 2.6 - Run configuration UX (planned):
+- Add `maxNewVideos` semantics (limit AFTER skip) to support incremental backfills ("10 now, 10 later").
+- Add plan preview UX (total/processed/remaining) before spending credits.
+- Keep CLI + runs.yaml parity with API/web.
+- Future: cost/duration preview, optional channel catalog caching, optional settings UI for non-secret defaults.
+
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 
 Add:
