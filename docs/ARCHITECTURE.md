@@ -209,7 +209,10 @@ Phase 2.6 - Run configuration UX (DONE):
 Phase 2.7 - Optional settings + ops hardening (planned):
 - Optional Settings UI for non-secret defaults (persist to `output/_settings.json`), secrets remain env-only.
 - Optional cost/duration preview (best-effort, non-blocking).
-- Optional channel catalog caching (only if needed for performance).
+- Channel catalog caching + processed index for exact fast planning (DONE in v0.16.0):
+  - Cache full channel catalog under `output/_catalog/<channelId>.json` (exact; first run is expensive).
+  - Maintain a fast processed-id scan (set of ids) derived from `output/<channelDir>/*.json` transcripts.
+  - Used by `POST /runs/plan` and runs to avoid per-video filesystem checks.
 - Optional rate limiting and additional server hardening if exposing beyond a single-tenant admin.
 
 ### Phase 3+ - Cloud multi-tenant platform (optional)

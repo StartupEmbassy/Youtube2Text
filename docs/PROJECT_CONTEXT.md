@@ -72,6 +72,7 @@ In progress / next:
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
+ - Phase 2.7: exact planning performance - channel catalog cache + processed index (output-backed) to speed `POST /runs/plan` for large channels.
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE

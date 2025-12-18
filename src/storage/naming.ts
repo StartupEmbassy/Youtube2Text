@@ -37,6 +37,32 @@ export function makeVideoBaseName(
 }
 
 export function parseVideoIdFromBaseName(baseName: string): string {
-  const parts = baseName.split("__");
-  return (parts.length >= 2 ? parts[parts.length - 1] : baseName) as string;
+  const trimmed = baseName.trim();
+  // Most YouTube video IDs are 11 chars: [A-Za-z0-9_-]{11}
+  const idRe = /^[A-Za-z0-9_-]{11}$/;
+  if (idRe.test(trimmed)) return trimmed;
+
+  const parts = trimmed.split("__").filter(Boolean);
+  const first = parts[0];
+  const last = parts.length >= 2 ? parts[parts.length - 1] : undefined;
+
+  const hasDigit = (s: string) => /\d/.test(s);
+
+  if (first && last && idRe.test(first) && idRe.test(last)) {
+    // Ambiguous case: both ends look like ids (e.g. title slug happens to be 11 chars).
+    // Prefer the candidate that contains digits; titles often do not.
+    if (hasDigit(first) && !hasDigit(last)) return first;
+    if (hasDigit(last) && !hasDigit(first)) return last;
+    // Fallback: prefer the suffix (default filenameStyle is title_id).
+    return last;
+  }
+
+  // filenameStyle=title_id => "<title>__<id>"
+  if (last && idRe.test(last)) return last;
+
+  // filenameStyle=id_title => "<id>__<title>"
+  if (first && idRe.test(first)) return first;
+
+  // Fallback: last segment (best-effort)
+  return (parts.length >= 1 ? parts[parts.length - 1] : trimmed) as string;
 }

@@ -20,6 +20,7 @@ test("video basename includes id for id_title/title_id", () => {
   const videoId = "7j_NE6Pjv-E";
   const idTitle = makeVideoBaseName(videoId, "Hello World", "id_title");
   assert.equal(idTitle, `${videoId}__Hello-World`);
+  assert.equal(parseVideoIdFromBaseName(idTitle), videoId);
 
   const titleId = makeVideoBaseName(videoId, "Hello World", "title_id");
   assert.equal(titleId, `Hello-World__${videoId}`);

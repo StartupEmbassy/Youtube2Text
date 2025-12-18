@@ -22,6 +22,9 @@ export const configSchema = z.object({
   maxPollMinutes: z.number().int().positive().default(60),
   downloadRetries: z.number().int().nonnegative().default(2),
   transcriptionRetries: z.number().int().nonnegative().default(2),
+  // Channel catalog cache TTL for exact planning. When exceeded, we force a full refresh.
+  // Set <= 0 to disable TTL (cache never expires).
+  catalogMaxAgeHours: z.number().int().default(168),
   ytDlpPath: z.string().optional(),
   ytDlpExtraArgs: z.array(z.string()).default([]),
 });

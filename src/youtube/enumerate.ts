@@ -35,7 +35,8 @@ function inferChannelId(listing: YtDlpListing, inputUrl: string): string {
 export async function enumerateVideos(
   inputUrl: string,
   ytDlpCommand = "yt-dlp",
-  ytDlpExtraArgs: string[] = []
+  ytDlpExtraArgs: string[] = [],
+  options?: { playlistEnd?: number }
 ): Promise<YoutubeListing> {
   // Normalize channel URLs to include /videos suffix.
   // Without this, yt-dlp returns channel tabs (Videos, Shorts, etc.) instead of actual videos.
@@ -45,6 +46,9 @@ export async function enumerateVideos(
     ...ytDlpExtraArgs,
     "--flat-playlist",
     "--dump-single-json",
+    ...(typeof options?.playlistEnd === "number" && options.playlistEnd > 0
+      ? ["--playlist-end", String(Math.trunc(options.playlistEnd))]
+      : []),
     normalizedUrl,
   ];
   const result = await execCommand(ytDlpCommand, args);

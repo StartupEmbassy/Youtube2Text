@@ -112,6 +112,7 @@ ASSEMBLYAI_MIN_BALANCE_MINUTES=60
 COMMENTS_ENABLED=false
 COMMENTS_MAX=
 YT_DLP_EXTRA_ARGS=[]
+Y2T_CATALOG_MAX_AGE_HOURS=168
 ```
 
 Example files:
@@ -322,6 +323,14 @@ Pages:
 - Watchlist: `/watchlist` (manage scheduler sources; per-entry interval override in hours + "Run now")
 
 Library channel pages include quick actions (Open on YouTube / Copy URL / Run this channel) and can compute channel totals on-demand via `POST /runs/plan`.
+
+### Exact channel totals performance
+
+Exact totals require enumerating the full channel listing via yt-dlp (which can be 1000+ videos). To keep planning exact but fast on subsequent requests, the pipeline caches:
+
+- Channel catalog: `output/_catalog/<channelId>.json` (full list; first time is expensive, then refreshes incrementally).
+- Processed index: built by scanning `output/<channelDir>/*.json` transcript files once per plan/run (avoids per-video existence checks for the entire channel listing).
+- TTL: set `Y2T_CATALOG_MAX_AGE_HOURS` (default `168`). When exceeded, the next plan/run forces a full refresh of the catalog.
 
 Run via Docker Compose (API + Web):
 

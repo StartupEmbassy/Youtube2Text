@@ -4,7 +4,9 @@ import type { AppConfig } from "../config/schema.js";
 import { isAfterDate } from "../utils/date.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
 import { makeVideoBaseName } from "../storage/naming.js";
-import { getOutputPaths, isProcessed } from "../storage/index.js";
+import { getOutputPaths } from "../storage/index.js";
+import { buildProcessedVideoIdSet } from "../storage/processedIndex.js";
+import { getListingWithCatalogCache } from "../youtube/catalogCache.js";
 
 export type PlannedVideo = {
   id: string;
@@ -32,14 +34,14 @@ export type RunPlan = {
   selectedVideos: PlannedVideo[];
 };
 
-type IsProcessedFn = (jsonPath: string) => Promise<boolean>;
+type BuildProcessedSetFn = (outputDir: string, channelId: string) => Promise<Set<string>>;
 
 export async function planFromListing(
   inputUrl: string,
   listing: YoutubeListing,
   config: AppConfig,
   options: { force: boolean },
-  deps?: { isProcessed?: IsProcessedFn }
+  deps?: { buildProcessedVideoIdSet?: BuildProcessedSetFn }
 ): Promise<RunPlan> {
   const filteredVideos = listing.videos.filter((v) =>
     isAfterDate(v.uploadDate, config.afterDate)
@@ -62,10 +64,11 @@ export async function planFromListing(
     return { video, basename, jsonPath: paths.jsonPath };
   });
 
-  const check = deps?.isProcessed ?? isProcessed;
-  const processedFlags = options.force
-    ? new Array(planned.length).fill(false)
-    : await Promise.all(planned.map((p) => check(p.jsonPath)));
+  // Fast "processed" detection: scan existing outputs once per channelId rather than
+  // doing a filesystem existence check for every video in the channel listing.
+  const buildFn = deps?.buildProcessedVideoIdSet ?? buildProcessedVideoIdSet;
+  const processedSet =
+    options.force ? new Set<string>() : await buildFn(config.outputDir, listing.channelId);
 
   const videos: PlannedVideo[] = planned.map((p, idx) => ({
     id: p.video.id,
@@ -73,7 +76,7 @@ export async function planFromListing(
     url: p.video.url,
     uploadDate: p.video.uploadDate,
     basename: p.basename,
-    processed: Boolean(processedFlags[idx]),
+    processed: options.force ? false : processedSet.has(p.video.id),
   }));
 
   const alreadyProcessed = videos.filter((v) => v.processed).length;
@@ -113,6 +116,11 @@ export async function planRun(
 ): Promise<RunPlan> {
   const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
   const ytDlpExtraArgs = config.ytDlpExtraArgs ?? [];
-  const listing = await enumerateVideos(inputUrl, ytDlpCommand, ytDlpExtraArgs);
+  const listing = await getListingWithCatalogCache(inputUrl, config.outputDir, {
+    ytDlpCommand,
+    ytDlpExtraArgs,
+  }, {
+    maxAgeHours: config.catalogMaxAgeHours,
+  });
   return planFromListing(inputUrl, listing, config, options);
 }

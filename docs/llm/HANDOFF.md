@@ -6,10 +6,106 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - Claude Opus 4.5 (v0.15.1 channel enumeration fix + GPT UI fix reviewed)
+- Last Updated: 2025-12-17 - Claude Opus 4.5 (v0.16.0 catalog cache review)
 - Scope: Public YouTube videos only (no cookies support)
 - Goal: Phase 2.7 - Polish + optional Settings UI (keep CLI unchanged)
-- Next: See "Claude Opus 4.5 Suggestions for Phase 2.7" below
+- Next: See "Claude Opus 4.5 Suggestions for v0.16.0 Improvements" below
+
+## Claude Opus 4.5 Review of v0.16.0 - Catalog Cache + Processed Index (2025-12-17)
+
+**Implementation quality: Excellent.** Build OK, 63/63 tests pass (2 new).
+
+GPT-5.2 implemented two performance optimizations for large channels:
+
+### 1. Catalog Cache (`src/youtube/catalogCache.ts`)
+
+**What it does:**
+- First time: full yt-dlp enumeration, saves to `output/_catalog/<channelId>.json`
+- Subsequent: incremental refresh (fetch N newest videos, merge with cache)
+- Falls back to full enumeration if previous head not found in newest chunk
+
+**What I liked:**
+- Versioned schema (`version: 1`) for future migrations
+- Exponential chunk growth (200 -> 400 -> 800...) until previous head found
+- `uniqById()` for correct deduplication
+- Fallback to full enumeration when too many new videos
+
+### 2. Processed Index (`src/storage/processedIndex.ts`)
+
+**What it does:**
+- Scans `output/<channelDir>/*.json` once per plan/run
+- Builds `Set<string>` of processed video IDs
+- Avoids per-video `fs.stat()` calls (1000+ calls -> 1-2 readdir)
+
+**What I liked:**
+- Correctly filters out `.meta.json`, `.comments.json`, `_channel.json`
+- Supports multiple basename formats (`id.json`, `id__title.json`, `title__id.json`)
+- `parseVideoIdFromBaseName()` has smart heuristics for ambiguous cases
+
+### 3. Integration in `plan.ts`
+
+Uses `getListingWithCatalogCache()` + `buildProcessedVideoIdSet()` for O(1) lookups instead of O(n) filesystem checks.
+
+**Performance impact:** For a 1000-video channel, goes from ~1000 fs.stat() calls to ~2 readdir() calls.
+
+---
+
+## Claude Opus 4.5 Suggestions for v0.16.0 Improvements
+
+These are optional polish items for GPT-5.2 to consider:
+
+### 1. Cache TTL (Time To Live) - RECOMMENDED
+
+**Problem:** The catalog cache never expires. If a channel deletes/privates old videos, the cache still lists them.
+
+**Scenario:**
+- Day 1: Channel has 1000 videos -> cached
+- Day 30: Channel deletes 50 old videos
+- Cache still shows those 50 videos as "existing"
+- If you try to process them, yt-dlp fails
+
+**Suggested fix:** Add `Y2T_CATALOG_MAX_AGE_HOURS` env var (default: 168 = 7 days).
+
+```typescript
+const cached = await readCatalog(path);
+const ageHours = (Date.now() - Date.parse(cached.retrievedAt)) / 3600000;
+if (ageHours > maxAgeHours) {
+  // Force full enumeration even if cache exists
+  return enumerateChannelFull(...);
+}
+```
+
+**Effort:** 15-30 minutes.
+
+---
+
+### 2. Cache metrics/logging - NICE TO HAVE
+
+**Problem:** No visibility into whether cache is being used effectively.
+
+**Suggested fix:** Add log lines or Prometheus metrics:
+- `y2t_catalog_cache_hit` / `y2t_catalog_cache_miss`
+- Log: `[catalog] cache hit for UC... (age: 2.3h, 1372 videos)`
+- Log: `[catalog] incremental refresh added 5 new videos`
+
+**Effort:** 30 minutes.
+
+---
+
+### 3. Integration test for cache flow - NICE TO HAVE
+
+**Problem:** Current tests only cover `mergeNewestFirst()` and `buildProcessedVideoIdSet()` in isolation.
+
+**Suggested test:** Full flow test:
+1. First call -> cache miss -> full enumeration
+2. Second call -> cache hit -> incremental refresh
+3. Verify merged result is correct
+
+**Effort:** 1 hour (needs mock yt-dlp or fixture data).
+
+---
+
+**Summary:** v0.16.0 is solid. The TTL suggestion is the most important improvement to prevent stale cache issues.
 
 ## Decision RESOLVED - Channel Totals Bug (v0.15.1)
 
@@ -64,6 +160,8 @@ Root causes identified (two separate problems, both fixed):
 - v0.14.1: Phase 2.6 polish: Create Run UI warns when `force=true` and `maxNewVideos` is set (reprocess mode); run detail Downloads auto-updates as videos finish (no manual refresh needed).
 - v0.15.0: Phase 2.6 polish: Library channel pages show channel title + quick actions (Open/Copy/Run) and on-demand totals via `POST /runs/plan`.
 - v0.15.1: Fix channel enumeration bug: bare channel URLs (`/channel/UC...`) now auto-normalize to `/videos` suffix so yt-dlp returns actual videos instead of channel tabs.
+- v0.16.0: Exact planning performance: cache channel catalog under `output/_catalog/<channelId>.json` and build a processed-id set by scanning `output/<channelDir>/*.json` once per plan/run (avoids per-video existence checks across the full channel listing).
+- v0.16.1: Catalog cache TTL: add `Y2T_CATALOG_MAX_AGE_HOURS` / `catalogMaxAgeHours` (default 168h). If the catalog is older than this, the next plan/run forces a full refresh to avoid stale/deleted videos.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 

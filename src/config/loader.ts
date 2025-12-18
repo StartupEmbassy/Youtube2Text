@@ -53,6 +53,9 @@ function loadEnvConfig(): PartialConfig {
     transcriptionRetries: env.TRANSCRIPTION_RETRIES
       ? Number(env.TRANSCRIPTION_RETRIES)
       : undefined,
+    catalogMaxAgeHours: env.Y2T_CATALOG_MAX_AGE_HOURS
+      ? Number(env.Y2T_CATALOG_MAX_AGE_HOURS)
+      : undefined,
     ytDlpPath: env.YT_DLP_PATH || env.YTDLP_PATH,
     ytDlpExtraArgs,
   };

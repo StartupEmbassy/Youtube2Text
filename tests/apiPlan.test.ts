@@ -34,7 +34,7 @@ test("planFromListing counts processed vs remaining (force=false)", async () => 
       ytDlpExtraArgs: [],
     },
     { force: false },
-    { isProcessed: async (jsonPath) => jsonPath.includes("__b.json") }
+    { buildProcessedVideoIdSet: async () => new Set(["b"]) }
   );
 
   assert.equal(plan.totalVideos, 3);
@@ -76,7 +76,7 @@ test("planFromListing treats everything as unprocessed when force=true", async (
       ytDlpExtraArgs: [],
     },
     { force: true },
-    { isProcessed: async () => true }
+    { buildProcessedVideoIdSet: async () => new Set(["a"]) }
   );
 
   assert.equal(plan.totalVideos, 1);
@@ -122,8 +122,7 @@ test("planFromListing maxNewVideos applies after skipping already processed", as
     },
     { force: false },
     {
-      isProcessed: async (jsonPath) =>
-        jsonPath.includes("__a.json") || jsonPath.includes("__b.json"),
+      buildProcessedVideoIdSet: async () => new Set(["a", "b"]),
     }
   );
 

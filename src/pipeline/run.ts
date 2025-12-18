@@ -9,6 +9,7 @@ import {
   fetchVideoMetadata,
   fetchChannelMetadata,
 } from "../youtube/index.js";
+import { getListingWithCatalogCache } from "../youtube/catalogCache.js";
 import { AssemblyAiProvider } from "../transcription/index.js";
 import { formatTxt, formatCsv, formatMd, formatJsonl } from "../formatters/index.js";
 import {
@@ -23,6 +24,7 @@ import {
   saveVideoMetaJson,
   saveChannelMetaJson,
 } from "../storage/index.js";
+import { buildProcessedVideoIdSet } from "../storage/processedIndex.js";
 import { logErrorRecord } from "../storage/errors.js";
 import { isAfterDate } from "../utils/date.js";
 import { logInfo, logWarn, logStep } from "../utils/logger.js";
@@ -138,7 +140,12 @@ export async function runPipeline(
   }
 
   const ytDlpExtraArgs = config.ytDlpExtraArgs ?? [];
-  const listing = await enumerateVideos(inputUrl, ytDlpCommand, ytDlpExtraArgs);
+  const listing = await getListingWithCatalogCache(inputUrl, config.outputDir, {
+    ytDlpCommand,
+    ytDlpExtraArgs,
+  }, {
+    maxAgeHours: config.catalogMaxAgeHours,
+  });
   const candidateVideos = listing.videos.filter((v) =>
     isAfterDate(v.uploadDate, config.afterDate)
   );
@@ -165,9 +172,8 @@ export async function runPipeline(
   let candidateProcessedFlags: boolean[] = [];
 
   if (!options.force) {
-    candidateProcessedFlags = await Promise.all(
-      candidateJobs.map((j) => isProcessed(j.paths.jsonPath))
-    );
+    const processedSet = await buildProcessedVideoIdSet(config.outputDir, listing.channelId);
+    candidateProcessedFlags = candidateJobs.map((j) => processedSet.has(j.video.id));
     candidateAlreadyProcessed = candidateProcessedFlags.filter(Boolean).length;
     candidateUnprocessed = candidateTotal - candidateAlreadyProcessed;
   } else {
