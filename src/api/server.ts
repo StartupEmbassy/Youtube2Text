@@ -19,6 +19,7 @@ import { getDeepHealth, getHealth } from "./health.js";
 import { runRetentionCleanup } from "./retention.js";
 import { Scheduler, loadSchedulerConfigFromEnv } from "./scheduler.js";
 import { WatchlistStore } from "./watchlist.js";
+import { getCatalogMetricsSnapshot } from "../youtube/catalogMetrics.js";
 
 type ServerOptions = {
   port: number;
@@ -240,6 +241,31 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             Number.isFinite(next) ? Math.floor(next / 1000) : 0
           )
         );
+
+        const catalog = getCatalogMetricsSnapshot();
+        lines.push("# HELP y2t_catalog_cache_hit_total Catalog cache hits (used cached catalog and attempted incremental refresh).");
+        lines.push("# TYPE y2t_catalog_cache_hit_total counter");
+        lines.push(promLine("y2t_catalog_cache_hit_total", undefined, catalog.cacheHit));
+
+        lines.push("# HELP y2t_catalog_cache_miss_total Catalog cache misses (no usable cached catalog).");
+        lines.push("# TYPE y2t_catalog_cache_miss_total counter");
+        lines.push(promLine("y2t_catalog_cache_miss_total", undefined, catalog.cacheMiss));
+
+        lines.push("# HELP y2t_catalog_cache_expired_total Catalog cache expirations (TTL exceeded).");
+        lines.push("# TYPE y2t_catalog_cache_expired_total counter");
+        lines.push(promLine("y2t_catalog_cache_expired_total", undefined, catalog.cacheExpired));
+
+        lines.push("# HELP y2t_catalog_full_refresh_total Full channel enumerations performed for catalog updates.");
+        lines.push("# TYPE y2t_catalog_full_refresh_total counter");
+        lines.push(promLine("y2t_catalog_full_refresh_total", undefined, catalog.fullRefresh));
+
+        lines.push("# HELP y2t_catalog_incremental_refresh_total Incremental refresh operations performed for channel catalogs.");
+        lines.push("# TYPE y2t_catalog_incremental_refresh_total counter");
+        lines.push(promLine("y2t_catalog_incremental_refresh_total", undefined, catalog.incrementalRefresh));
+
+        lines.push("# HELP y2t_catalog_incremental_added_videos_total Number of new videos discovered during incremental refresh.");
+        lines.push("# TYPE y2t_catalog_incremental_added_videos_total counter");
+        lines.push(promLine("y2t_catalog_incremental_added_videos_total", undefined, catalog.incrementalAddedVideos));
 
         res.statusCode = 200;
         res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");

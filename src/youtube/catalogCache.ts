@@ -4,6 +4,14 @@ import { ensureDir, fileExists, writeJson } from "../utils/fs.js";
 import { enumerateVideos } from "./enumerate.js";
 import type { YoutubeListing, YoutubeVideo } from "./types.js";
 import { classifyYoutubeUrl } from "./url.js";
+import { logStep } from "../utils/logger.js";
+import {
+  incCatalogCacheExpired,
+  incCatalogCacheHit,
+  incCatalogCacheMiss,
+  incCatalogFullRefresh,
+  incCatalogIncrementalRefresh,
+} from "./catalogMetrics.js";
 
 type ChannelCatalog = {
   version: 1;
@@ -19,6 +27,12 @@ type EnumerateDeps = {
   ytDlpCommand: string;
   ytDlpExtraArgs: string[];
 };
+
+type EnumerateFn = (
+  inputUrl: string,
+  deps: EnumerateDeps,
+  options?: { playlistEnd?: number }
+) => Promise<YoutubeListing>;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -59,6 +73,16 @@ function mergeNewestFirst(cached: YoutubeVideo[], newestSlice: YoutubeVideo[]): 
   return uniqById([...newestSlice, ...cached]);
 }
 
+function addedCount(oldIds: Set<string>, newestSlice: YoutubeVideo[]): number {
+  let added = 0;
+  for (const v of newestSlice) {
+    if (!v?.id) continue;
+    if (oldIds.has(v.id)) continue;
+    added++;
+  }
+  return added;
+}
+
 function includesVideoId(videos: YoutubeVideo[], id: string | undefined): boolean {
   if (!id) return false;
   return videos.some((v) => v.id === id);
@@ -67,13 +91,18 @@ function includesVideoId(videos: YoutubeVideo[], id: string | undefined): boolea
 async function enumerateChannelHead(
   inputUrl: string,
   deps: EnumerateDeps,
-  playlistEnd: number
+  playlistEnd: number,
+  enumerate: EnumerateFn
 ): Promise<YoutubeListing> {
-  return enumerateVideos(inputUrl, deps.ytDlpCommand, deps.ytDlpExtraArgs, { playlistEnd });
+  return enumerate(inputUrl, deps, { playlistEnd });
 }
 
-async function enumerateChannelFull(inputUrl: string, deps: EnumerateDeps): Promise<YoutubeListing> {
-  return enumerateVideos(inputUrl, deps.ytDlpCommand, deps.ytDlpExtraArgs);
+async function enumerateChannelFull(
+  inputUrl: string,
+  deps: EnumerateDeps,
+  enumerate: EnumerateFn
+): Promise<YoutubeListing> {
+  return enumerate(inputUrl, deps);
 }
 
 /**
@@ -86,25 +115,34 @@ export async function getListingWithCatalogCache(
   inputUrl: string,
   outputDir: string,
   deps: EnumerateDeps,
-  options?: { newestChunk?: number; newestChunkMax?: number; maxAgeHours?: number }
+  options?: { newestChunk?: number; newestChunkMax?: number; maxAgeHours?: number; enumerate?: EnumerateFn }
 ): Promise<YoutubeListing> {
   const kind = classifyYoutubeUrl(inputUrl).kind;
   if (kind !== "channel") {
-    return enumerateVideos(inputUrl, deps.ytDlpCommand, deps.ytDlpExtraArgs);
+    const enumerate =
+      options?.enumerate ??
+      ((u, d, o) => enumerateVideos(u, d.ytDlpCommand, d.ytDlpExtraArgs, o));
+    return enumerate(inputUrl, deps);
   }
 
   const newestChunk = options?.newestChunk ?? 200;
   const newestChunkMax = options?.newestChunkMax ?? 5000;
   const maxAgeHours = typeof options?.maxAgeHours === "number" ? options.maxAgeHours : 168;
+  const enumerate =
+    options?.enumerate ??
+    ((u, d, o) => enumerateVideos(u, d.ytDlpCommand, d.ytDlpExtraArgs, o));
 
   // Step 1: identify channelId cheaply (playlist-end 1).
-  const head = await enumerateChannelHead(inputUrl, deps, 1);
+  const head = await enumerateChannelHead(inputUrl, deps, 1, enumerate);
   const channelId = head.channelId;
   const path = catalogPath(outputDir, channelId);
 
   // Step 2: no cache -> do full enumeration and persist.
   if (!(await fileExists(path))) {
-    const full = await enumerateChannelFull(inputUrl, deps);
+    incCatalogCacheMiss();
+    logStep("catalog", `Cache miss for ${channelId}; enumerating full channel listing`);
+    const full = await enumerateChannelFull(inputUrl, deps, enumerate);
+    incCatalogFullRefresh();
     await ensureDir(join(outputDir, "_catalog"));
     await writeJson(path, {
       version: 1,
@@ -120,7 +158,10 @@ export async function getListingWithCatalogCache(
 
   const cached = await readCatalog(path);
   if (!cached || cached.channelId !== channelId || !cached.complete) {
-    const full = await enumerateChannelFull(inputUrl, deps);
+    incCatalogCacheMiss();
+    logStep("catalog", `Cache invalid for ${channelId}; enumerating full channel listing`);
+    const full = await enumerateChannelFull(inputUrl, deps, enumerate);
+    incCatalogFullRefresh();
     await ensureDir(join(outputDir, "_catalog"));
     await writeJson(path, {
       version: 1,
@@ -140,7 +181,13 @@ export async function getListingWithCatalogCache(
     if (Number.isFinite(retrieved)) {
       const ageHours = (Date.now() - retrieved) / 3600000;
       if (ageHours > maxAgeHours) {
-        const full = await enumerateChannelFull(inputUrl, deps);
+        incCatalogCacheExpired();
+        logStep(
+          "catalog",
+          `Cache expired for ${channelId} (age ${ageHours.toFixed(1)}h > ${maxAgeHours}h); forcing full refresh`
+        );
+        const full = await enumerateChannelFull(inputUrl, deps, enumerate);
+        incCatalogFullRefresh();
         await ensureDir(join(outputDir, "_catalog"));
         await writeJson(path, {
           version: 1,
@@ -157,11 +204,12 @@ export async function getListingWithCatalogCache(
   }
 
   // Step 3: incremental refresh.
+  incCatalogCacheHit();
   const previousHeadId = cached.videos[0]?.id;
   let chunk = newestChunk;
   let newestListing: YoutubeListing | undefined;
   while (chunk <= newestChunkMax) {
-    newestListing = await enumerateChannelHead(inputUrl, deps, chunk);
+    newestListing = await enumerateChannelHead(inputUrl, deps, chunk, enumerate);
     if (includesVideoId(newestListing.videos, previousHeadId)) break;
     chunk = Math.min(newestChunkMax, chunk * 2);
     if (chunk === newestChunkMax) {
@@ -172,7 +220,9 @@ export async function getListingWithCatalogCache(
   }
 
   if (!newestListing) {
-    const full = await enumerateChannelFull(inputUrl, deps);
+    logStep("catalog", `Incremental refresh for ${channelId} failed to find previous head; enumerating full channel listing`);
+    const full = await enumerateChannelFull(inputUrl, deps, enumerate);
+    incCatalogFullRefresh();
     await ensureDir(join(outputDir, "_catalog"));
     await writeJson(path, {
       version: 1,
@@ -185,6 +235,11 @@ export async function getListingWithCatalogCache(
     } satisfies ChannelCatalog);
     return full;
   }
+
+  const cachedIds = new Set(cached.videos.map((v) => v.id));
+  const added = addedCount(cachedIds, newestListing.videos);
+  incCatalogIncrementalRefresh(added);
+  logStep("catalog", `Incremental refresh for ${channelId}: +${added} new videos (fetched ${newestListing.videos.length})`);
 
   const mergedVideos = mergeNewestFirst(cached.videos, newestListing.videos);
   await writeJson(path, {

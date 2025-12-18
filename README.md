@@ -216,6 +216,7 @@ Scheduler / watchlist (Phase 2.3, opt-in):
 
 Monitoring:
 - `GET /metrics` exposes Prometheus text metrics (requires `X-API-Key` if `Y2T_API_KEY` is set).
+  - Includes catalog cache counters: `y2t_catalog_cache_hit_total`, `y2t_catalog_cache_miss_total`, `y2t_catalog_cache_expired_total`, `y2t_catalog_full_refresh_total`, `y2t_catalog_incremental_refresh_total`, `y2t_catalog_incremental_added_videos_total`.
 
 Webhooks (optional):
 - `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
@@ -331,6 +332,7 @@ Exact totals require enumerating the full channel listing via yt-dlp (which can 
 - Channel catalog: `output/_catalog/<channelId>.json` (full list; first time is expensive, then refreshes incrementally).
 - Processed index: built by scanning `output/<channelDir>/*.json` transcript files once per plan/run (avoids per-video existence checks for the entire channel listing).
 - TTL: set `Y2T_CATALOG_MAX_AGE_HOURS` (default `168`). When exceeded, the next plan/run forces a full refresh of the catalog.
+- When the TTL expires, the app logs: `[catalog] Cache expired ... forcing full refresh`.
 
 Run via Docker Compose (API + Web):
 

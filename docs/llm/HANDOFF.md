@@ -6,10 +6,10 @@ Long-form rationale lives in `docs/llm/DECISIONS.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Last Updated: 2025-12-17 - Claude Opus 4.5 (v0.16.0 catalog cache review)
+- Last Updated: 2025-12-18 - Claude Opus 4.5 (v0.16.1 cache TTL review)
 - Scope: Public YouTube videos only (no cookies support)
 - Goal: Phase 2.7 - Polish + optional Settings UI (keep CLI unchanged)
-- Next: See "Claude Opus 4.5 Suggestions for v0.16.0 Improvements" below
+- Next: See remaining suggestions below (cache logging, integration test)
 
 ## Claude Opus 4.5 Review of v0.16.0 - Catalog Cache + Processed Index (2025-12-17)
 
@@ -107,6 +107,48 @@ if (ageHours > maxAgeHours) {
 
 **Summary:** v0.16.0 is solid. The TTL suggestion is the most important improvement to prevent stale cache issues.
 
+---
+
+## Claude Opus 4.5 Review of v0.16.1 - Cache TTL (2025-12-18)
+
+**Implementation quality: Excellent.** Build OK, 63/63 tests pass. GPT-5.2 implemented my TTL suggestion correctly.
+
+### What GPT-5.2 did:
+
+1. **Config schema** (`schema.ts`):
+   ```typescript
+   catalogMaxAgeHours: z.number().int().default(168),
+   ```
+
+2. **Env var** (`loader.ts`):
+   - `Y2T_CATALOG_MAX_AGE_HOURS` maps to `catalogMaxAgeHours`
+
+3. **TTL check** (`catalogCache.ts` lines 137-157):
+   - Correct position: after cache validation, before incremental refresh
+   - `maxAgeHours > 0` allows disabling TTL with `<= 0`
+   - Handles invalid `Date.parse()` with `Number.isFinite()`
+
+4. **Documentation**: `.env.example` and `README.md` updated
+
+### Minor suggestions (optional, low priority):
+
+1. **No test for TTL logic**: A unit test could verify behavior with old vs new cache. Simple to add but not critical since logic is straightforward.
+
+2. **No logging on TTL expiry**: Would be useful to log when cache expires:
+   ```
+   [catalog] cache expired (age: 170h > 168h), forcing full refresh for UC...
+   ```
+
+### Status of my v0.16.0 suggestions:
+
+| Suggestion | Status |
+|------------|--------|
+| 1. Cache TTL | DONE in v0.16.1 |
+| 2. Cache metrics/logging | Pending (nice to have) |
+| 3. Integration test | Pending (nice to have) |
+
+**Verdict:** TTL implementation is solid. Remaining suggestions are low priority polish.
+
 ## Decision RESOLVED - Channel Totals Bug (v0.15.1)
 
 Issue observed (Library -> channel -> "Compute totals"):
@@ -162,6 +204,8 @@ Root causes identified (two separate problems, both fixed):
 - v0.15.1: Fix channel enumeration bug: bare channel URLs (`/channel/UC...`) now auto-normalize to `/videos` suffix so yt-dlp returns actual videos instead of channel tabs.
 - v0.16.0: Exact planning performance: cache channel catalog under `output/_catalog/<channelId>.json` and build a processed-id set by scanning `output/<channelDir>/*.json` once per plan/run (avoids per-video existence checks across the full channel listing).
 - v0.16.1: Catalog cache TTL: add `Y2T_CATALOG_MAX_AGE_HOURS` / `catalogMaxAgeHours` (default 168h). If the catalog is older than this, the next plan/run forces a full refresh to avoid stale/deleted videos.
+- v0.16.2: Catalog TTL polish: log when the cache expires and add unit tests covering TTL (expired => full refresh, fresh => incremental refresh).
+- v0.16.3: Catalog cache observability: add Prometheus counters for catalog cache hit/miss/expired and full vs incremental refresh; add catalog log lines for cache miss/invalid, incremental refresh (+N new videos), and fallback to full refresh.
 
 ### Claude Opus 4.5 Review of v0.9.4 Deep Health (2025-12-16)
 

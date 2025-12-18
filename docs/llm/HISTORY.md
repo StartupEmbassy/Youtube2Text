@@ -6,6 +6,12 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-18 - GPT-5.2 - Catalog cache observability: add in-process counters for catalog cache hit/miss/expired and full vs incremental refresh; expose as Prometheus metrics under `GET /metrics`; add catalog log lines for cache miss/invalid, incremental refresh (+N new), and fallback to full refresh; bump version to 0.16.3 - Files: [src/youtube/catalogMetrics.ts, src/youtube/catalogCache.ts, src/api/server.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, package-lock.json, openapi.yaml] - Version impact: yes (0.16.2 -> 0.16.3)
+
+2025-12-18 - GPT-5.2 - Catalog TTL polish: log when `output/_catalog/<channelId>.json` expires (forces full refresh) and add unit tests for TTL behavior using injected enumerate function; bump version to 0.16.2 - Files: [src/youtube/catalogCache.ts, tests/catalogCacheTtl.test.ts, tests/all.test.ts, README.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, package-lock.json, openapi.yaml] - Version impact: yes (0.16.1 -> 0.16.2)
+
+2025-12-18 - Claude Opus 4.5 - Review v0.16.1 cache TTL: implementation correct, follows my suggestion exactly; noted 2 minor improvements (TTL test, logging on expiry) as low priority; updated suggestion status table in HANDOFF.md - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-18 - GPT-5.2 - Catalog cache TTL: add `catalogMaxAgeHours` (config) and `Y2T_CATALOG_MAX_AGE_HOURS` (env, default 168h; <=0 disables). If the cached `output/_catalog/<channelId>.json` is older than TTL, force full enumeration to avoid stale/deleted videos; document env + config examples; bump version to 0.16.1 - Files: [src/config/schema.ts, src/config/loader.ts, src/youtube/catalogCache.ts, src/pipeline/plan.ts, src/pipeline/run.ts, .env.example, config.yaml.example, README.md, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, package-lock.json, openapi.yaml] - Version impact: yes (0.16.0 -> 0.16.1)
 
 2025-12-17 - Claude Opus 4.5 - Review v0.16.0 catalog cache + processed index: implementation excellent, suggested 3 improvements (cache TTL via Y2T_CATALOG_MAX_AGE_HOURS, cache metrics/logging, integration test for full cache flow); documented in HANDOFF.md for GPT-5.2 roadmap - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

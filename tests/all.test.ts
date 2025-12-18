@@ -4,6 +4,7 @@ import "./txtFormatter.test.js";
 import "./outputFormats.test.js";
 import "./ytDlpErrors.test.js";
 import "./catalogCache.test.js";
+import "./catalogCacheTtl.test.js";
 import "./urlNormalization.test.js";
 import "./processedIndex.test.js";
 import "./apiEventBuffer.test.js";
