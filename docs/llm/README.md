@@ -13,6 +13,8 @@ Goals:
   - The current operational snapshot.
   - Keep short (target: 1-2 screens).
   - Contains: Current Status, numbered Next Steps, Key Decisions, Open Questions, Testing Notes.
+- `docs/llm/HANDOFF_ARCHIVE.md`
+  - Older long-form handoff content moved out of HANDOFF to keep it readable.
 
 - `docs/llm/HISTORY.md`
   - Append-only change log (newest entries at top).

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.16.3
+  version: 0.17.1
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -53,6 +53,61 @@ paths:
                 $ref: "#/components/schemas/CleanupResponse"
         "400":
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /settings:
+    get:
+      operationId: getSettings
+      summary: Get non-secret settings
+      description: |
+        Returns the current persisted non-secret defaults stored in `output/_settings.json`,
+        and the effective config values after applying those settings to the loaded config.
+        Notes:
+        - Secrets are never returned here (e.g. `ASSEMBLYAI_API_KEY`, `Y2T_API_KEY`).
+        - Precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsGetResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchSettings
+      summary: Update non-secret settings
+      description: |
+        Updates persisted non-secret defaults in `output/_settings.json`.
+        Send `null` for a key to clear it (remove it from the settings file).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsPatchRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsGetResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
           content:
             application/json:
               schema:
@@ -684,6 +739,79 @@ components:
                 deletedFiles: { type: integer }
                 keptFiles: { type: integer }
                 errors: { type: integer }
+
+    NonSecretSettings:
+      type: object
+      description: |
+        Persisted non-secret defaults. Secrets (API keys) are never stored here.
+      properties:
+        filenameStyle:
+          type: string
+          enum: [id, id_title, title_id]
+        audioFormat:
+          type: string
+          enum: [mp3, wav]
+        languageDetection:
+          type: string
+          enum: [auto, manual]
+        languageCode: { type: string }
+        concurrency: { type: integer }
+        maxNewVideos: { type: integer }
+        afterDate: { type: string }
+        csvEnabled: { type: boolean }
+        commentsEnabled: { type: boolean }
+        commentsMax: { type: integer }
+        pollIntervalMs: { type: integer }
+        maxPollMinutes: { type: integer }
+        downloadRetries: { type: integer }
+        transcriptionRetries: { type: integer }
+        ytDlpExtraArgs:
+          type: array
+          items: { type: string }
+        catalogMaxAgeHours: { type: integer }
+      additionalProperties: false
+
+    SettingsGetResponse:
+      type: object
+      required: [outputDir, settingsPath, settings, effective]
+      properties:
+        outputDir: { type: string }
+        settingsPath: { type: string }
+        updatedAt: { type: string }
+        settings:
+          $ref: "#/components/schemas/NonSecretSettings"
+        effective:
+          $ref: "#/components/schemas/NonSecretSettings"
+
+    SettingsPatchRequest:
+      type: object
+      required: [settings]
+      properties:
+        settings:
+          type: object
+          description: |
+            Partial settings update. Send `null` to clear a key.
+          properties:
+            filenameStyle: { type: [string, "null"], enum: [id, id_title, title_id, null] }
+            audioFormat: { type: [string, "null"], enum: [mp3, wav, null] }
+            languageDetection: { type: [string, "null"], enum: [auto, manual, null] }
+            languageCode: { type: [string, "null"] }
+            concurrency: { type: [integer, "null"] }
+            maxNewVideos: { type: [integer, "null"] }
+            afterDate: { type: [string, "null"] }
+            csvEnabled: { type: [boolean, "null"] }
+            commentsEnabled: { type: [boolean, "null"] }
+            commentsMax: { type: [integer, "null"] }
+            pollIntervalMs: { type: [integer, "null"] }
+            maxPollMinutes: { type: [integer, "null"] }
+            downloadRetries: { type: [integer, "null"] }
+            transcriptionRetries: { type: [integer, "null"] }
+            ytDlpExtraArgs:
+              type: [array, "null"]
+              items: { type: string }
+            catalogMaxAgeHours: { type: [integer, "null"] }
+          additionalProperties: true
+      additionalProperties: false
 
     WatchlistEntry:
       type: object

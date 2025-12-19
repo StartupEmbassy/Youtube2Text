@@ -20,6 +20,8 @@ import { runRetentionCleanup } from "./retention.js";
 import { Scheduler, loadSchedulerConfigFromEnv } from "./scheduler.js";
 import { WatchlistStore } from "./watchlist.js";
 import { getCatalogMetricsSnapshot } from "../youtube/catalogMetrics.js";
+import { getSettingsResponse, patchSettings } from "./settings.js";
+import { applySettingsToConfig, readSettingsFile, sanitizeNonSecretSettings } from "../config/settings.js";
 
 type ServerOptions = {
   port: number;
@@ -147,7 +149,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
     schedulerCfg,
     manager,
     watchlistStore,
-    async (url) => planRun(url, config, { force: false }),
+    async (url) => planRunFn(url, await getEffectiveConfig(), { force: false }),
     (req) => manager.createRun(req),
     (runId, req) => manager.startRun(runId, req)
   );
@@ -158,6 +160,12 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
     audioDir: config.audioDir,
     audioFormat: config.audioFormat,
   });
+
+  async function getEffectiveConfig(): Promise<AppConfig> {
+    const file = await readSettingsFile(config.outputDir);
+    const settings = sanitizeNonSecretSettings(file?.settings);
+    return applySettingsToConfig(config, settings);
+  }
 
   const server = createServer(async (req, res) => {
     setCors(req, res);
@@ -270,6 +278,33 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         res.statusCode = 200;
         res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
         res.end(`${lines.join("\n")}\n`);
+        return;
+      }
+
+      if (req.method === "GET" && seg.length === 1 && seg[0] === "settings") {
+        const body = await getSettingsResponse(config);
+        json(res, 200, body);
+        return;
+      }
+
+      if (req.method === "PATCH" && seg.length === 1 && seg[0] === "settings") {
+        let body: unknown;
+        try {
+          body = (await readJsonBody(req)) as unknown;
+        } catch {
+          badRequest(res, "Invalid JSON body");
+          return;
+        }
+        if (!body || typeof body !== "object") {
+          badRequest(res, "Expected JSON body");
+          return;
+        }
+        if (!(body as any).settings || typeof (body as any).settings !== "object") {
+          badRequest(res, "Missing settings");
+          return;
+        }
+        const updated = await patchSettings(config, body as any);
+        json(res, 200, updated);
         return;
       }
 
@@ -433,8 +468,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           ...(typeof maxNewVideos === "number" ? { maxNewVideos } : {}),
           ...(typeof afterDate === "string" ? { afterDate } : {}),
         };
-        const mergedConfig = { ...config, ...requestOverrides };
-        const plan = await planRun(url, mergedConfig, { force });
+        const effectiveBase = await getEffectiveConfig();
+        const mergedConfig = { ...effectiveBase, ...requestOverrides };
+        const plan = await planRunFn(url, mergedConfig, { force });
         json(res, 200, { plan });
         return;
       }
@@ -602,7 +638,12 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           ...(typeof maxNewVideos === "number" ? { maxNewVideos } : {}),
           ...(typeof afterDate === "string" ? { afterDate } : {}),
         };
-        const mergedConfig = { ...config, ...requestOverrides };
+        const effectiveBase = await getEffectiveConfig();
+        const mergedConfig = { ...effectiveBase, ...requestOverrides };
+
+        // Ensure runs started by the manager also inherit current settings (without storing secrets).
+        const settingsForRun = sanitizeNonSecretSettings((await readSettingsFile(config.outputDir))?.settings);
+        const runConfigOverrides = { ...settingsForRun, ...requestOverrides };
 
         if (!force) {
           const videoId = tryExtractVideoIdFromUrl(url);
@@ -610,7 +651,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             const plan = await planRunFn(url, mergedConfig, { force: false });
             if (plan.totalVideos === 1 && plan.toProcess === 0) {
               const record = manager.createCachedRun(
-                { url, force: false, callbackUrl, config: requestOverrides },
+                { url, force: false, callbackUrl, config: runConfigOverrides },
                 plan
               );
 
@@ -660,8 +701,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           }
         }
 
-        const record = manager.createRun({ url, force, callbackUrl, config: requestOverrides });
-        manager.startRun(record.runId, { url, force, callbackUrl, config: requestOverrides });
+        const record = manager.createRun({ url, force, callbackUrl, config: runConfigOverrides });
+        manager.startRun(record.runId, { url, force, callbackUrl, config: runConfigOverrides });
         json(res, 201, {
           run: record,
           links: {

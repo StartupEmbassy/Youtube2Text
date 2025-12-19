@@ -40,7 +40,7 @@ This document describes the current repository layout for Youtube2Text.
 
 - `src/cli/` - CLI entrypoints and orchestration.
 - `src/api/` - HTTP API runner (SSE, runs persistence, auth, webhooks).
-- `src/config/` - configuration loading from `.env` and optional `config.yaml`/`runs.yaml`.
+- `src/config/` - configuration loading from `.env`, optional `config.yaml`/`runs.yaml`, and non-secret defaults from `output/_settings.json`.
 - `src/youtube/` - enumeration/metadata/download wrappers around `yt-dlp`.
 - `src/transcription/` - provider interface and AssemblyAI implementation.
 - `src/formatters/` - derived artifacts (`.txt`, `.md`, `.jsonl`, optional `.csv`).

@@ -85,13 +85,13 @@ Note: Youtube2Text only targets public videos. If a channel contains members-onl
 
 ## Configuration
 
-Configuration is loaded from:
+Configuration is loaded (lowest to highest precedence) from:
 
-1. `.env` (required for secrets).
+1. Optional `output/_settings.json` for non-secret defaults (created via `GET/PATCH /settings` or the web UI Settings page).
 2. Optional `config.yaml` for non-secret defaults.
-3. Optional `runs.yaml` for convenient multi-run execution.
+3. `.env` (required for secrets and highest-precedence overrides).
 
-`.env` takes precedence for overlapping keys.
+Per-run overrides (CLI flags, `runs.yaml`, `POST /runs` request fields) override these defaults for that run.
 
 Example environment variables:
 
@@ -115,11 +115,15 @@ YT_DLP_EXTRA_ARGS=[]
 Y2T_CATALOG_MAX_AGE_HOURS=168
 ```
 
+Notes:
+- Boolean env vars like `CSV_ENABLED` / `COMMENTS_ENABLED` only override config when set; accepted truthy values: `true`, `1`, `yes`.
+
 Example files:
 
 - `.env.example` - template of supported env vars (copy to `.env`).
 - `config.yaml.example` - optional non-secret defaults (copy to `config.yaml`).
 - `runs.yaml.example` - optional batch runs template (copy to `runs.yaml` or `runs.yml`).
+- `output/_settings.json` - optional non-secret defaults persisted by the API/web UI (never commit this file).
 
 ## CLI Usage
 
@@ -235,6 +239,7 @@ Endpoints:
 - `GET /health?deep=true` (best-effort deps + disk + persistence checks)
 - `GET /metrics` (Prometheus text format)
 - `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)
+- `GET /settings`, `PATCH /settings` (persist non-secret defaults to `output/_settings.json`)
 - `GET /watchlist`, `POST /watchlist`, `PATCH /watchlist/:id`, `DELETE /watchlist/:id` (followed channels list)
 - `GET /scheduler/status`, `POST /scheduler/start|stop|trigger` (Phase 2.3, opt-in)
 - `GET /events` (SSE global stream for run updates)
@@ -286,7 +291,7 @@ docker build --build-arg YT_DLP_VERSION=2025.01.01 -t youtube2text-api .
 This repo includes a no-credit smoke test that:
 1) builds the Docker image
 2) starts the API container
-3) checks `GET /health` and `GET /runs`
+3) checks `GET /health`, `GET /runs`, and `GET /settings`
 4) stops the container
 
 Run:
@@ -322,6 +327,7 @@ Pages:
 - Runs: `/`
 - Library: `/library`
 - Watchlist: `/watchlist` (manage scheduler sources; per-entry interval override in hours + "Run now")
+- Settings: `/settings` (persist non-secret defaults to `output/_settings.json`)
 
 Library channel pages include quick actions (Open on YouTube / Copy URL / Run this channel) and can compute channel totals on-demand via `POST /runs/plan`.
 
@@ -416,7 +422,7 @@ output/<channel_id>/_errors.jsonl
 
 - Alternative `TranscriptionProvider` implementations.
 - Semantic post-processing: summarization, topic clustering.
-- Optional Settings UI for non-secret defaults + additional ops hardening (if deployed beyond single-tenant admin).
+- Ops hardening for hosted use (timeouts/healthcheck/rate limiting as needed).
 - Optional direct audio file input (skip yt-dlp download stage) for automation use cases.
 - Optional multi-tenant cloud platform (Phase 3+).
 

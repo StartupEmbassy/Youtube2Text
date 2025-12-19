@@ -38,6 +38,10 @@ If you expose the API port publicly in that state, anyone can call it.
 Retention never deletes transcripts under `output/<channelDir>/*`.
 It only deletes operational run persistence (`output/_runs/*`) and old audio cache files (`audio/*`).
 
+Non-secret defaults:
+- The API/web UI can persist non-secret defaults to `output/_settings.json` via `GET/PATCH /settings`.
+- This file is safe to keep on disk (no secrets) and is persisted via the `output/` volume mount.
+
 ## Ports and exposure (recommended)
 
 - Expose the Web UI to the Internet (TLS): `:3000`

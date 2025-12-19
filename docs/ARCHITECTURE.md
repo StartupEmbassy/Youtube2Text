@@ -206,8 +206,8 @@ Phase 2.6 - Run configuration UX (DONE):
 - Kept CLI + runs.yaml parity with API/web.
 - UX polish: Create Run warns about `force=true` + `maxNewVideos`; run detail Downloads auto-updates as videos finish.
 
-Phase 2.7 - Optional settings + ops hardening (planned):
-- Optional Settings UI for non-secret defaults (persist to `output/_settings.json`), secrets remain env-only.
+Phase 2.7 - Settings + ops hardening (in progress):
+- Settings UI for non-secret defaults (persist to `output/_settings.json`), secrets remain env-only (DONE in v0.17.0).
 - Optional cost/duration preview (best-effort, non-blocking).
 - Channel catalog caching + processed index for exact fast planning (DONE in v0.16.0):
   - Cache full channel catalog under `output/_catalog/<channelId>.json` (exact; first run is expensive).

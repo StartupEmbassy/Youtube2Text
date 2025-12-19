@@ -25,6 +25,28 @@ curl -H "X-API-Key: $env:Y2T_API_KEY" http://127.0.0.1:8787/runs
 curl http://127.0.0.1:8787/health
 ```
 
+### 1b) Settings (optional non-secret defaults)
+
+The API can persist non-secret defaults to `output/_settings.json` (never secrets).
+These settings affect planning and runs unless overridden per-run.
+
+Precedence:
+`output/_settings.json` (lowest) < `config.yaml` < `.env` (highest) < per-run overrides.
+
+Fetch current settings + effective values:
+
+```bash
+curl -sS http://127.0.0.1:8787/settings
+```
+
+Update settings (send `null` to clear a key):
+
+```bash
+curl -sS -X PATCH http://127.0.0.1:8787/settings \
+  -H "Content-Type: application/json" \
+  -d '{"settings":{"maxNewVideos":10,"afterDate":"2024-01-01","csvEnabled":true}}'
+```
+
 ### 2) Plan a run (no transcription)
 
 Use this to avoid wasted credits. It enumerates and counts what is already processed.

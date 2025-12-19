@@ -155,6 +155,14 @@ try {
   const runs = Array.isArray(runsBody) ? runsBody : runsBody?.runs;
   if (!Array.isArray(runs)) throw new Error(`/runs did not return an array (or {runs: []})`);
 
+  console.log(`\n[smoke] Checking /settings ...`);
+  const settingsRes = await fetchWithTimeout(`${baseUrl}/settings`, 1500);
+  if (!settingsRes.ok) throw new Error(`/settings returned ${settingsRes.status}`);
+  const settingsBody = await settingsRes.json();
+  if (!settingsBody || typeof settingsBody !== "object") throw new Error(`/settings returned invalid JSON`);
+  if (!("settingsPath" in settingsBody)) throw new Error(`/settings missing settingsPath`);
+  if (!("effective" in settingsBody)) throw new Error(`/settings missing effective`);
+
   console.log(`\n[smoke] OK`);
 } finally {
   if (started) console.log(`\n[smoke] Cleaning up container ${containerName}`);

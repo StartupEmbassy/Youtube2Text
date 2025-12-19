@@ -164,6 +164,72 @@ a:hover {
   color: inherit;
 }
 
+/* Settings page UX: compact inputs + inline rows (see docs/llm/HANDOFF_ARCHIVE.md) */
+.inputXs {
+  flex: 0 0 70px;
+  min-width: 50px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(2, 6, 23, 0.7);
+  color: inherit;
+}
+
+.inputSm {
+  flex: 0 0 90px;
+  min-width: 70px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(2, 6, 23, 0.7);
+  color: inherit;
+}
+
+.inputMd {
+  flex: 0 0 120px;
+  min-width: 100px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(2, 6, 23, 0.7);
+  color: inherit;
+}
+
+.stackTight {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.formLabel {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+/* Desktop: horizontal with right-aligned labels (Gemini-validated spec) */
+@media (min-width: 900px) {
+  .formRow {
+    flex-direction: row;
+    align-items: center;
+  }
+  .formLabel {
+    width: 140px;
+    min-width: 140px;
+    text-align: right;
+    margin-right: 12px;
+    margin-bottom: 0;
+  }
+}
+
 .button {
   padding: 10px 12px;
   border-radius: 10px;

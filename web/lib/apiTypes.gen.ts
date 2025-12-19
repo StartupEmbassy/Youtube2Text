@@ -47,6 +47,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get non-secret settings
+         * @description Returns the current persisted non-secret defaults stored in `output/_settings.json`,
+         *     and the effective config values after applying those settings to the loaded config.
+         *     Notes:
+         *     - Secrets are never returned here (e.g. `ASSEMBLYAI_API_KEY`, `Y2T_API_KEY`).
+         *     - Precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest).
+         */
+        get: operations["getSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update non-secret settings
+         * @description Updates persisted non-secret defaults in `output/_settings.json`.
+         *     Send `null` for a key to clear it (remove it from the settings file).
+         */
+        patch: operations["patchSettings"];
+        trace?: never;
+    };
     "/watchlist": {
         parameters: {
             query?: never;
@@ -444,6 +473,61 @@ export interface components {
                 };
             };
         };
+        /** @description Persisted non-secret defaults. Secrets (API keys) are never stored here. */
+        NonSecretSettings: {
+            /** @enum {string} */
+            filenameStyle?: "id" | "id_title" | "title_id";
+            /** @enum {string} */
+            audioFormat?: "mp3" | "wav";
+            /** @enum {string} */
+            languageDetection?: "auto" | "manual";
+            languageCode?: string;
+            concurrency?: number;
+            maxNewVideos?: number;
+            afterDate?: string;
+            csvEnabled?: boolean;
+            commentsEnabled?: boolean;
+            commentsMax?: number;
+            pollIntervalMs?: number;
+            maxPollMinutes?: number;
+            downloadRetries?: number;
+            transcriptionRetries?: number;
+            ytDlpExtraArgs?: string[];
+            catalogMaxAgeHours?: number;
+        };
+        SettingsGetResponse: {
+            outputDir: string;
+            settingsPath: string;
+            updatedAt?: string;
+            settings: components["schemas"]["NonSecretSettings"];
+            effective: components["schemas"]["NonSecretSettings"];
+        };
+        SettingsPatchRequest: {
+            /** @description Partial settings update. Send `null` to clear a key. */
+            settings: {
+                /** @enum {string|null} */
+                filenameStyle?: "id" | "id_title" | "title_id" | null;
+                /** @enum {string|null} */
+                audioFormat?: "mp3" | "wav" | null;
+                /** @enum {string|null} */
+                languageDetection?: "auto" | "manual" | null;
+                languageCode?: string | null;
+                concurrency?: number | null;
+                maxNewVideos?: number | null;
+                afterDate?: string | null;
+                csvEnabled?: boolean | null;
+                commentsEnabled?: boolean | null;
+                commentsMax?: number | null;
+                pollIntervalMs?: number | null;
+                maxPollMinutes?: number | null;
+                downloadRetries?: number | null;
+                transcriptionRetries?: number | null;
+                ytDlpExtraArgs?: string[] | null;
+                catalogMaxAgeHours?: number | null;
+            } & {
+                [key: string]: unknown;
+            };
+        };
         WatchlistEntry: {
             id: string;
             channelUrl: string;
@@ -753,6 +837,77 @@ export interface operations {
             };
             /** @description Bad request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsGetResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    patchSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsPatchRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsGetResponse"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

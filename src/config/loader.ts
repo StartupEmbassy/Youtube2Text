@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import dotenv from "dotenv";
 import YAML from "yaml";
 import { configSchema, AppConfig } from "./schema.js";
+import { readSettingsFileSync } from "./settings.js";
 
 type PartialConfig = Partial<Record<keyof AppConfig, unknown>>;
 
@@ -15,6 +16,11 @@ function loadYamlConfig(path: string): PartialConfig {
 function loadEnvConfig(): PartialConfig {
   dotenv.config();
   const env = process.env;
+  const parseOptionalBool = (raw: string | undefined): boolean | undefined => {
+    if (raw === undefined) return undefined;
+    const v = raw.trim().toLowerCase();
+    return v === "true" || v === "1" || v === "yes";
+  };
   let ytDlpExtraArgs: unknown = undefined;
   if (env.YT_DLP_EXTRA_ARGS) {
     try {
@@ -34,12 +40,12 @@ function loadEnvConfig(): PartialConfig {
     concurrency: env.CONCURRENCY ? Number(env.CONCURRENCY) : undefined,
     maxNewVideos: env.MAX_NEW_VIDEOS ? Number(env.MAX_NEW_VIDEOS) : undefined,
     afterDate: env.AFTER_DATE,
-    csvEnabled: env.CSV_ENABLED === "true",
+    csvEnabled: parseOptionalBool(env.CSV_ENABLED),
     assemblyAiCreditsCheck: env.ASSEMBLYAI_CREDITS_CHECK,
     assemblyAiMinBalanceMinutes: env.ASSEMBLYAI_MIN_BALANCE_MINUTES
       ? Number(env.ASSEMBLYAI_MIN_BALANCE_MINUTES)
       : undefined,
-    commentsEnabled: env.COMMENTS_ENABLED === "true",
+    commentsEnabled: parseOptionalBool(env.COMMENTS_ENABLED),
     commentsMax: env.COMMENTS_MAX ? Number(env.COMMENTS_MAX) : undefined,
     pollIntervalMs: env.POLL_INTERVAL_MS
       ? Number(env.POLL_INTERVAL_MS)
@@ -70,6 +76,19 @@ function filterUndefined(obj: PartialConfig): PartialConfig {
 export function loadConfig(configPath = "config.yaml"): AppConfig {
   const yamlConfig = loadYamlConfig(resolve(configPath));
   const envConfig = filterUndefined(loadEnvConfig());
-  const merged = { ...yamlConfig, ...envConfig };
+
+  // Settings file lives under outputDir. Determine candidate outputDir before schema parse.
+  const outputDirCandidate =
+    (typeof envConfig.outputDir === "string" && envConfig.outputDir.length > 0
+      ? envConfig.outputDir
+      : typeof yamlConfig.outputDir === "string" && (yamlConfig.outputDir as string).length > 0
+        ? (yamlConfig.outputDir as string)
+        : "output");
+
+  const settingsFile = readSettingsFileSync(outputDirCandidate);
+  const settingsConfig = settingsFile?.settings ?? {};
+
+  // Precedence: settings (lowest) < config.yaml < .env (highest)
+  const merged = { ...settingsConfig, ...yamlConfig, ...envConfig };
   return configSchema.parse(merged);
 }

@@ -68,11 +68,12 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Phase 2.7: optional Settings UI for non-secret defaults (keep secrets env-only) and additional server hardening (rate limiting only if exposing beyond single-tenant admin).
+- Phase 2.7: additional server hardening (only if exposing beyond single-tenant admin).
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
- - Phase 2.7: exact planning performance - channel catalog cache + processed index (output-backed) to speed `POST /runs/plan` for large channels.
+- Phase 2.7: exact planning performance - channel catalog cache + processed index (output-backed) to speed `POST /runs/plan` for large channels.
+- Phase 2.7: Settings UI + non-secret defaults persisted to `output/_settings.json` (API `GET/PATCH /settings`).
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE
