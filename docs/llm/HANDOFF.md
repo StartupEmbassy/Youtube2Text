@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.17.1 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.17.2 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -46,8 +46,129 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - For every version bump, add a top entry to `docs/llm/HISTORY.md`.
 
 ## Next Steps (Do In Order)
+
+### 2.7.4 Settings Help Tooltips (DONE - Gemini-designed)
+
+**Problem:** Users don't understand what each setting does.
+
+**Solution:** Add `?` icon tooltips next to each label (Gemini recommendation: cleanest UX for 15+ fields).
+
+Status: DONE in v0.17.2
+
+#### CSS to Add (in `globals.css`)
+
+```css
+/* Tooltip for settings help text (Gemini-designed) */
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.tooltipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: bold;
+  cursor: help;
+  user-select: none;
+}
+
+.tooltipText {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  z-index: 100;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.tooltipText::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--border) transparent transparent transparent;
+}
+
+.tooltipContainer:hover .tooltipText {
+  visibility: visible;
+  opacity: 1;
+}
+```
+
+#### Component Pattern
+
+```tsx
+function Tooltip({ text }: { text: string }) {
+  return (
+    <span className="tooltipContainer">
+      <span className="tooltipIcon">?</span>
+      <span className="tooltipText">{text}</span>
+    </span>
+  );
+}
+
+// Usage in formRow:
+<div className="formRow">
+  <span className="formLabel">
+    concurrency
+    <Tooltip text="How many videos to process in parallel (1-10 typical)" />
+  </span>
+  <input className="inputXs" ... />
+</div>
+```
+
+#### Help Text for Each Field
+
+| Field | Help Text |
+|-------|-----------|
+| filenameStyle | Output filename format: title_id (Video Title_abc123), id_title, or id only |
+| audioFormat | Downloaded audio format: mp3 (smaller) or wav (lossless) |
+| concurrency | How many videos to process in parallel (1-10 typical) |
+| languageDetection | auto = AssemblyAI detects language, manual = you specify |
+| languageCode | Language code when manual (e.g., es, en_us, fr, de) |
+| csvEnabled | Generate CSV file with timestamps alongside JSON |
+| commentsEnabled | Download YouTube comments for each video |
+| commentsMax | Max comments to download per video (empty = no limit) |
+| maxNewVideos | Limit new videos per run (empty = process all) |
+| afterDate | Only process videos published after this date |
+| catalogMaxAgeHours | Hours before refreshing channel video list (cache TTL, default 168 = 7 days) |
+| pollIntervalMs | How often to check AssemblyAI for transcription status (ms) |
+| maxPollMinutes | Timeout waiting for a single transcription |
+| downloadRetries | Retry attempts if audio download fails |
+| transcriptionRetries | Retry attempts if transcription fails |
+| ytDlpExtraArgs | Extra yt-dlp arguments, one per line (e.g., --cookies-from-browser chrome) |
+
+**Source:** Gemini CLI UX recommendation (tooltip pattern for 15+ fields).
+
+---
+
+### Future (lower priority)
 1) Add runtime timeouts and Docker healthcheck (ops hardening).
-2) Future (only if exposing beyond localhost): rate limiting + auth/cors hardening.
+2) Rate limiting + auth/cors hardening (only if exposing beyond localhost).
 
 ## Testing / Sanity Pass
 - `npm test`

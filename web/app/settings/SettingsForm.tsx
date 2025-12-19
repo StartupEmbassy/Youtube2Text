@@ -10,6 +10,34 @@ type FilenameStyleOpt = "" | "id" | "id_title" | "title_id";
 type AudioFormatOpt = "" | "mp3" | "wav";
 type LanguageDetectionOpt = "" | "auto" | "manual";
 
+function Tooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="tooltipContainer" data-open={open ? "true" : "false"}>
+      <span
+        className="tooltipIcon"
+        role="button"
+        tabIndex={0}
+        aria-label={text}
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((v) => !v);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
+        onBlur={() => setOpen(false)}
+      >
+        ?
+      </span>
+      <span className="tooltipText">{text}</span>
+    </span>
+  );
+}
+
 function toTriBool(v: unknown): TriBool {
   if (v === true) return "true";
   if (v === false) return "false";
@@ -175,7 +203,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">Core</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">filenameStyle</span>
+                <span className="formLabel">
+                  filenameStyle
+                  <Tooltip text="Output filename format: title_id (Title__abc123), id_title, or id only." />
+                </span>
                 <select
                   className="inputMd"
                   value={form.filenameStyle}
@@ -191,7 +222,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               </div>
 
               <div className="formRow">
-                <span className="formLabel">audioFormat</span>
+                <span className="formLabel">
+                  audioFormat
+                  <Tooltip text="Downloaded audio format: mp3 (smaller) or wav (lossless, bigger files)." />
+                </span>
                 <select
                   className="inputMd"
                   value={form.audioFormat}
@@ -206,7 +240,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               </div>
 
               <div className="formRow">
-                <span className="formLabel">concurrency</span>
+                <span className="formLabel">
+                  concurrency
+                  <Tooltip text="How many videos to process in parallel (2-4 typical; higher can hit rate limits)." />
+                </span>
                 <input
                   className="inputXs"
                   inputMode="numeric"
@@ -222,7 +259,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">Language</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">languageDetection</span>
+                <span className="formLabel">
+                  languageDetection
+                  <Tooltip text="auto = detect per video; manual = force a languageCode." />
+                </span>
                 <select
                   className="inputMd"
                   value={form.languageDetection}
@@ -239,7 +279,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 </select>
               </div>
               <div className="formRow">
-                <span className="formLabel">languageCode</span>
+                <span className="formLabel">
+                  languageCode
+                  <Tooltip text="Language code used when manual (e.g. en_us, es, fr, de). Leave empty to inherit." />
+                </span>
                 <input
                   className="inputMd"
                   value={form.languageCode}
@@ -255,7 +298,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">Outputs</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">csvEnabled</span>
+                <span className="formLabel">
+                  csvEnabled
+                  <Tooltip text="Generate a .csv alongside the canonical .json (useful for spreadsheets)." />
+                </span>
                 <select
                   className="inputSm"
                   value={form.csvEnabled}
@@ -267,7 +313,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 </select>
               </div>
               <div className="formRow">
-                <span className="formLabel">commentsEnabled</span>
+                <span className="formLabel">
+                  commentsEnabled
+                  <Tooltip text="Best-effort: fetch YouTube comments via yt-dlp into .comments.json (non-fatal if it fails)." />
+                </span>
                 <select
                   className="inputSm"
                   value={form.commentsEnabled}
@@ -281,7 +330,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 </select>
               </div>
               <div className="formRow">
-                <span className="formLabel">commentsMax</span>
+                <span className="formLabel">
+                  commentsMax
+                  <Tooltip text="Max comments to fetch per video (empty = no limit)." />
+                </span>
                 <input
                   className="inputSm"
                   inputMode="numeric"
@@ -297,7 +349,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">Planning</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">maxNewVideos</span>
+                <span className="formLabel">
+                  maxNewVideos
+                  <Tooltip text='Limit NEW (unprocessed) videos per run. Applied after skipping already-processed videos (good for "10 now, 10 later").' />
+                </span>
                 <input
                   className="inputSm"
                   inputMode="numeric"
@@ -307,7 +362,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 />
               </div>
               <div className="formRow">
-                <span className="formLabel">afterDate</span>
+                <span className="formLabel">
+                  afterDate
+                  <Tooltip text="Only process videos published after this date (YYYY-MM-DD)." />
+                </span>
                 <input
                   className="inputMd"
                   value={form.afterDate}
@@ -316,7 +374,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 />
               </div>
               <div className="formRow">
-                <span className="formLabel">catalogMaxAgeHours</span>
+                <span className="formLabel">
+                  catalogMaxAgeHours
+                  <Tooltip text="Catalog cache TTL in hours (default 168 = 7 days). If exceeded, we force a full channel refresh for exact planning." />
+                </span>
                 <input
                   className="inputSm"
                   inputMode="numeric"
@@ -332,7 +393,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">Polling</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">pollIntervalMs</span>
+                <span className="formLabel">
+                  pollIntervalMs
+                  <Tooltip text="How often to poll AssemblyAI transcription status (milliseconds)." />
+                </span>
                 <input
                   className="inputSm"
                   inputMode="numeric"
@@ -342,7 +406,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 />
               </div>
               <div className="formRow">
-                <span className="formLabel">maxPollMinutes</span>
+                <span className="formLabel">
+                  maxPollMinutes
+                  <Tooltip text="Max minutes to wait for a single transcription before timing out." />
+                </span>
                 <input
                   className="inputSm"
                   inputMode="numeric"
@@ -358,7 +425,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">Retries</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">downloadRetries</span>
+                <span className="formLabel">
+                  downloadRetries
+                  <Tooltip text="Retry attempts if audio download fails (yt-dlp / transient errors)." />
+                </span>
                 <input
                   className="inputXs"
                   inputMode="numeric"
@@ -368,7 +438,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 />
               </div>
               <div className="formRow">
-                <span className="formLabel">transcriptionRetries</span>
+                <span className="formLabel">
+                  transcriptionRetries
+                  <Tooltip text="Retry attempts if upload/transcription fails (transient network/5xx)." />
+                </span>
                 <input
                   className="inputXs"
                   inputMode="numeric"
@@ -384,7 +457,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             <h3 className="title">yt-dlp</h3>
             <div className="stackTight">
               <div className="formRow">
-                <span className="formLabel">ytDlpExtraArgs</span>
+                <span className="formLabel">
+                  ytDlpExtraArgs
+                  <Tooltip text='Extra yt-dlp arguments (one per line). Example for EJS warnings: --extractor-args "youtube:player_client=default"' />
+                </span>
                 <span className="muted">one per line</span>
               </div>
               <textarea

@@ -201,6 +201,73 @@ a:hover {
   gap: 6px;
 }
 
+/* Tooltip for settings help text (Gemini-designed) */
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.tooltipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.35);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  user-select: none;
+}
+
+.tooltipText {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  z-index: 100;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.tooltipText::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--border) transparent transparent transparent;
+}
+
+.tooltipContainer:hover .tooltipText {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltipContainer[data-open="true"] .tooltipText {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .formRow {
   display: flex;
   flex-direction: column;

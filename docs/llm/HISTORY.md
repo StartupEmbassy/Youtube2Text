@@ -6,6 +6,12 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-19 - GPT-5.2 - Settings UI help tooltips (Gemini-designed): add tooltip CSS + a small Tooltip component and attach per-field help text to `/settings` labels; bump version to 0.17.2 - Files: [web/app/globals.css, web/app/settings/SettingsForm.tsx, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.1 -> 0.17.2)
+
+2025-12-19 - Claude Opus 4.5 - Settings help tooltips spec: consulted Gemini for UX pattern (recommends ? icon tooltips for 15+ fields); wrote CSS spec matching dark theme + Tooltip component + help text for all 16 fields to HANDOFF.md for GPT to implement - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
+2025-12-19 - Claude Opus 4.5 - Reviewed GPT v0.17.1 implementation: confirmed all UX fixes correctly applied (compact inputs, formRow, right-aligned labels, 3 cards); Gemini CLI also validated "no issues found"; Docker rebuilt and running - Files: none - Version impact: no
+
 2025-12-19 - GPT-5.2 - Settings UI UX polish (Gemini-validated): add settings-specific compact input CSS classes, switch `/settings` to inline rows with right-aligned labels on desktop (mobile-first column layout), and reduce card clutter; bump version to 0.17.1 - Files: [web/app/globals.css, web/app/settings/SettingsForm.tsx, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.0 -> 0.17.1)
 
 2025-12-19 - Claude Opus 4.5 - Final Settings UX spec with 3-LLM consensus: GPT proposed responsiveness (media queries), Gemini validated and provided exact CSS with 900px breakpoint (matching project convention), touch target recommendations (44x44px min), and mobile-first responsive formRow/formLabel classes; wrote complete implementation-ready CSS spec to HANDOFF.md for GPT to implement - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
