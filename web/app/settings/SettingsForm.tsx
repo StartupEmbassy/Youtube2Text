@@ -454,12 +454,12 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
           </div>
 
           <div className="card">
-            <h3 className="title">yt-dlp</h3>
+            <h3 className="title">Advanced (download)</h3>
             <div className="stackTight">
               <div className="formRow">
                 <span className="formLabel">
                   ytDlpExtraArgs
-                  <Tooltip text='Extra yt-dlp arguments (one per line). Example for EJS warnings: --extractor-args "youtube:player_client=default"' />
+                  <Tooltip text='Advanced flags for the internal YouTube downloader (yt-dlp). Most users should leave this empty. One argument per line. Example for some extractor warnings: --extractor-args "youtube:player_client=default"' />
                 </span>
                 <span className="muted">one per line</span>
               </div>

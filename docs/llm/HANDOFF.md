@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.17.2 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.17.3 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -30,7 +30,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Reference spec: `docs/llm/HANDOFF_ARCHIVE.md`
 - Card 1: Core + Language + Outputs
 - Card 2: Planning + Polling + Retries
-- Card 3: yt-dlp (textarea full width)
+- Card 3: Advanced (download) - textarea full width
 
 #### Additional Gemini Recommendations
 
@@ -160,11 +160,45 @@ function Tooltip({ text }: { text: string }) {
 | maxPollMinutes | Timeout waiting for a single transcription |
 | downloadRetries | Retry attempts if audio download fails |
 | transcriptionRetries | Retry attempts if transcription fails |
-| ytDlpExtraArgs | Extra yt-dlp arguments, one per line (e.g., --cookies-from-browser chrome) |
+| ytDlpExtraArgs | Advanced downloader arguments (yt-dlp), one per line. Most users should leave this empty. |
 
 **Source:** Gemini CLI UX recommendation (tooltip pattern for 15+ fields).
 
 ---
+
+### 2.7.5 UX follow-up: rename "yt-dlp" section + fix textarea resize (DONE)
+
+**Status: DONE in v0.17.3.**
+
+#### Problem
+1. "yt-dlp" is technical jargon users dont understand
+2. Textarea can be resized horizontally, breaking layout
+
+#### Solution (3-LLM consensus: GPT proposed, Claude + Gemini approved)
+
+**Change 1: Rename section**
+- Current: `<h3>yt-dlp</h3>`
+- New: `<h3>Advanced (download)</h3>`
+
+**Change 2: Update tooltip text**
+- Current: `Extra yt-dlp arguments...`
+- New: `Advanced flags for the YouTube downloader. Leave empty unless troubleshooting.`
+
+**Change 3: Fix textarea resize**
+Add to `globals.css`:
+```css
+textarea.input {
+  resize: vertical;
+  max-width: 100%;
+}
+```
+
+#### Review Summary
+| Reviewer | Verdict |
+|----------|---------|
+| GPT | Proposed the changes |
+| Claude | Approved - "yt-dlp is useless jargon for users" |
+| Gemini | Approved - "improves clarity for non-technical users, resize:vertical is standard practice" |
 
 ### Future (lower priority)
 1) Add runtime timeouts and Docker healthcheck (ops hardening).

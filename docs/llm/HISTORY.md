@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-19 - GPT-5.2 - Settings UX polish: rename confusing "yt-dlp" section to "Advanced (download)", improve tooltip copy for non-technical users, and prevent horizontal textarea resizing (resize: vertical) to avoid layout shifting; bump version to 0.17.3 - Files: [web/app/settings/SettingsForm.tsx, web/app/globals.css, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.2 -> 0.17.3)
+
+2025-12-19 - Claude Opus 4.5 - Reviewed GPT v0.17.2 tooltips (excellent work: added mobile click support + accessibility beyond spec); reviewed GPT 2.7.5 proposal (rename yt-dlp to Advanced + textarea resize:vertical); consulted Gemini who approved both; updated HANDOFF with 3-LLM consensus - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-19 - GPT-5.2 - Settings UI help tooltips (Gemini-designed): add tooltip CSS + a small Tooltip component and attach per-field help text to `/settings` labels; bump version to 0.17.2 - Files: [web/app/globals.css, web/app/settings/SettingsForm.tsx, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.1 -> 0.17.2)
 
 2025-12-19 - Claude Opus 4.5 - Settings help tooltips spec: consulted Gemini for UX pattern (recommends ? icon tooltips for 15+ fields); wrote CSS spec matching dark theme + Tooltip component + help text for all 16 fields to HANDOFF.md for GPT to implement - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
