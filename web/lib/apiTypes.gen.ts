@@ -501,7 +501,27 @@ export interface components {
             updatedAt?: string;
             settings: components["schemas"]["NonSecretSettings"];
             effective: components["schemas"]["NonSecretSettings"];
+            sources: {
+                filenameStyle?: components["schemas"]["NonSecretSettingSource"];
+                audioFormat?: components["schemas"]["NonSecretSettingSource"];
+                languageDetection?: components["schemas"]["NonSecretSettingSource"];
+                languageCode?: components["schemas"]["NonSecretSettingSource"];
+                concurrency?: components["schemas"]["NonSecretSettingSource"];
+                maxNewVideos?: components["schemas"]["NonSecretSettingSource"];
+                afterDate?: components["schemas"]["NonSecretSettingSource"];
+                csvEnabled?: components["schemas"]["NonSecretSettingSource"];
+                commentsEnabled?: components["schemas"]["NonSecretSettingSource"];
+                commentsMax?: components["schemas"]["NonSecretSettingSource"];
+                pollIntervalMs?: components["schemas"]["NonSecretSettingSource"];
+                maxPollMinutes?: components["schemas"]["NonSecretSettingSource"];
+                downloadRetries?: components["schemas"]["NonSecretSettingSource"];
+                transcriptionRetries?: components["schemas"]["NonSecretSettingSource"];
+                ytDlpExtraArgs?: components["schemas"]["NonSecretSettingSource"];
+                catalogMaxAgeHours?: components["schemas"]["NonSecretSettingSource"];
+            };
         };
+        /** @enum {string} */
+        NonSecretSettingSource: "env" | "config.yaml" | "settingsFile" | "default" | "unset";
         SettingsPatchRequest: {
             /** @description Partial settings update. Send `null` to clear a key. */
             settings: {

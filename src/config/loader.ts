@@ -73,20 +73,44 @@ function filterUndefined(obj: PartialConfig): PartialConfig {
   );
 }
 
-export function loadConfig(configPath = "config.yaml"): AppConfig {
+export type ConfigSourceSnapshots = {
+  outputDirCandidate: string;
+  settingsFile: ReturnType<typeof readSettingsFileSync>;
+  settingsConfig: PartialConfig;
+  yamlConfig: PartialConfig;
+  envConfig: PartialConfig;
+};
+
+export function loadConfigSourceSnapshots(
+  configPath = "config.yaml",
+  opts?: { outputDirOverride?: string }
+): ConfigSourceSnapshots {
   const yamlConfig = loadYamlConfig(resolve(configPath));
   const envConfig = filterUndefined(loadEnvConfig());
 
-  // Settings file lives under outputDir. Determine candidate outputDir before schema parse.
   const outputDirCandidate =
-    (typeof envConfig.outputDir === "string" && envConfig.outputDir.length > 0
-      ? envConfig.outputDir
-      : typeof yamlConfig.outputDir === "string" && (yamlConfig.outputDir as string).length > 0
-        ? (yamlConfig.outputDir as string)
-        : "output");
+    typeof opts?.outputDirOverride === "string" && opts.outputDirOverride.length > 0
+      ? opts.outputDirOverride
+      : (typeof envConfig.outputDir === "string" && envConfig.outputDir.length > 0
+          ? envConfig.outputDir
+          : typeof yamlConfig.outputDir === "string" && (yamlConfig.outputDir as string).length > 0
+            ? (yamlConfig.outputDir as string)
+            : "output");
 
   const settingsFile = readSettingsFileSync(outputDirCandidate);
   const settingsConfig = settingsFile?.settings ?? {};
+
+  return {
+    outputDirCandidate,
+    settingsFile,
+    settingsConfig,
+    yamlConfig,
+    envConfig,
+  };
+}
+
+export function loadConfig(configPath = "config.yaml"): AppConfig {
+  const { settingsConfig, yamlConfig, envConfig } = loadConfigSourceSnapshots(configPath);
 
   // Precedence: settings (lowest) < config.yaml < .env (highest)
   const merged = { ...settingsConfig, ...yamlConfig, ...envConfig };

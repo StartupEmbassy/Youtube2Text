@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-19 - GPT-5.2 - Settings source tracking: extend `GET /settings` to return per-field sources (env vs config.yaml vs settingsFile vs default/unset) and display `(source)` next to inline effective-value hints in the Settings UI; bump version to 0.17.5 - Files: [src/config/loader.ts, src/config/settings.ts, src/api/settings.ts, openapi.yaml, web/lib/apiTypes.gen.ts, web/app/settings/SettingsForm.tsx, tests/apiSettings.test.ts, docs/llm/HISTORY.md, docs/llm/HANDOFF.md, docs/VERSIONING_RULES.md, package.json, package-lock.json] - Version impact: yes (0.17.4 -> 0.17.5)
+
+2025-12-19 - GPT-5.2 - Settings UX clarity: when a Settings field is unset (inherit), show an inline `effective: ...` hint next to the input so users can see the actual value coming from config/env/defaults; bump version to 0.17.4 - Files: [web/app/settings/SettingsForm.tsx, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.3 -> 0.17.4)
+
 2025-12-19 - GPT-5.2 - Settings UX polish: rename confusing "yt-dlp" section to "Advanced (download)", improve tooltip copy for non-technical users, and prevent horizontal textarea resizing (resize: vertical) to avoid layout shifting; bump version to 0.17.3 - Files: [web/app/settings/SettingsForm.tsx, web/app/globals.css, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.2 -> 0.17.3)
 
 2025-12-19 - Claude Opus 4.5 - Reviewed GPT v0.17.2 tooltips (excellent work: added mobile click support + accessibility beyond spec); reviewed GPT 2.7.5 proposal (rename yt-dlp to Advanced + textarea resize:vertical); consulted Gemini who approved both; updated HANDOFF with 3-LLM consensus - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

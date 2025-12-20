@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { components } from "../../lib/apiTypes.gen";
 
 type SettingsGetResponse = components["schemas"]["SettingsGetResponse"];
+type Sources = SettingsGetResponse["sources"];
 
 type TriBool = "" | "true" | "false";
 type FilenameStyleOpt = "" | "id" | "id_title" | "title_id";
@@ -38,6 +39,16 @@ function Tooltip({ text }: { text: string }) {
   );
 }
 
+function fmtEffective(value: unknown): string {
+  if (value === undefined) return "(unset)";
+  if (value === null) return "(unset)";
+  if (typeof value === "string") return value.trim().length === 0 ? "(unset)" : value;
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.length === 0 ? "(empty)" : `${value.length} items`;
+  return String(value);
+}
+
 function toTriBool(v: unknown): TriBool {
   if (v === true) return "true";
   if (v === false) return "false";
@@ -63,6 +74,15 @@ function splitLines(raw: string): string[] {
     .split(/\r?\n/g)
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+}
+
+function fmtSource(source: unknown): string {
+  if (source === "env") return "env";
+  if (source === "config.yaml") return "config.yaml";
+  if (source === "settingsFile") return "settings file";
+  if (source === "default") return "default";
+  if (source === "unset") return "unset";
+  return "unknown";
 }
 
 export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
@@ -107,6 +127,9 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
   useEffect(() => {
     setForm(initialForm);
   }, [initialForm]);
+
+  const effective = data.effective ?? ({} as any);
+  const sources: Sources = (data.sources ?? {}) as any;
 
   async function save() {
     setSaving(true);
@@ -219,6 +242,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="id_title">id_title</option>
                   <option value="id">id</option>
                 </select>
+                {form.filenameStyle === "" ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.filenameStyle)} ({fmtSource(sources.filenameStyle)})
+                  </span>
+                ) : null}
               </div>
 
               <div className="formRow">
@@ -237,6 +265,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="mp3">mp3</option>
                   <option value="wav">wav</option>
                 </select>
+                {form.audioFormat === "" ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.audioFormat)} ({fmtSource(sources.audioFormat)})
+                  </span>
+                ) : null}
               </div>
 
               <div className="formRow">
@@ -251,6 +284,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, concurrency: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.concurrency.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.concurrency)} ({fmtSource(sources.concurrency)})
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -277,6 +315,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="auto">auto</option>
                   <option value="manual">manual</option>
                 </select>
+                {form.languageDetection === "" ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.languageDetection)} ({fmtSource(sources.languageDetection)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -290,6 +333,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   placeholder="en_us"
                 />
                 <span className="muted">when manual</span>
+                {form.languageCode.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.languageCode)} ({fmtSource(sources.languageCode)})
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -311,6 +359,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>
+                {form.csvEnabled === "" ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.csvEnabled)} ({fmtSource(sources.csvEnabled)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -328,6 +381,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>
+                {form.commentsEnabled === "" ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.commentsEnabled)} ({fmtSource(sources.commentsEnabled)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -341,6 +399,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, commentsMax: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.commentsMax.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.commentsMax)} ({fmtSource(sources.commentsMax)})
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -360,6 +423,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, maxNewVideos: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.maxNewVideos.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.maxNewVideos)} ({fmtSource(sources.maxNewVideos)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -372,6 +440,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, afterDate: e.target.value })}
                   placeholder="YYYY-MM-DD"
                 />
+                {form.afterDate.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.afterDate)} ({fmtSource(sources.afterDate)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -385,6 +458,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, catalogMaxAgeHours: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.catalogMaxAgeHours.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.catalogMaxAgeHours)} ({fmtSource(sources.catalogMaxAgeHours)})
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -404,6 +482,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, pollIntervalMs: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.pollIntervalMs.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.pollIntervalMs)} ({fmtSource(sources.pollIntervalMs)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -417,6 +500,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, maxPollMinutes: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.maxPollMinutes.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.maxPollMinutes)} ({fmtSource(sources.maxPollMinutes)})
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -436,6 +524,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, downloadRetries: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.downloadRetries.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.downloadRetries)} ({fmtSource(sources.downloadRetries)})
+                  </span>
+                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -449,6 +542,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, transcriptionRetries: e.target.value })}
                   placeholder="inherit"
                 />
+                {form.transcriptionRetries.trim().length === 0 ? (
+                  <span className="muted mono">
+                    effective: {fmtEffective(effective.transcriptionRetries)} ({fmtSource(sources.transcriptionRetries)})
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -470,6 +568,11 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 onChange={(e) => setForm({ ...form, ytDlpExtraArgs: e.target.value })}
                 placeholder="(inherit)"
               />
+              {form.ytDlpExtraArgs.trim().length === 0 ? (
+                <div className="muted mono">
+                  effective: {fmtEffective(effective.ytDlpExtraArgs)} ({fmtSource(sources.ytDlpExtraArgs)})
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

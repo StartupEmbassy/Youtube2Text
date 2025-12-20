@@ -45,6 +45,8 @@ test("GET /settings returns effective values and a stable settingsPath", async (
     assert.match(body.settingsPath, /_settings\.json$/);
     assert.equal(typeof body.settings, "object");
     assert.equal(typeof body.effective, "object");
+    assert.equal(typeof body.sources, "object");
+    assert.equal(typeof body.sources.maxNewVideos, "string");
   });
 });
 
@@ -56,6 +58,8 @@ test("PATCH /settings persists and influences /runs/plan effective config", asyn
       body: JSON.stringify({ settings: { maxNewVideos: 1 } }),
     });
     assert.equal(patch.status, 200);
+    const patchedBody = (await patch.json()) as any;
+    assert.equal(patchedBody.sources.maxNewVideos, "settingsFile");
 
     const plan1 = await fetch(`${baseUrl}/runs/plan`, {
       method: "POST",
@@ -76,4 +80,3 @@ test("PATCH /settings persists and influences /runs/plan effective config", asyn
     assert.equal(planBody2.plan.maxNewVideosSeen, 2);
   });
 });
-

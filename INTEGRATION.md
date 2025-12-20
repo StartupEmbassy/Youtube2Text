@@ -39,6 +39,8 @@ Fetch current settings + effective values:
 curl -sS http://127.0.0.1:8787/settings
 ```
 
+The response also includes `sources` per field (`env`, `config.yaml`, `settingsFile`, `default`, `unset`) so UIs can explain where each effective value comes from.
+
 Update settings (send `null` to clear a key):
 
 ```bash

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.17.3
+  version: 0.17.5
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -773,7 +773,7 @@ components:
 
     SettingsGetResponse:
       type: object
-      required: [outputDir, settingsPath, settings, effective]
+      required: [outputDir, settingsPath, settings, effective, sources]
       properties:
         outputDir: { type: string }
         settingsPath: { type: string }
@@ -782,6 +782,30 @@ components:
           $ref: "#/components/schemas/NonSecretSettings"
         effective:
           $ref: "#/components/schemas/NonSecretSettings"
+        sources:
+          type: object
+          additionalProperties: false
+          properties:
+            filenameStyle: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            audioFormat: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            languageDetection: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            languageCode: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            concurrency: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            maxNewVideos: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            afterDate: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            csvEnabled: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            commentsEnabled: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            commentsMax: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            pollIntervalMs: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            maxPollMinutes: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            downloadRetries: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            transcriptionRetries: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            ytDlpExtraArgs: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            catalogMaxAgeHours: { $ref: "#/components/schemas/NonSecretSettingSource" }
+
+    NonSecretSettingSource:
+      type: string
+      enum: [env, config.yaml, settingsFile, default, unset]
 
     SettingsPatchRequest:
       type: object

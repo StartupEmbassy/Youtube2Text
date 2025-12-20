@@ -6,8 +6,10 @@ import {
   sanitizeNonSecretSettings,
   settingsPath,
   writeSettingsFile,
+  type NonSecretSettingSource,
   type NonSecretSettings,
 } from "../config/settings.js";
+import { loadConfigSourceSnapshots } from "../config/loader.js";
 
 export type SettingsGetResponse = {
   outputDir: string;
@@ -15,6 +17,7 @@ export type SettingsGetResponse = {
   updatedAt?: string;
   settings: Partial<NonSecretSettings>;
   effective: NonSecretSettings;
+  sources: Record<keyof NonSecretSettings, NonSecretSettingSource>;
 };
 
 export type SettingsPatchRequest = {
@@ -26,12 +29,15 @@ export async function getSettingsResponse(baseConfig: AppConfig): Promise<Settin
   const file = await readSettingsFile(baseConfig.outputDir);
   const settings = sanitizeNonSecretSettings(file?.settings);
   const effectiveConfig = applySettingsToConfig(baseConfig, settings);
+  const effective = pickNonSecretSettings(effectiveConfig);
+  const sources = computeNonSecretSettingSources(baseConfig.outputDir, effective);
   return {
     outputDir: baseConfig.outputDir,
     settingsPath: settingsPath(baseConfig.outputDir),
     updatedAt: file?.updatedAt,
     settings,
-    effective: pickNonSecretSettings(effectiveConfig),
+    effective,
+    sources,
   };
 }
 
@@ -54,3 +60,90 @@ export async function patchSettings(
   return getSettingsResponse(baseConfig);
 }
 
+function computeNonSecretSettingSources(
+  outputDir: string,
+  effective: NonSecretSettings
+): Record<keyof NonSecretSettings, NonSecretSettingSource> {
+  const { settingsConfig, yamlConfig, envConfig } = loadConfigSourceSnapshots("config.yaml", {
+    outputDirOverride: outputDir,
+  });
+
+  const envHas = (key: keyof NonSecretSettings): boolean => {
+    const envVar = envVarForSetting(key);
+    if (!envVar) return false;
+    return process.env[envVar] !== undefined;
+  };
+
+  const sourceFor = (key: keyof NonSecretSettings): NonSecretSettingSource => {
+    // env wins (if the env var is set and it produced a defined config value)
+    if (envHas(key) && (envConfig as any)[key] !== undefined) return "env";
+    // yaml wins over settings file
+    if ((yamlConfig as any)[key] !== undefined) return "config.yaml";
+    // settings file is lowest
+    if ((settingsConfig as any)[key] !== undefined) return "settingsFile";
+    // otherwise: schema default or unset optional
+    return (effective as any)[key] === undefined ? "unset" : "default";
+  };
+
+  const keys: (keyof NonSecretSettings)[] = [
+    "filenameStyle",
+    "audioFormat",
+    "languageDetection",
+    "languageCode",
+    "concurrency",
+    "maxNewVideos",
+    "afterDate",
+    "csvEnabled",
+    "commentsEnabled",
+    "commentsMax",
+    "pollIntervalMs",
+    "maxPollMinutes",
+    "downloadRetries",
+    "transcriptionRetries",
+    "ytDlpExtraArgs",
+    "catalogMaxAgeHours",
+  ];
+
+  const out: Partial<Record<keyof NonSecretSettings, NonSecretSettingSource>> = {};
+  for (const k of keys) out[k] = sourceFor(k);
+  return out as Record<keyof NonSecretSettings, NonSecretSettingSource>;
+}
+
+function envVarForSetting(key: keyof NonSecretSettings): string | undefined {
+  switch (key) {
+    case "filenameStyle":
+      return "FILENAME_STYLE";
+    case "audioFormat":
+      return "AUDIO_FORMAT";
+    case "languageDetection":
+      return "LANGUAGE_DETECTION";
+    case "languageCode":
+      return "LANGUAGE_CODE";
+    case "concurrency":
+      return "CONCURRENCY";
+    case "maxNewVideos":
+      return "MAX_NEW_VIDEOS";
+    case "afterDate":
+      return "AFTER_DATE";
+    case "csvEnabled":
+      return "CSV_ENABLED";
+    case "commentsEnabled":
+      return "COMMENTS_ENABLED";
+    case "commentsMax":
+      return "COMMENTS_MAX";
+    case "pollIntervalMs":
+      return "POLL_INTERVAL_MS";
+    case "maxPollMinutes":
+      return "MAX_POLL_MINUTES";
+    case "downloadRetries":
+      return "DOWNLOAD_RETRIES";
+    case "transcriptionRetries":
+      return "TRANSCRIPTION_RETRIES";
+    case "ytDlpExtraArgs":
+      return "YT_DLP_EXTRA_ARGS";
+    case "catalogMaxAgeHours":
+      return "Y2T_CATALOG_MAX_AGE_HOURS";
+    default:
+      return undefined;
+  }
+}

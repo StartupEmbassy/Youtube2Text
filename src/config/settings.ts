@@ -31,6 +31,8 @@ export type NonSecretSettings = Pick<
   | "catalogMaxAgeHours"
 >;
 
+export type NonSecretSettingSource = "env" | "config.yaml" | "settingsFile" | "default" | "unset";
+
 export function settingsPath(outputDir: string): string {
   return join(outputDir, "_settings.json");
 }
