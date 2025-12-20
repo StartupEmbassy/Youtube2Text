@@ -11,15 +11,16 @@ type FilenameStyleOpt = "" | "id" | "id_title" | "title_id";
 type AudioFormatOpt = "" | "mp3" | "wav";
 type LanguageDetectionOpt = "" | "auto" | "manual";
 
-function Tooltip({ text }: { text: string }) {
+function Tooltip({ text, effective }: { text: string; effective?: string }) {
   const [open, setOpen] = useState(false);
+  const fullText = effective ? `${text}\n\nCurrent: ${effective}` : text;
   return (
     <span className="tooltipContainer" data-open={open ? "true" : "false"}>
       <span
         className="tooltipIcon"
         role="button"
         tabIndex={0}
-        aria-label={text}
+        aria-label={fullText}
         onClick={(e) => {
           e.preventDefault();
           setOpen((v) => !v);
@@ -34,7 +35,7 @@ function Tooltip({ text }: { text: string }) {
       >
         ?
       </span>
-      <span className="tooltipText">{text}</span>
+      <span className="tooltipText" style={{ whiteSpace: "pre-line" }}>{fullText}</span>
     </span>
   );
 }
@@ -221,6 +222,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
 
         <div className="spacer10" />
 
+        <div className="flexWrap">
+          <button className="button" onClick={save} disabled={saving}>
+            {saving ? "Saving..." : "Save settings"}
+          </button>
+        </div>
+
+        <div className="spacer14" />
+
         <div className="grid">
           <div className="card">
             <h3 className="title">Core</h3>
@@ -228,7 +237,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   filenameStyle
-                  <Tooltip text="Output filename format: title_id (Title__abc123), id_title, or id only." />
+                  <Tooltip
+                    text="Output filename format: title_id (Title__abc123), id_title, or id only."
+                    effective={form.filenameStyle === "" ? `${fmtEffective(effective.filenameStyle)} (${fmtSource(sources.filenameStyle)})` : undefined}
+                  />
                 </span>
                 <select
                   className="inputMd"
@@ -242,17 +254,15 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="id_title">id_title</option>
                   <option value="id">id</option>
                 </select>
-                {form.filenameStyle === "" ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.filenameStyle)} ({fmtSource(sources.filenameStyle)})
-                  </span>
-                ) : null}
               </div>
 
               <div className="formRow">
                 <span className="formLabel">
                   audioFormat
-                  <Tooltip text="Downloaded audio format: mp3 (smaller) or wav (lossless, bigger files)." />
+                  <Tooltip
+                    text="Downloaded audio format: mp3 (smaller) or wav (lossless, bigger files)."
+                    effective={form.audioFormat === "" ? `${fmtEffective(effective.audioFormat)} (${fmtSource(sources.audioFormat)})` : undefined}
+                  />
                 </span>
                 <select
                   className="inputMd"
@@ -265,17 +275,15 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="mp3">mp3</option>
                   <option value="wav">wav</option>
                 </select>
-                {form.audioFormat === "" ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.audioFormat)} ({fmtSource(sources.audioFormat)})
-                  </span>
-                ) : null}
               </div>
 
               <div className="formRow">
                 <span className="formLabel">
                   concurrency
-                  <Tooltip text="How many videos to process in parallel (2-4 typical; higher can hit rate limits)." />
+                  <Tooltip
+                    text="How many videos to process in parallel (2-4 typical; higher can hit rate limits)."
+                    effective={form.concurrency.trim().length === 0 ? `${fmtEffective(effective.concurrency)} (${fmtSource(sources.concurrency)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputXs"
@@ -284,11 +292,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, concurrency: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.concurrency.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.concurrency)} ({fmtSource(sources.concurrency)})
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -299,7 +302,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   languageDetection
-                  <Tooltip text="auto = detect per video; manual = force a languageCode." />
+                  <Tooltip
+                    text="auto = detect per video; manual = force a languageCode."
+                    effective={form.languageDetection === "" ? `${fmtEffective(effective.languageDetection)} (${fmtSource(sources.languageDetection)})` : undefined}
+                  />
                 </span>
                 <select
                   className="inputMd"
@@ -315,16 +321,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="auto">auto</option>
                   <option value="manual">manual</option>
                 </select>
-                {form.languageDetection === "" ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.languageDetection)} ({fmtSource(sources.languageDetection)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   languageCode
-                  <Tooltip text="Language code used when manual (e.g. en_us, es, fr, de). Leave empty to inherit." />
+                  <Tooltip
+                    text="Language code used when manual (e.g. en_us, es, fr, de). Leave empty to inherit."
+                    effective={form.languageCode.trim().length === 0 ? `${fmtEffective(effective.languageCode)} (${fmtSource(sources.languageCode)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputMd"
@@ -333,11 +337,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   placeholder="en_us"
                 />
                 <span className="muted">when manual</span>
-                {form.languageCode.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.languageCode)} ({fmtSource(sources.languageCode)})
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -348,7 +347,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   csvEnabled
-                  <Tooltip text="Generate a .csv alongside the canonical .json (useful for spreadsheets)." />
+                  <Tooltip
+                    text="Generate a .csv alongside the canonical .json (useful for spreadsheets)."
+                    effective={form.csvEnabled === "" ? `${fmtEffective(effective.csvEnabled)} (${fmtSource(sources.csvEnabled)})` : undefined}
+                  />
                 </span>
                 <select
                   className="inputSm"
@@ -359,16 +361,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>
-                {form.csvEnabled === "" ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.csvEnabled)} ({fmtSource(sources.csvEnabled)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   commentsEnabled
-                  <Tooltip text="Best-effort: fetch YouTube comments via yt-dlp into .comments.json (non-fatal if it fails)." />
+                  <Tooltip
+                    text="Best-effort: fetch YouTube comments via yt-dlp into .comments.json (non-fatal if it fails)."
+                    effective={form.commentsEnabled === "" ? `${fmtEffective(effective.commentsEnabled)} (${fmtSource(sources.commentsEnabled)})` : undefined}
+                  />
                 </span>
                 <select
                   className="inputSm"
@@ -381,16 +381,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>
-                {form.commentsEnabled === "" ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.commentsEnabled)} ({fmtSource(sources.commentsEnabled)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   commentsMax
-                  <Tooltip text="Max comments to fetch per video (empty = no limit)." />
+                  <Tooltip
+                    text="Max comments to fetch per video (empty = no limit)."
+                    effective={form.commentsMax.trim().length === 0 ? `${fmtEffective(effective.commentsMax)} (${fmtSource(sources.commentsMax)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputSm"
@@ -399,11 +397,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, commentsMax: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.commentsMax.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.commentsMax)} ({fmtSource(sources.commentsMax)})
-                  </span>
-                ) : null}
               </div>
             </div>
           </div>
@@ -414,7 +407,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   maxNewVideos
-                  <Tooltip text='Limit NEW (unprocessed) videos per run. Applied after skipping already-processed videos (good for "10 now, 10 later").' />
+                  <Tooltip
+                    text='Limit NEW (unprocessed) videos per run. Applied after skipping already-processed videos (good for "10 now, 10 later").'
+                    effective={form.maxNewVideos.trim().length === 0 ? `${fmtEffective(effective.maxNewVideos)} (${fmtSource(sources.maxNewVideos)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputSm"
@@ -423,16 +419,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, maxNewVideos: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.maxNewVideos.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.maxNewVideos)} ({fmtSource(sources.maxNewVideos)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   afterDate
-                  <Tooltip text="Only process videos published after this date (YYYY-MM-DD)." />
+                  <Tooltip
+                    text="Only process videos published after this date (YYYY-MM-DD)."
+                    effective={form.afterDate.trim().length === 0 ? `${fmtEffective(effective.afterDate)} (${fmtSource(sources.afterDate)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputMd"
@@ -440,16 +434,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, afterDate: e.target.value })}
                   placeholder="YYYY-MM-DD"
                 />
-                {form.afterDate.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.afterDate)} ({fmtSource(sources.afterDate)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   catalogMaxAgeHours
-                  <Tooltip text="Catalog cache TTL in hours (default 168 = 7 days). If exceeded, we force a full channel refresh for exact planning." />
+                  <Tooltip
+                    text="Catalog cache TTL in hours (default 168 = 7 days). If exceeded, we force a full channel refresh for exact planning."
+                    effective={form.catalogMaxAgeHours.trim().length === 0 ? `${fmtEffective(effective.catalogMaxAgeHours)} (${fmtSource(sources.catalogMaxAgeHours)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputSm"
@@ -458,11 +450,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, catalogMaxAgeHours: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.catalogMaxAgeHours.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.catalogMaxAgeHours)} ({fmtSource(sources.catalogMaxAgeHours)})
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -473,7 +460,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   pollIntervalMs
-                  <Tooltip text="How often to poll AssemblyAI transcription status (milliseconds)." />
+                  <Tooltip
+                    text="How often to poll AssemblyAI transcription status (milliseconds)."
+                    effective={form.pollIntervalMs.trim().length === 0 ? `${fmtEffective(effective.pollIntervalMs)} (${fmtSource(sources.pollIntervalMs)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputSm"
@@ -482,16 +472,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, pollIntervalMs: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.pollIntervalMs.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.pollIntervalMs)} ({fmtSource(sources.pollIntervalMs)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   maxPollMinutes
-                  <Tooltip text="Max minutes to wait for a single transcription before timing out." />
+                  <Tooltip
+                    text="Max minutes to wait for a single transcription before timing out."
+                    effective={form.maxPollMinutes.trim().length === 0 ? `${fmtEffective(effective.maxPollMinutes)} (${fmtSource(sources.maxPollMinutes)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputSm"
@@ -500,11 +488,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, maxPollMinutes: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.maxPollMinutes.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.maxPollMinutes)} ({fmtSource(sources.maxPollMinutes)})
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -515,7 +498,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   downloadRetries
-                  <Tooltip text="Retry attempts if audio download fails (yt-dlp / transient errors)." />
+                  <Tooltip
+                    text="Retry attempts if audio download fails (yt-dlp / transient errors)."
+                    effective={form.downloadRetries.trim().length === 0 ? `${fmtEffective(effective.downloadRetries)} (${fmtSource(sources.downloadRetries)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputXs"
@@ -524,16 +510,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, downloadRetries: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.downloadRetries.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.downloadRetries)} ({fmtSource(sources.downloadRetries)})
-                  </span>
-                ) : null}
               </div>
               <div className="formRow">
                 <span className="formLabel">
                   transcriptionRetries
-                  <Tooltip text="Retry attempts if upload/transcription fails (transient network/5xx)." />
+                  <Tooltip
+                    text="Retry attempts if upload/transcription fails (transient network/5xx)."
+                    effective={form.transcriptionRetries.trim().length === 0 ? `${fmtEffective(effective.transcriptionRetries)} (${fmtSource(sources.transcriptionRetries)})` : undefined}
+                  />
                 </span>
                 <input
                   className="inputXs"
@@ -542,11 +526,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, transcriptionRetries: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.transcriptionRetries.trim().length === 0 ? (
-                  <span className="muted mono">
-                    effective: {fmtEffective(effective.transcriptionRetries)} ({fmtSource(sources.transcriptionRetries)})
-                  </span>
-                ) : null}
               </div>
             </div>
           </div>
@@ -557,7 +536,10 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
               <div className="formRow">
                 <span className="formLabel">
                   ytDlpExtraArgs
-                  <Tooltip text='Advanced flags for the internal YouTube downloader (yt-dlp). Most users should leave this empty. One argument per line. Example for some extractor warnings: --extractor-args "youtube:player_client=default"' />
+                  <Tooltip
+                    text='Advanced flags for the internal YouTube downloader (yt-dlp). Most users should leave this empty. One argument per line.'
+                    effective={form.ytDlpExtraArgs.trim().length === 0 ? `${fmtEffective(effective.ytDlpExtraArgs)} (${fmtSource(sources.ytDlpExtraArgs)})` : undefined}
+                  />
                 </span>
                 <span className="muted">one per line</span>
               </div>
@@ -568,21 +550,8 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 onChange={(e) => setForm({ ...form, ytDlpExtraArgs: e.target.value })}
                 placeholder="(inherit)"
               />
-              {form.ytDlpExtraArgs.trim().length === 0 ? (
-                <div className="muted mono">
-                  effective: {fmtEffective(effective.ytDlpExtraArgs)} ({fmtSource(sources.ytDlpExtraArgs)})
-                </div>
-              ) : null}
             </div>
           </div>
-        </div>
-
-        <div className="spacer14" />
-
-        <div className="flexWrap">
-          <button className="button" onClick={save} disabled={saving}>
-            {saving ? "Saving..." : "Save settings"}
-          </button>
         </div>
       </div>
 

@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-20 - Claude Opus 4.5 - Settings UX cleanup (3-LLM consensus): remove inline `effective: value (source)` text from all 16 fields to reduce visual clutter; move effective value info into existing `?` tooltips (combines help text + effective value); move Save button to top of form for better accessibility; Gemini recommended tooltip approach over placeholder/table alternatives; bump version to 0.17.6 - Files: [web/app/settings/SettingsForm.tsx, package.json, openapi.yaml, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md] - Version impact: yes (0.17.5 -> 0.17.6)
+
 2025-12-19 - GPT-5.2 - Settings source tracking: extend `GET /settings` to return per-field sources (env vs config.yaml vs settingsFile vs default/unset) and display `(source)` next to inline effective-value hints in the Settings UI; bump version to 0.17.5 - Files: [src/config/loader.ts, src/config/settings.ts, src/api/settings.ts, openapi.yaml, web/lib/apiTypes.gen.ts, web/app/settings/SettingsForm.tsx, tests/apiSettings.test.ts, docs/llm/HISTORY.md, docs/llm/HANDOFF.md, docs/VERSIONING_RULES.md, package.json, package-lock.json] - Version impact: yes (0.17.4 -> 0.17.5)
 
 2025-12-19 - GPT-5.2 - Settings UX clarity: when a Settings field is unset (inherit), show an inline `effective: ...` hint next to the input so users can see the actual value coming from config/env/defaults; bump version to 0.17.4 - Files: [web/app/settings/SettingsForm.tsx, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, openapi.yaml, package.json, package-lock.json] - Version impact: yes (0.17.3 -> 0.17.4)

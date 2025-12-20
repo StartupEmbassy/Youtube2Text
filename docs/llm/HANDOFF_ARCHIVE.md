@@ -7,6 +7,144 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ---
 
+## Settings UI Implementation Reference (v0.17.0-v0.17.5) - Archived 2025-12-20
+
+This section contains the CSS specs and component patterns that were implemented in v0.17.0-v0.17.5.
+Moved here from HANDOFF.md to keep the operational snapshot short.
+
+### Tooltip CSS (Gemini-designed, implemented in v0.17.2)
+
+```css
+/* Tooltip for settings help text (Gemini-designed) */
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.tooltipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: bold;
+  cursor: help;
+  user-select: none;
+}
+
+.tooltipText {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  z-index: 100;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.tooltipText::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--border) transparent transparent transparent;
+}
+
+.tooltipContainer:hover .tooltipText {
+  visibility: visible;
+  opacity: 1;
+}
+```
+
+### Tooltip Component Pattern (implemented with GPT enhancements)
+
+```tsx
+function Tooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="tooltipContainer" data-open={open ? "true" : "false"}>
+      <span
+        className="tooltipIcon"
+        role="button"
+        tabIndex={0}
+        aria-label={text}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen((v) => !v); }}
+        onBlur={() => setOpen(false)}
+      >?</span>
+      <span className="tooltipText">{text}</span>
+    </span>
+  );
+}
+```
+
+**Note:** GPT-5.2 added accessibility enhancements beyond the original spec: click support for mobile, keyboard navigation, aria-label, and data-open state.
+
+### Help Text for Each Field (implemented in v0.17.2)
+
+| Field | Help Text |
+|-------|-----------|
+| filenameStyle | Output filename format: title_id (Video Title_abc123), id_title, or id only |
+| audioFormat | Downloaded audio format: mp3 (smaller) or wav (lossless) |
+| concurrency | How many videos to process in parallel (1-10 typical) |
+| languageDetection | auto = AssemblyAI detects language, manual = you specify |
+| languageCode | Language code when manual (e.g., es, en_us, fr, de) |
+| csvEnabled | Generate CSV file with timestamps alongside JSON |
+| commentsEnabled | Download YouTube comments for each video |
+| commentsMax | Max comments to download per video (empty = no limit) |
+| maxNewVideos | Limit new videos per run (empty = process all) |
+| afterDate | Only process videos published after this date |
+| catalogMaxAgeHours | Hours before refreshing channel video list (cache TTL, default 168 = 7 days) |
+| pollIntervalMs | How often to check AssemblyAI for transcription status (ms) |
+| maxPollMinutes | Timeout waiting for a single transcription |
+| downloadRetries | Retry attempts if audio download fails |
+| transcriptionRetries | Retry attempts if transcription fails |
+| ytDlpExtraArgs | Advanced downloader arguments (yt-dlp), one per line. Most users should leave this empty. |
+
+### v0.17.3 UX Follow-up (3-LLM consensus)
+
+**Problem:**
+1. "yt-dlp" is technical jargon users dont understand
+2. Textarea can be resized horizontally, breaking layout
+
+**Solution:**
+- Renamed section from "yt-dlp" to "Advanced (download)"
+- Updated tooltip to user-friendly language
+- Added `textarea.input { resize: vertical; max-width: 100%; }`
+
+| Reviewer | Verdict |
+|----------|---------|
+| GPT | Proposed the changes |
+| Claude | Approved |
+| Gemini | Approved |
+
+### v0.17.4-v0.17.5 Enhancements
+
+- **v0.17.4:** When a field is unset (inherit), shows inline `effective: value` hint
+- **v0.17.5:** Added per-field source tracking - shows `(env)`, `(config.yaml)`, `(settings file)`, `(default)` next to effective values
+
+---
+
 ## Claude Opus 4.5 UX Review: Settings Page (v0.17.0) - 2025-12-19
 
 **Problem:** The Settings UI (`/settings`) has poor visual design compared to other pages in the app. Inputs are oversized, there's excessive whitespace, and the layout doesn't match the compact patterns used elsewhere.

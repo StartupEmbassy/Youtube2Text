@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.6-draft
-> Last Updated: 2025-12-15
+> Version: 1.1.7
+> Last Updated: 2025-12-20
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
