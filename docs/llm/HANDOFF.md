@@ -22,7 +22,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 | v0.17.4 | Inline `effective: value` hints when field is unset |
 | v0.17.5 | Per-field source tracking (`env`, `config.yaml`, `settings file`, `default`) |
 | v0.17.6 | Move effective hints to tooltips (reduce clutter), Save button to top |
-| v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip |
+| v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip, 8px spacing |
 
 **Key details:**
 - Settings precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest)

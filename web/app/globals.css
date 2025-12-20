@@ -332,6 +332,10 @@ textarea.input {
   color: var(--muted);
 }
 
+.effectiveHint {
+  margin-left: 8px;
+}
+
 .pill {
   font-size: 12px;
   padding: 3px 8px;

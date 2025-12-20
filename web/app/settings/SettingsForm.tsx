@@ -254,7 +254,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="id_title">id_title</option>
                   <option value="id">id</option>
                 </select>
-                {form.filenameStyle === "" && <span className="muted">{fmtEffective(effective.filenameStyle)}</span>}
+                {form.filenameStyle === "" && <span className="muted effectiveHint">{fmtEffective(effective.filenameStyle)}</span>}
               </div>
 
               <div className="formRow">
@@ -276,7 +276,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="mp3">mp3</option>
                   <option value="wav">wav</option>
                 </select>
-                {form.audioFormat === "" && <span className="muted">{fmtEffective(effective.audioFormat)}</span>}
+                {form.audioFormat === "" && <span className="muted effectiveHint">{fmtEffective(effective.audioFormat)}</span>}
               </div>
 
               <div className="formRow">
@@ -294,7 +294,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, concurrency: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.concurrency.trim().length === 0 && <span className="muted">{fmtEffective(effective.concurrency)}</span>}
+                {form.concurrency.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.concurrency)}</span>}
               </div>
             </div>
 
@@ -324,7 +324,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="auto">auto</option>
                   <option value="manual">manual</option>
                 </select>
-                {form.languageDetection === "" && <span className="muted">{fmtEffective(effective.languageDetection)}</span>}
+                {form.languageDetection === "" && <span className="muted effectiveHint">{fmtEffective(effective.languageDetection)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -340,7 +340,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, languageCode: e.target.value })}
                   placeholder="en_us"
                 />
-                {form.languageCode.trim().length === 0 && <span className="muted">{fmtEffective(effective.languageCode)}</span>}
+                {form.languageCode.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.languageCode)}</span>}
               </div>
             </div>
 
@@ -365,7 +365,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>
-                {form.csvEnabled === "" && <span className="muted">{fmtEffective(effective.csvEnabled)}</span>}
+                {form.csvEnabled === "" && <span className="muted effectiveHint">{fmtEffective(effective.csvEnabled)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -386,7 +386,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>
-                {form.commentsEnabled === "" && <span className="muted">{fmtEffective(effective.commentsEnabled)}</span>}
+                {form.commentsEnabled === "" && <span className="muted effectiveHint">{fmtEffective(effective.commentsEnabled)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -403,7 +403,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, commentsMax: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.commentsMax.trim().length === 0 && <span className="muted">{fmtEffective(effective.commentsMax)}</span>}
+                {form.commentsMax.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.commentsMax)}</span>}
               </div>
             </div>
           </div>
@@ -426,7 +426,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, maxNewVideos: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.maxNewVideos.trim().length === 0 && <span className="muted">{fmtEffective(effective.maxNewVideos)}</span>}
+                {form.maxNewVideos.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.maxNewVideos)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -442,7 +442,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, afterDate: e.target.value })}
                   placeholder="YYYY-MM-DD"
                 />
-                {form.afterDate.trim().length === 0 && <span className="muted">{fmtEffective(effective.afterDate)}</span>}
+                {form.afterDate.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.afterDate)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -459,7 +459,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, catalogMaxAgeHours: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.catalogMaxAgeHours.trim().length === 0 && <span className="muted">{fmtEffective(effective.catalogMaxAgeHours)}</span>}
+                {form.catalogMaxAgeHours.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.catalogMaxAgeHours)}</span>}
               </div>
             </div>
 
@@ -482,7 +482,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, pollIntervalMs: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.pollIntervalMs.trim().length === 0 && <span className="muted">{fmtEffective(effective.pollIntervalMs)}</span>}
+                {form.pollIntervalMs.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.pollIntervalMs)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -499,7 +499,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, maxPollMinutes: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.maxPollMinutes.trim().length === 0 && <span className="muted">{fmtEffective(effective.maxPollMinutes)}</span>}
+                {form.maxPollMinutes.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.maxPollMinutes)}</span>}
               </div>
             </div>
 
@@ -522,7 +522,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, downloadRetries: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.downloadRetries.trim().length === 0 && <span className="muted">{fmtEffective(effective.downloadRetries)}</span>}
+                {form.downloadRetries.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.downloadRetries)}</span>}
               </div>
               <div className="formRow">
                 <span className="formLabel">
@@ -539,7 +539,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   onChange={(e) => setForm({ ...form, transcriptionRetries: e.target.value })}
                   placeholder="inherit"
                 />
-                {form.transcriptionRetries.trim().length === 0 && <span className="muted">{fmtEffective(effective.transcriptionRetries)}</span>}
+                {form.transcriptionRetries.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.transcriptionRetries)}</span>}
               </div>
             </div>
           </div>
@@ -556,7 +556,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   />
                 </span>
                 <span className="muted">one per line</span>
-                {form.ytDlpExtraArgs.trim().length === 0 && <span className="muted">{fmtEffective(effective.ytDlpExtraArgs)}</span>}
+                {form.ytDlpExtraArgs.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.ytDlpExtraArgs)}</span>}
               </div>
               <textarea
                 className="input"
