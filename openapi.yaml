@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.18.0
+  version: 0.19.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -653,8 +653,7 @@ components:
       in: header
       name: X-API-Key
       description: |
-        Optional when `Y2T_API_KEY` is unset. If `Y2T_API_KEY` is set on the server,
-        all endpoints require this header (except `/health`).
+        Required for all endpoints except `/health` (configured by server env `Y2T_API_KEY`).
   parameters:
     RunId:
       name: runId

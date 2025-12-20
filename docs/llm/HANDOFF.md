@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.18.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.19.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -49,7 +49,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Operator Notes
 - `.env` must include `ASSEMBLYAI_API_KEY`.
-- `Y2T_API_KEY` is optional but recommended when running in Docker or on a server.
+- `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
 
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)

@@ -1,3 +1,6 @@
+process.env.Y2T_API_KEY = "test";
+delete process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
+
 import "./naming.test.js";
 import "./language.test.js";
 import "./txtFormatter.test.js";

@@ -60,8 +60,14 @@ test("GET /runs/:id/logs returns tail events as JSON", async () => {
 
   try {
     const res = await fetch(`http://127.0.0.1:${port}/runs/${runId}/logs?tail=10`);
-    assert.equal(res.status, 200);
-    const body = await res.json();
+    assert.equal(res.status, 401);
+
+    const authed = await fetch(`http://127.0.0.1:${port}/runs/${runId}/logs?tail=10`, {
+      headers: { "x-api-key": "test" },
+    });
+    assert.equal(authed.status, 200);
+
+    const body = await authed.json();
     assert.equal(body.run.runId, runId);
     assert.equal(body.events.length, 2);
     assert.equal(body.events[0].id, 1);
@@ -72,4 +78,3 @@ test("GET /runs/:id/logs returns tail events as JSON", async () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
-

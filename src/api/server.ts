@@ -94,6 +94,11 @@ function setCors(req: IncomingMessage, res: ServerResponse) {
   );
 }
 
+function apiKeyIsConfigured(): boolean {
+  const key = process.env.Y2T_API_KEY;
+  return typeof key === "string" && key.trim().length > 0;
+}
+
 function segments(req: IncomingMessage): string[] {
   const url = req.url ?? "/";
   const parsed = parseUrl(url, true);
@@ -132,6 +137,15 @@ async function streamFile(res: ServerResponse, path: string, contentType: string
 }
 
 export async function startApiServer(config: AppConfig, opts: ServerOptions) {
+  const allowInsecureNoApiKey =
+    typeof process.env.Y2T_ALLOW_INSECURE_NO_API_KEY === "string" &&
+    process.env.Y2T_ALLOW_INSECURE_NO_API_KEY.trim().toLowerCase() === "true";
+  if (!apiKeyIsConfigured() && !allowInsecureNoApiKey) {
+    throw new Error(
+      "Y2T_API_KEY is required to start the HTTP API server. Set Y2T_API_KEY (recommended) or set Y2T_ALLOW_INSECURE_NO_API_KEY=true for local development only."
+    );
+  }
+
   const planRunFn = opts.deps?.planRun ?? planRun;
   const fetchChannelMetadataFn = opts.deps?.fetchChannelMetadata ?? fetchChannelMetadata;
   const safeChannelThumbnailUrlFn = opts.deps?.safeChannelThumbnailUrl ?? safeChannelThumbnailUrl;

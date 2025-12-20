@@ -44,7 +44,7 @@ test("POST /watchlist rejects non-channel/playlist URLs by default", async () =>
     try {
       const res = await fetch(`http://127.0.0.1:${port}/watchlist`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-api-key": "test" },
         body: JSON.stringify({ channelUrl: "https://www.youtube.com/watch?v=abc" }),
       });
       assert.equal(res.status, 400);
@@ -78,7 +78,7 @@ test("POST /watchlist accepts any URL when Y2T_WATCHLIST_ALLOW_ANY_URL=true", as
     try {
       const res = await fetch(`http://127.0.0.1:${port}/watchlist`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-api-key": "test" },
         body: JSON.stringify({ channelUrl: "https://www.youtube.com/watch?v=abc" }),
       });
       assert.equal(res.status, 201);

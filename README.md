@@ -176,7 +176,8 @@ Persistence (default enabled):
 - Override directory with `Y2T_API_PERSIST_DIR=...`.
 
 Auth (optional, recommended for server/Docker):
-- Set `Y2T_API_KEY` to require `X-API-Key: ...` on all endpoints (except `GET /health`).
+- `Y2T_API_KEY` is required to run the HTTP API server (clients must send `X-API-Key: ...`, except `GET /health`).
+  - For local development only, you can set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to start the API server without auth.
 - Example:
   - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
 
@@ -211,7 +212,7 @@ Scheduler / watchlist (Phase 2.3, opt-in):
   - `POST /scheduler/trigger`
 
 Monitoring:
-- `GET /metrics` exposes Prometheus text metrics (requires `X-API-Key` if `Y2T_API_KEY` is set).
+- `GET /metrics` exposes Prometheus text metrics (requires `X-API-Key`).
   - Includes catalog cache counters: `y2t_catalog_cache_hit_total`, `y2t_catalog_cache_miss_total`, `y2t_catalog_cache_expired_total`, `y2t_catalog_full_refresh_total`, `y2t_catalog_incremental_refresh_total`, `y2t_catalog_incremental_added_videos_total`.
 
 Webhooks (optional):

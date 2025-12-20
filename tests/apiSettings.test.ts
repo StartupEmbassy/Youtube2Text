@@ -38,7 +38,7 @@ async function withServer<T>(fn: (baseUrl: string) => Promise<T>): Promise<T> {
 
 test("GET /settings returns effective values and a stable settingsPath", async () => {
   await withServer(async (baseUrl) => {
-    const res = await fetch(`${baseUrl}/settings`);
+    const res = await fetch(`${baseUrl}/settings`, { headers: { "x-api-key": "test" } });
     assert.equal(res.status, 200);
     const body = (await res.json()) as any;
     assert.equal(typeof body.outputDir, "string");
@@ -54,7 +54,7 @@ test("PATCH /settings persists and influences /runs/plan effective config", asyn
   await withServer(async (baseUrl) => {
     const patch = await fetch(`${baseUrl}/settings`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-api-key": "test" },
       body: JSON.stringify({ settings: { maxNewVideos: 1 } }),
     });
     assert.equal(patch.status, 200);
@@ -63,7 +63,7 @@ test("PATCH /settings persists and influences /runs/plan effective config", asyn
 
     const plan1 = await fetch(`${baseUrl}/runs/plan`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-api-key": "test" },
       body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc" }),
     });
     assert.equal(plan1.status, 200);
@@ -72,7 +72,7 @@ test("PATCH /settings persists and influences /runs/plan effective config", asyn
 
     const plan2 = await fetch(`${baseUrl}/runs/plan`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-api-key": "test" },
       body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc", maxNewVideos: 2 }),
     });
     assert.equal(plan2.status, 200);

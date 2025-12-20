@@ -29,12 +29,13 @@ function withEnv(key: string | undefined, fn: () => void) {
   }
 }
 
-test("requireApiKey allows when Y2T_API_KEY is unset", () => {
+test("requireApiKey returns 500 when Y2T_API_KEY is unset (server misconfigured)", () => {
   withEnv(undefined, () => {
     const res = new FakeResponse();
     const ok = requireApiKey({ url: "/runs", headers: {} } as any, res as any);
-    assert.equal(ok, true);
-    assert.equal(res.statusCode, 200);
+    assert.equal(ok, false);
+    assert.equal(res.statusCode, 500);
+    assert.match(res.body, /server_misconfigured/i);
   });
 });
 
@@ -79,4 +80,3 @@ test("requireApiKey accepts correct key", () => {
     assert.equal(res.statusCode, 200);
   });
 });
-

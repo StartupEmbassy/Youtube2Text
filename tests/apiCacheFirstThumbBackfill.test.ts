@@ -75,7 +75,7 @@ test("Cache-first run backfills channelThumbnailUrl when missing (fire-and-forge
   try {
     const res = await fetch(`http://127.0.0.1:${port}/runs`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-api-key": "test" },
       body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc", force: false }),
     });
     assert.equal(res.status, 201);
@@ -99,4 +99,3 @@ test("Cache-first run backfills channelThumbnailUrl when missing (fire-and-forge
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
-

@@ -31,7 +31,13 @@ export function sendUnauthorized(res: ServerResponse): void {
 
 export function requireApiKey(req: IncomingMessage, res: ServerResponse): boolean {
   const expected = getExpectedApiKey();
-  if (!expected) return true; // local/dev default: no auth unless configured
+  if (!expected) {
+    // Should be prevented by startApiServer() validation, but keep a safe fallback.
+    res.statusCode = 500;
+    res.setHeader("content-type", "application/json; charset=utf-8");
+    res.end(JSON.stringify({ error: "server_misconfigured", message: "Y2T_API_KEY is required" }));
+    return false;
+  }
   if (isPublicPath(req)) return true;
   const provided = extractProvidedApiKey(req);
   if (!provided || provided !== expected) {
@@ -40,4 +46,3 @@ export function requireApiKey(req: IncomingMessage, res: ServerResponse): boolea
   }
   return true;
 }
-

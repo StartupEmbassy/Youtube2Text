@@ -21,11 +21,11 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 
 ## Strongly recommended (servers)
 
-- `Y2T_API_KEY` (enforces `X-API-Key` on all API endpoints except `GET /health`)
+- `Y2T_API_KEY` (required; enforces `X-API-Key` on all API endpoints except `GET /health`)
 - `Y2T_CORS_ORIGINS` (comma-separated exact origin allowlist)
   - Example: `https://y2t.example.com`
 
-If you do not set `Y2T_API_KEY`, the API is unauthenticated.
+If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
 If you expose the API port publicly in that state, anyone can call it.
 
 ## Optional ops knobs (Phase 2.2)
@@ -71,7 +71,7 @@ Linux cron example (daily at 03:15):
 ```
 
 Notes:
-- If `Y2T_API_KEY` is unset on the server, you can omit the header (not recommended on public servers).
+- If `Y2T_API_KEY` is set on the server (required by default), clients must include the header.
 - If the API is not exposed publicly, run this on the same host/container network (or via your reverse proxy if you intentionally expose it).
 
 ## Suggested deployment steps (high level)
