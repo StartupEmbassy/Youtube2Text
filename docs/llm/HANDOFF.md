@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.17.6 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.17.7 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -21,6 +21,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 | v0.17.3 | Renamed "yt-dlp" to "Advanced (download)", textarea resize fix |
 | v0.17.4 | Inline `effective: value` hints when field is unset |
 | v0.17.5 | Per-field source tracking (`env`, `config.yaml`, `settings file`, `default`) |
+| v0.17.6 | Move effective hints to tooltips (reduce clutter), Save button to top |
+| v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip |
 
 **Key details:**
 - Settings precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest)
