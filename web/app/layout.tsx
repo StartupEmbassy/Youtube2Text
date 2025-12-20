@@ -1,13 +1,27 @@
 import type { ReactNode } from "react";
 import "./globals.css";
 import Link from "next/link";
+import { apiGetJson } from "../lib/api";
+import type { components } from "../lib/apiTypes.gen";
 
 export const metadata = {
   title: "Youtube2Text Admin",
   description: "Local-first admin UI for Youtube2Text",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+type HealthResponse = components["schemas"]["HealthResponse"];
+
+async function getApiVersion(): Promise<string | undefined> {
+  try {
+    const health = await apiGetJson<HealthResponse>("/health");
+    return typeof health.version === "string" && health.version.length > 0 ? health.version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const apiVersion = await getApiVersion();
   return (
     <html lang="en">
       <body>
@@ -20,6 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/settings">Settings</Link>
             <span className="muted mlAuto">
               API: {process.env.NEXT_PUBLIC_Y2T_API_BASE_URL ?? "http://127.0.0.1:8787"}
+              {apiVersion ? ` (v${apiVersion})` : ""}
             </span>
           </div>
           <div className="spacer14" />
