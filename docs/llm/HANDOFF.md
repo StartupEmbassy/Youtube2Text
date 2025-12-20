@@ -37,8 +37,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Add entry to `docs/llm/HISTORY.md` for every version bump
 
 ## Next Steps (Future, lower priority)
-1) Add runtime timeouts and Docker healthcheck (ops hardening).
-2) Rate limiting + auth/cors hardening (only if exposing beyond localhost).
+1) Phase 2.8 security hardening for hosted use: make `Y2T_API_KEY` mandatory (non-local), add server-side clamps/validation, and add rate limiting for write endpoints.
+2) Add runtime timeouts and Docker healthcheck (ops hardening).
 
 ## Testing / Sanity Pass
 - `npm test`

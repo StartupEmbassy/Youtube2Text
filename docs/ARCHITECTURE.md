@@ -205,14 +205,25 @@ Phase 2.6 - Run configuration UX (DONE):
 - Kept CLI + runs.yaml parity with API/web.
 - UX polish: Create Run warns about `force=true` + `maxNewVideos`; run detail Downloads auto-updates as videos finish.
 
-Phase 2.7 - Settings + ops hardening (in progress):
+Phase 2.7 - Settings + planning performance (DONE):
 - Settings UI for non-secret defaults (persist to `output/_settings.json`), secrets remain env-only (DONE in v0.17.0).
 - Optional cost/duration preview (best-effort, non-blocking).
 - Channel catalog caching + processed index for exact fast planning (DONE in v0.16.0):
   - Cache full channel catalog under `output/_catalog/<channelId>.json` (exact; first run is expensive).
   - Maintain a fast processed-id scan (set of ids) derived from `output/<channelDir>/*.json` transcripts.
   - Used by `POST /runs/plan` and runs to avoid per-video filesystem checks.
-- Optional rate limiting and additional server hardening if exposing beyond a single-tenant admin.
+
+Phase 2.8 - Security hardening for hosted use (NEXT; do in order):
+1) Make API auth mandatory for non-local deployments
+   - Require `Y2T_API_KEY` by default in Docker/hosted mode; keep a deliberate escape hatch for local dev only.
+2) Server-side clamps/validation for config inputs
+   - Reject or clamp pathological values for: concurrency, pollIntervalMs, maxPollMinutes, retries, commentsMax, catalogMaxAgeHours, afterDate format, manual languageCode allowlist.
+   - Apply to: `PATCH /settings`, `POST /runs`, `POST /watchlist` (and any future endpoints that accept overrides).
+3) Rate limiting (write limiting)
+   - Per API key (primary) and optionally per IP; stricter limits on write endpoints (`POST /runs`, `PATCH /settings`, watchlist mutations, scheduler triggers).
+4) Tests + docs
+   - Unit tests for auth-required mode, clamp behavior, and rate limiting.
+   - Update README + OpenAPI error responses for 401/429 where relevant.
 
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 

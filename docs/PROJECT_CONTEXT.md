@@ -68,7 +68,7 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Phase 2.7: additional server hardening (only if exposing beyond single-tenant admin).
+- Phase 2.8: security hardening for hosted use (mandatory API key, server-side clamps/validation, rate limiting on write endpoints).
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
