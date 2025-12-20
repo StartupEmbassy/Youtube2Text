@@ -48,13 +48,7 @@ export function parseYtDlpFailure(output: {
   const stdout = normalize(output.stdout ?? "");
   const text = `${stderr}\n${stdout}`.toLowerCase();
 
-  const hasEjsWarning =
-    text.includes("no supported javascript runtime could be found") ||
-    text.includes("extraction without a js runtime has been deprecated");
-
-  const hint = hasEjsWarning
-    ? 'If downloads fail, try: YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=default"]'
-    : undefined;
+  const hint = undefined;
 
   if (
     text.includes("members-only") ||

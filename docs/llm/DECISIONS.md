@@ -52,18 +52,18 @@ AssemblyAI-supported whitelist:
 Test fixtures:
 - See `tests/fixtures/test-videos.md`.
 
-## D-004 - yt-dlp extra args default must be empty
+## D-004 - Do not expose arbitrary yt-dlp flags (security)
 
 Problem:
 - YouTube upstream changes can require additional tokens for some player clients (e.g. android/ios), breaking public downloads.
 
 Decision:
-- Default `ytDlpExtraArgs` to `[]`.
-- Use `["--extractor-args","youtube:player_client=default"]` only as an opt-in workaround when EJS warnings occur.
+- Do not expose arbitrary yt-dlp flags via Settings/UI/API (or any remote-configurable surface).
+- Remove `ytDlpExtraArgs` / `YT_DLP_EXTRA_ARGS` from supported configuration.
 
 Rationale:
-- Lets yt-dlp select fallback clients automatically (best compatibility).
-- Avoids hardcoding a client that may require extra tokens.
+- Allowing arbitrary yt-dlp args is a high-risk footgun if the API/UI is ever exposed beyond localhost (potentially enabling file writes, cookie usage, or other abuse).
+- If we ever need advanced downloader customization again, reintroduce it as an explicit opt-in build/deploy-time feature with strict allowlists (not by default).
 
 ## D-005 - Interfaces: what to abstract now vs later
 

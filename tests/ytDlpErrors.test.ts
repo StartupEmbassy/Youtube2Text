@@ -13,15 +13,15 @@ test("parseYtDlpFailure classifies members-only videos as non-retryable access e
   assert.equal(info.retryable, false);
 });
 
-test("parseYtDlpFailure detects EJS warning and provides a hint", () => {
+test("parseYtDlpFailure classifies EJS warning-only output (no hint)", () => {
   const info = parseYtDlpFailure({
     stderr:
       "WARNING: [youtube] No supported JavaScript runtime could be found. YouTube extraction without a JS runtime has been deprecated.",
   });
   assert.ok(info);
   assert.equal(info.kind, "unknown");
-  assert.ok(info.hint);
-  assert.match(info.hint, /player_client=default/);
+  assert.equal(info.reason, "unknown");
+  assert.equal(info.hint, undefined);
 });
 
 test("parseYtDlpFailure classifies 429 as retryable transient", () => {
@@ -33,4 +33,3 @@ test("parseYtDlpFailure classifies 429 as retryable transient", () => {
   assert.equal(info.reason, "rate_limited");
   assert.equal(info.retryable, true);
 });
-

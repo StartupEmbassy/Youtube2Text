@@ -115,7 +115,7 @@ export async function planRun(
   options: { force: boolean }
 ): Promise<RunPlan> {
   const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
-  const ytDlpExtraArgs = config.ytDlpExtraArgs ?? [];
+  const ytDlpExtraArgs: string[] = [];
   const listing = await getListingWithCatalogCache(inputUrl, config.outputDir, {
     ytDlpCommand,
     ytDlpExtraArgs,

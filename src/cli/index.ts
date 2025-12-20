@@ -90,7 +90,6 @@ async function main() {
       afterDate: opts.after ?? baseConfig.afterDate,
       csvEnabled: opts.csv ?? baseConfig.csvEnabled,
       ytDlpPath: opts.ytDlpPath ?? baseConfig.ytDlpPath,
-      ytDlpExtraArgs: baseConfig.ytDlpExtraArgs,
       assemblyAiCreditsCheck:
         (opts.assemblyAiCreditsCheck as
           | "warn"
@@ -131,7 +130,6 @@ async function main() {
       afterDate: run.after ?? baseConfig.afterDate,
       csvEnabled: run.csvEnabled ?? baseConfig.csvEnabled,
       ytDlpPath: run.ytDlpPath ?? baseConfig.ytDlpPath,
-      ytDlpExtraArgs: run.ytDlpExtraArgs ?? baseConfig.ytDlpExtraArgs,
       assemblyAiCreditsCheck:
         run.assemblyAiCreditsCheck ?? baseConfig.assemblyAiCreditsCheck,
       assemblyAiMinBalanceMinutes:

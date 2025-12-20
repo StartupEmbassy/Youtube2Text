@@ -70,13 +70,6 @@ function parseOptionalInt(raw: string): number | null {
   return n;
 }
 
-function splitLines(raw: string): string[] {
-  return raw
-    .split(/\r?\n/g)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-}
-
 function fmtSource(source: unknown): string {
   if (source === "env") return "env";
   if (source === "config.yaml") return "config.yaml";
@@ -118,7 +111,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
       transcriptionRetries:
         s.transcriptionRetries === undefined ? "" : String(s.transcriptionRetries),
       catalogMaxAgeHours: s.catalogMaxAgeHours === undefined ? "" : String(s.catalogMaxAgeHours),
-      ytDlpExtraArgs: Array.isArray(s.ytDlpExtraArgs) ? (s.ytDlpExtraArgs as string[]).join("\n") : "",
     };
   }, [data.settings]);
 
@@ -177,8 +169,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
           downloadRetries: downloadRetries === null ? null : downloadRetries,
           transcriptionRetries: transcriptionRetries === null ? null : transcriptionRetries,
           catalogMaxAgeHours: catalogMaxAgeHours === null ? null : catalogMaxAgeHours,
-          ytDlpExtraArgs:
-            form.ytDlpExtraArgs.trim().length === 0 ? null : splitLines(form.ytDlpExtraArgs),
         },
       };
 
@@ -544,29 +534,6 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
             </div>
           </div>
 
-          <div className="card">
-            <h3 className="title">Advanced (download)</h3>
-            <div className="stackTight">
-              <div className="formRow">
-                <span className="formLabel">
-                  ytDlpExtraArgs
-                  <Tooltip
-                    text='Advanced flags for the internal YouTube downloader (yt-dlp). Most users should leave this empty. One argument per line.'
-                    effective={form.ytDlpExtraArgs.trim().length === 0 ? `${fmtEffective(effective.ytDlpExtraArgs)} (${fmtSource(sources.ytDlpExtraArgs)})` : undefined}
-                  />
-                </span>
-                <span className="muted">one per line</span>
-                {form.ytDlpExtraArgs.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.ytDlpExtraArgs)}</span>}
-              </div>
-              <textarea
-                className="input"
-                rows={6}
-                value={form.ytDlpExtraArgs}
-                onChange={(e) => setForm({ ...form, ytDlpExtraArgs: e.target.value })}
-                placeholder="(inherit)"
-              />
-            </div>
-          </div>
         </div>
       </div>
 

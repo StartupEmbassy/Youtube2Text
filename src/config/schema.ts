@@ -26,7 +26,6 @@ export const configSchema = z.object({
   // Set <= 0 to disable TTL (cache never expires).
   catalogMaxAgeHours: z.number().int().default(168),
   ytDlpPath: z.string().optional(),
-  ytDlpExtraArgs: z.array(z.string()).default([]),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;

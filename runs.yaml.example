@@ -15,7 +15,6 @@ runs:
     commentsEnabled: false
     commentsMax:
     ytDlpPath:
-    ytDlpExtraArgs: []
 
   - url: "https://www.youtube.com/playlist?list=PLxxxxxxxxxxxx"
     maxNewVideos: 5
@@ -32,4 +31,3 @@ runs:
     commentsMax: 200
     force: false
     ytDlpPath:
-    ytDlpExtraArgs: []

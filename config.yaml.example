@@ -19,4 +19,3 @@ assemblyAiMinBalanceMinutes: 60
 commentsEnabled: false
 commentsMax:
 ytDlpPath:
-ytDlpExtraArgs: []

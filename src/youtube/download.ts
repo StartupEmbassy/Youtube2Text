@@ -40,16 +40,7 @@ export async function downloadAudio(
       if (result.exitCode !== 0) {
         const parsed = parseYtDlpFailure(result);
         if (parsed) {
-          const info =
-            (parsed.kind === "unknown" || parsed.kind === "transient") &&
-            parsed.retryable &&
-            !parsed.hint
-              ? {
-                  ...parsed,
-                  hint: 'If this persists, try: YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=default"]',
-                }
-              : parsed;
-          throw new YtDlpError(info, { stderr: result.stderr, stdout: result.stdout });
+          throw new YtDlpError(parsed, { stderr: result.stderr, stdout: result.stdout });
         }
         throw new Error(result.stderr || result.stdout);
       }

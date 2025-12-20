@@ -492,7 +492,6 @@ export interface components {
             maxPollMinutes?: number;
             downloadRetries?: number;
             transcriptionRetries?: number;
-            ytDlpExtraArgs?: string[];
             catalogMaxAgeHours?: number;
         };
         SettingsGetResponse: {
@@ -516,7 +515,6 @@ export interface components {
                 maxPollMinutes?: components["schemas"]["NonSecretSettingSource"];
                 downloadRetries?: components["schemas"]["NonSecretSettingSource"];
                 transcriptionRetries?: components["schemas"]["NonSecretSettingSource"];
-                ytDlpExtraArgs?: components["schemas"]["NonSecretSettingSource"];
                 catalogMaxAgeHours?: components["schemas"]["NonSecretSettingSource"];
             };
         };
@@ -542,7 +540,6 @@ export interface components {
                 maxPollMinutes?: number | null;
                 downloadRetries?: number | null;
                 transcriptionRetries?: number | null;
-                ytDlpExtraArgs?: string[] | null;
                 catalogMaxAgeHours?: number | null;
             } & {
                 [key: string]: unknown;

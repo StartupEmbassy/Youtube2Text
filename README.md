@@ -72,14 +72,7 @@ npm run dev -- --ytDlpPath "C:\Users\cdela\AppData\Local\Microsoft\WinGet\Links\
 
 ### yt-dlp extractor warnings (public videos)
 
-If you see warnings about a missing JavaScript runtime (EJS), you can optionally set `YT_DLP_EXTRA_ARGS` to use a different YouTube player client.
-
-- Conservative option (often silences warnings):
-  - `YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=default"]`
-- More aggressive option (may avoid extractor JS entirely, but can require additional YouTube tokens depending on upstream changes):
-  - `YT_DLP_EXTRA_ARGS=["--extractor-args","youtube:player_client=android"]`
-
-If downloads fail after changing this, set `YT_DLP_EXTRA_ARGS=[]` to revert to yt-dlp defaults.
+If you see warnings about a missing JavaScript runtime (EJS), upgrade `yt-dlp` and install a supported JS runtime as documented by yt-dlp (this project does not expose arbitrary yt-dlp flags via Settings/UI/API for security reasons).
 
 Note: Youtube2Text only targets public videos. If a channel contains members-only/private/age-restricted videos, yt-dlp will fail for those and Youtube2Text will record the failure and continue with the rest.
 
@@ -111,7 +104,6 @@ ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
 ASSEMBLYAI_MIN_BALANCE_MINUTES=60
 COMMENTS_ENABLED=false
 COMMENTS_MAX=
-YT_DLP_EXTRA_ARGS=[]
 Y2T_CATALOG_MAX_AGE_HOURS=168
 ```
 

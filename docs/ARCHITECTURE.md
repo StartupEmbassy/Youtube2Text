@@ -116,9 +116,8 @@ Completed:
 3. Sidecar metadata (`_channel.json`, `<basename>.meta.json`) for indexing/browsing.
 4. Language auto-detection (metadata/captions) + unit tests.
 5. yt-dlp reliability hardening (public videos only)
-   - Keep `ytDlpExtraArgs` configurable.
-   - Recommended: `["--extractor-args","youtube:player_client=default"]` when you hit EJS warnings.
-   - Do not default to `youtube:player_client=android` (can require extra YouTube tokens and break public downloads).
+   - Do not expose arbitrary yt-dlp flags via Settings/UI/API (security).
+   - If yt-dlp reports missing JS runtime warnings (EJS), upgrade yt-dlp and install a supported JS runtime (per yt-dlp docs).
 6. Minimal HTTP API runner (service shell around core)
    - `POST /runs` to start a run
    - `GET /runs/:id/events` (SSE) to stream JSON events

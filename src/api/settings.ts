@@ -100,7 +100,6 @@ function computeNonSecretSettingSources(
     "maxPollMinutes",
     "downloadRetries",
     "transcriptionRetries",
-    "ytDlpExtraArgs",
     "catalogMaxAgeHours",
   ];
 
@@ -139,8 +138,6 @@ function envVarForSetting(key: keyof NonSecretSettings): string | undefined {
       return "DOWNLOAD_RETRIES";
     case "transcriptionRetries":
       return "TRANSCRIPTION_RETRIES";
-    case "ytDlpExtraArgs":
-      return "YT_DLP_EXTRA_ARGS";
     case "catalogMaxAgeHours":
       return "Y2T_CATALOG_MAX_AGE_HOURS";
     default:

@@ -119,9 +119,12 @@ function Tooltip({ text }: { text: string }) {
 | maxPollMinutes | Timeout waiting for a single transcription |
 | downloadRetries | Retry attempts if audio download fails |
 | transcriptionRetries | Retry attempts if transcription fails |
-| ytDlpExtraArgs | Advanced downloader arguments (yt-dlp), one per line. Most users should leave this empty. |
+
+Note: `ytDlpExtraArgs` was removed in v0.18.0 for security (no arbitrary yt-dlp flags via Settings/UI/API).
 
 ### v0.17.3 UX Follow-up (3-LLM consensus)
+
+Note: This section is obsolete as of v0.18.0 (the `ytDlpExtraArgs` setting was removed).
 
 **Problem:**
 1. "yt-dlp" is technical jargon users dont understand
@@ -183,7 +186,7 @@ This makes sense for the main URL input in CreateRunForm, but is absurd for:
 All inputs look identical regardless of content:
 - A dropdown with 3 options takes 520px
 - A number field for `concurrency: 3` takes 520px
-- A textarea for `ytDlpExtraArgs` takes 520px (this one is appropriate)
+- A textarea for `ytDlpExtraArgs` takes 520px (obsolete; setting removed in v0.18.0)
 
 #### 4. Card-heavy layout creates visual clutter
 
@@ -291,7 +294,7 @@ Do:
 | Medium numbers (1-9999) | `.inputSm` | 90px | commentsMax, pollIntervalMs |
 | Short text / dates | `.inputMd` | 120px | languageCode, afterDate |
 | Dropdowns | `.inputMd` | 120px | filenameStyle, audioFormat |
-| Multiline text | `.input` | full | ytDlpExtraArgs |
+| Multiline text | `.input` | full | ytDlpExtraArgs (obsolete; removed in v0.18.0) |
 
 #### Fix 4: Reduce to 2-3 cards with internal sections (REQUIRED)
 
@@ -2229,7 +2232,7 @@ Follow-up (not implemented yet):
 ## Key Decisions (Do Not Drift)
 - CLI must remain fully operational; service/web are additional layers.
 - No members-only/private content support (no cookie ingestion/refresh).
-- Keep default `ytDlpExtraArgs` as `[]` (do not default to `youtube:player_client=android`).
+- Keep default `ytDlpExtraArgs` as `[]` (obsolete; setting removed in v0.18.0).
 - In Docker: server-side fetch uses `Y2T_API_BASE_URL` (internal network), but any browser-visible links/SSE must use `NEXT_PUBLIC_Y2T_API_BASE_URL`.
 
 ## Future Reminder

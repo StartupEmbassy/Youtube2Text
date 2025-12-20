@@ -21,14 +21,6 @@ function loadEnvConfig(): PartialConfig {
     const v = raw.trim().toLowerCase();
     return v === "true" || v === "1" || v === "yes";
   };
-  let ytDlpExtraArgs: unknown = undefined;
-  if (env.YT_DLP_EXTRA_ARGS) {
-    try {
-      ytDlpExtraArgs = JSON.parse(env.YT_DLP_EXTRA_ARGS);
-    } catch {
-      ytDlpExtraArgs = undefined;
-    }
-  }
   return {
     assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
     outputDir: env.OUTPUT_DIR,
@@ -63,7 +55,6 @@ function loadEnvConfig(): PartialConfig {
       ? Number(env.Y2T_CATALOG_MAX_AGE_HOURS)
       : undefined,
     ytDlpPath: env.YT_DLP_PATH || env.YTDLP_PATH,
-    ytDlpExtraArgs,
   };
 }
 

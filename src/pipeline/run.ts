@@ -139,7 +139,7 @@ export async function runPipeline(
     }
   }
 
-  const ytDlpExtraArgs = config.ytDlpExtraArgs ?? [];
+  const ytDlpExtraArgs: string[] = [];
   const listing = await getListingWithCatalogCache(inputUrl, config.outputDir, {
     ytDlpCommand,
     ytDlpExtraArgs,

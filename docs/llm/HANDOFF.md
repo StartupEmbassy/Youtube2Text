@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.17.7 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.18.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -23,10 +23,11 @@ All content should be ASCII-only to avoid Windows encoding issues.
 | v0.17.5 | Per-field source tracking (`env`, `config.yaml`, `settings file`, `default`) |
 | v0.17.6 | Move effective hints to tooltips (reduce clutter), Save button to top |
 | v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip, 8px spacing |
+| v0.18.0 | Remove unsafe arbitrary yt-dlp extra args setting (security) |
 
 **Key details:**
 - Settings precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest)
-- Layout: 3 cards (Core+Language+Outputs, Planning+Polling+Retries, Advanced)
+- Layout: 2 cards (Core+Language+Outputs, Planning+Polling+Retries)
 - Responsive: 900px breakpoint, right-aligned labels on desktop
 - Full implementation specs: `docs/llm/HANDOFF_ARCHIVE.md`
 

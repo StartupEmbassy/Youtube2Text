@@ -21,7 +21,6 @@ const runSchema = z.object({
   commentsMax: z.number().int().positive().optional(),
   force: z.boolean().optional(),
   ytDlpPath: z.string().optional(),
-  ytDlpExtraArgs: z.array(z.string()).optional(),
 });
 
 const runsFileSchema = z.union([
