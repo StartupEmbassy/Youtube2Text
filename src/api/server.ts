@@ -507,7 +507,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         seg[1] === "channels"
       ) {
         const channelDirName = decodePathSegment(seg[2]!);
-        if (!channelDirName) return badRequest(res, "Invalid channelDirName");
+        if (!channelDirName || !isSafeBaseName(channelDirName)) return badRequest(res, "Invalid channelDirName");
         const meta = await storage.readChannelMeta(channelDirName);
         if (!meta) return notFound(res);
         json(res, 200, { channelDirName, meta });
@@ -522,7 +522,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         seg[3] === "videos"
       ) {
         const channelDirName = decodePathSegment(seg[2]!);
-        if (!channelDirName) return badRequest(res, "Invalid channelDirName");
+        if (!channelDirName || !isSafeBaseName(channelDirName)) return badRequest(res, "Invalid channelDirName");
         const videos = await storage.listVideos(channelDirName);
         json(res, 200, { channelDirName, videos });
         return;
@@ -538,7 +538,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         const channelDirName = decodePathSegment(seg[2]!);
         const baseName = decodePathSegment(seg[4]!);
         const kind = seg[5]!;
-        if (!channelDirName) return badRequest(res, "Invalid channelDirName");
+        if (!channelDirName || !isSafeBaseName(channelDirName)) return badRequest(res, "Invalid channelDirName");
         if (!baseName || !isSafeBaseName(baseName)) return badRequest(res, "Invalid basename");
 
         const videos = await storage.listVideos(channelDirName);

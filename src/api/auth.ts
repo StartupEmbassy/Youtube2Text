@@ -12,6 +12,11 @@ export function getExpectedApiKey(): string | undefined {
   return key && key.trim().length > 0 ? key.trim() : undefined;
 }
 
+export function isInsecureModeEnabled(): boolean {
+  const val = process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
+  return typeof val === "string" && val.trim().toLowerCase() === "true";
+}
+
 export function isPublicPath(req: IncomingMessage): boolean {
   const url = req.url ?? "/";
   return url === "/health" || url.startsWith("/health?");
@@ -32,6 +37,8 @@ export function sendUnauthorized(res: ServerResponse): void {
 export function requireApiKey(req: IncomingMessage, res: ServerResponse): boolean {
   const expected = getExpectedApiKey();
   if (!expected) {
+    // No API key configured - allow if insecure mode is enabled
+    if (isInsecureModeEnabled()) return true;
     // Should be prevented by startApiServer() validation, but keep a safe fallback.
     res.statusCode = 500;
     res.setHeader("content-type", "application/json; charset=utf-8");

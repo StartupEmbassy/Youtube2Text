@@ -7,6 +7,10 @@ import { TranscriptJson } from "../transcription/types.js";
 
 const CHANNEL_META_FILENAME = "_channel.json";
 
+function isSafeDirName(name: string): boolean {
+  return name.length > 0 && name === pathBasename(name) && !name.includes("..") && !name.startsWith("_");
+}
+
 function isTranscriptJsonFile(fileName: string): boolean {
   return (
     fileName.endsWith(".json") &&
@@ -65,6 +69,7 @@ export class FileSystemStorageAdapter implements StorageAdapter {
   }
 
   async listVideos(channelDirName: string): Promise<VideoInfo[]> {
+    if (!isSafeDirName(channelDirName)) return [];
     const channelDir = join(this.dirs.outputDir, channelDirName);
     const entries = await fs.readdir(channelDir, { withFileTypes: true });
 
@@ -111,6 +116,7 @@ export class FileSystemStorageAdapter implements StorageAdapter {
   async readChannelMeta(
     channelDirName: string
   ): Promise<ChannelMeta | undefined> {
+    if (!isSafeDirName(channelDirName)) return undefined;
     const metaPath = join(
       this.dirs.outputDir,
       channelDirName,

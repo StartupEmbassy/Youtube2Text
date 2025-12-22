@@ -30,3 +30,4 @@ import "./apiWatchlistValidation.test.js";
 import "./apiRunLogs.test.js";
 import "./apiMetrics.test.js";
 import "./apiSettings.test.js";
+import "./apiLibrarySecurity.test.js";

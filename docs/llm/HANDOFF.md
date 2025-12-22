@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.19.1 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.19.3 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -24,6 +24,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 | v0.17.6 | Move effective hints to tooltips (reduce clutter), Save button to top |
 | v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip, 8px spacing |
 | v0.18.0 | Remove unsafe arbitrary yt-dlp extra args setting (security) |
+| v0.19.0-v0.19.1 | Mandatory API key with `Y2T_ALLOW_INSECURE_NO_API_KEY` opt-out |
+| v0.19.2 | Bugfix: `requireApiKey` middleware now respects insecure mode |
+| v0.19.3 | Security: docker-compose insecure default false; prevent library path traversal |
 
 **Key details:**
 - Settings precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest)
@@ -50,6 +53,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Operator Notes
 - `.env` must include `ASSEMBLYAI_API_KEY`.
 - `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
+- Security note: `callbackUrl` webhooks allow any http(s) URL (SSRF risk if API key is leaked); keep API private or add allowlists in Phase 2.8.3+.
 
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)
