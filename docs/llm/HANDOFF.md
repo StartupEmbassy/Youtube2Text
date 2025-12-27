@@ -44,9 +44,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.20.2)
-- Docs/code alignment looks good for v0.20.x.
-- Tests: `npm test` passes (71/71).
+## Review Notes (GPT v0.21.0)
+- Docs/code alignment looks good for v0.21.x.
+- Tests: `npm test` passes (72/72).
 - `package-lock.json` still shows version 0.17.5 - run `npm install` to sync.
 - OpenAPI warning: `GlobalRunEvent` schema unused (Redocly warns).
 
@@ -65,10 +65,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - `RunManager` mutable maps without locking
    - Scheduler potential double-enqueue
 
-5. **Documentation drift**
-   - ARCHITECTURE.md says "Phase 2.5 future" but `/metrics` already exists
-   - `GET /runs/:id/logs` implemented but docs say "planned"
-   - Update ARCHITECTURE.md status from "Design/Roadmap" to "Production"
+5. **Documentation drift** - DONE (aligned in docs)
 
 6. **Environment variable naming inconsistent**
    - `FILENAME_STYLE` vs `Y2T_CATALOG_MAX_AGE_HOURS` (prefix inconsistent)
@@ -81,11 +78,6 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - Graceful shutdown sequence
    - Concurrent runs race conditions
    - Symlinks in output directory
-
-### Recommended order before Phase 2.8.3
-
-1. Update ARCHITECTURE.md status (clarity)
-2. Then proceed with rate limiting
 
 ## Phase 2.8.3 (DONE): Rate limiting
 - Write endpoints are rate limited per API key (or IP) with 429 + Retry-After.
@@ -110,7 +102,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Operator Notes
 - `.env` must include `ASSEMBLYAI_API_KEY`.
 - `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
-- Security note: `callbackUrl` webhooks allow any http(s) URL (SSRF risk if API key is leaked); keep API private or add allowlists in Phase 2.8.3+.
+- Security note: `callbackUrl` webhooks allow any http(s) URL (SSRF risk if API key is leaked); keep API private or add URL allowlists in a future phase.
 
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)
