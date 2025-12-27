@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-26 - GPT-5.2 - Tech debt: add scheduler concurrency guard + test to avoid overlapping triggerOnce runs, update roadmap docs, and bump version to 0.22.4 - Files: [src/api/scheduler.ts, tests/scheduler.test.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.22.3 -> 0.22.4)
+
 2025-12-26 - GPT-5.2 - Tech debt: add env var aliases with Y2T_ prefixes, document legacy names, add env alias tests, and bump version to 0.22.3 - Files: [src/config/loader.ts, src/api/settings.ts, .env.example, README.md, docs/STRUCTURE.md, tests/configEnvAliases.test.ts, tests/all.test.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.22.2 -> 0.22.3)
 
 2025-12-26 - GPT-5.2 - Tech debt: add webhook tests for 429 retry and missing signature, update roadmap docs, and bump version to 0.22.2 - Files: [tests/apiWebhooks.test.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.22.1 -> 0.22.2)

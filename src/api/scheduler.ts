@@ -73,6 +73,7 @@ export class Scheduler {
   private timer?: NodeJS.Timeout;
   private lastTickAt?: string;
   private nextTickAt?: string;
+  private triggering = false;
 
   constructor(
     private cfg: SchedulerConfig,
@@ -118,57 +119,65 @@ export class Scheduler {
   }
 
   async triggerOnce(): Promise<{ checked: number; runsCreated: number }> {
-    const nowMs = Date.now();
-    this.lastTickAt = nowIso();
-
-    const entries = await this.store.list();
-    let checked = 0;
-    let runsCreated = 0;
-
-    for (const entry of entries) {
-      if (!shouldCheckEntry(entry, nowMs, this.cfg.intervalMinutes)) continue;
-      checked += 1;
-
-      if (!isRunnableWatchlistUrl(entry.channelUrl)) {
-        entry.lastCheckedAt = nowIso();
-        await this.store.upsert(entry);
-        continue;
-      }
-
-      // Global overload protection (includes user-triggered runs).
-      const active = this.manager
-        .listRuns()
-        .filter((r) => r.status === "queued" || r.status === "running").length;
-      if (active >= this.cfg.maxConcurrentRuns) {
-        entry.lastCheckedAt = nowIso();
-        await this.store.upsert(entry);
-        continue;
-      }
-
-      let plan: RunPlan;
-      try {
-        plan = await this.planFn(entry.channelUrl);
-      } catch {
-        entry.lastCheckedAt = nowIso();
-        await this.store.upsert(entry);
-        continue;
-      }
-
-      entry.lastCheckedAt = nowIso();
-      entry.channelId = plan.channelId;
-      entry.channelTitle = plan.channelTitle;
-
-      if (plan.toProcess > 0) {
-        const req: RunCreateRequest = { url: entry.channelUrl, force: false };
-        const record = this.createRunFn(req);
-        this.startRunFn(record.runId, req);
-        entry.lastRunId = record.runId;
-        runsCreated += 1;
-      }
-
-      await this.store.upsert(entry);
+    if (this.triggering) {
+      return { checked: 0, runsCreated: 0 };
     }
+    this.triggering = true;
+    try {
+      const nowMs = Date.now();
+      this.lastTickAt = nowIso();
 
-    return { checked, runsCreated };
+      const entries = await this.store.list();
+      let checked = 0;
+      let runsCreated = 0;
+
+      for (const entry of entries) {
+        if (!shouldCheckEntry(entry, nowMs, this.cfg.intervalMinutes)) continue;
+        checked += 1;
+
+        if (!isRunnableWatchlistUrl(entry.channelUrl)) {
+          entry.lastCheckedAt = nowIso();
+          await this.store.upsert(entry);
+          continue;
+        }
+
+        // Global overload protection (includes user-triggered runs).
+        const active = this.manager
+          .listRuns()
+          .filter((r) => r.status === "queued" || r.status === "running").length;
+        if (active >= this.cfg.maxConcurrentRuns) {
+          entry.lastCheckedAt = nowIso();
+          await this.store.upsert(entry);
+          continue;
+        }
+
+        let plan: RunPlan;
+        try {
+          plan = await this.planFn(entry.channelUrl);
+        } catch {
+          entry.lastCheckedAt = nowIso();
+          await this.store.upsert(entry);
+          continue;
+        }
+
+        entry.lastCheckedAt = nowIso();
+        entry.channelId = plan.channelId;
+        entry.channelTitle = plan.channelTitle;
+
+        if (plan.toProcess > 0) {
+          const req: RunCreateRequest = { url: entry.channelUrl, force: false };
+          const record = this.createRunFn(req);
+          this.startRunFn(record.runId, req);
+          entry.lastRunId = record.runId;
+          runsCreated += 1;
+        }
+
+        await this.store.upsert(entry);
+      }
+
+      return { checked, runsCreated };
+    } finally {
+      this.triggering = false;
+    }
   }
 }

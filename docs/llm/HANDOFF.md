@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.22.3 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.22.4 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,9 +44,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.22.3)
+## Review Notes (GPT v0.22.4)
 - Docs/code alignment looks good for v0.22.x.
-- Tests: `npm test` passes (77/77).
+- Tests: `npm test` passes (78/78).
 
 ## Code Review (Claude 2025-12-27)
 
@@ -58,10 +58,10 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ### MEDIUM - Technical debt
 
-4. **Race conditions (no tests)**
-   - `EventBuffer` concurrent append/read
-   - `RunManager` mutable maps without locking
-   - Scheduler potential double-enqueue
+4. **Race conditions (partial)**
+   - Scheduler concurrent trigger guard + test DONE
+   - `EventBuffer` concurrent append/read pending
+   - `RunManager` mutable maps without locking pending
 
 5. **Documentation drift** - DONE (aligned in docs)
 
@@ -70,9 +70,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ### MINOR - Cleanup
 
 7. **Missing tests**
-   - Webhook retry/HMAC validation
    - Graceful shutdown sequence
-   - Concurrent runs race conditions
    - Symlinks in output directory
 
 ## Phase 2.8.3 (DONE): Rate limiting
@@ -86,7 +84,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Tech Debt Backlog (do in order)
 1) Webhook tests: add retry-on-429 and signature coverage (DONE).
 2) Environment variable naming consistency (document and align prefixes) (DONE).
-3) Race condition tests (EventBuffer/RunManager/scheduler).
+3) Race condition tests (Scheduler guard + test DONE; EventBuffer/RunManager still pending).
 4) Missing tests: graceful shutdown sequence, symlink handling.
 5) Optional: address `npm audit` moderate vulnerabilities.
 

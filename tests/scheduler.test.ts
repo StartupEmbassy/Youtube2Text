@@ -158,3 +158,64 @@ test("Scheduler skips non-channel/playlist watchlist URLs by default", async () 
     else process.env.Y2T_WATCHLIST_ALLOW_ANY_URL = prev;
   }
 });
+
+test("Scheduler ignores concurrent triggerOnce calls", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "y2t-scheduler-concurrent-"));
+  const config = configSchema.parse({
+    assemblyAiApiKey: "test",
+    outputDir: dir,
+    audioDir: join(dir, "audio"),
+  });
+
+  const manager = new RunManager(config, { maxBufferedEventsPerRun: 10, persistRuns: false });
+  await manager.init();
+
+  const store = new WatchlistStore(dir);
+  await store.add({ channelUrl: "https://www.youtube.com/@a" });
+
+  let releasePlan: (() => void) | undefined;
+  const planGate = new Promise<void>((resolve) => {
+    releasePlan = resolve;
+  });
+  let planStarted = 0;
+
+  const planFn = async (url: string): Promise<RunPlan> => {
+    planStarted += 1;
+    if (planStarted === 1) await planGate;
+    return {
+      inputUrl: url,
+      force: false,
+      channelId: "UC123",
+      channelTitle: "Chan",
+      totalVideos: 1,
+      alreadyProcessed: 0,
+      toProcess: 1,
+      filters: {},
+      videos: [{ id: "v", title: "t", url: "u", basename: "b", processed: false }],
+    };
+  };
+
+  const scheduler = new Scheduler(
+    { enabled: false, intervalMinutes: 60, maxConcurrentRuns: 1 },
+    manager,
+    store,
+    planFn,
+    (req) => manager.createRun(req),
+    () => {}
+  );
+
+  const first = scheduler.triggerOnce();
+
+  for (let i = 0; i < 50; i += 1) {
+    if (planStarted > 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+
+  const second = await scheduler.triggerOnce();
+  assert.equal(second.checked, 0);
+  assert.equal(second.runsCreated, 0);
+
+  releasePlan?.();
+  const firstResult = await first;
+  assert.equal(firstResult.runsCreated, 1);
+});

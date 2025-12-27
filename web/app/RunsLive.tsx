@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { GlobalRunEvent, RunRecord } from "../lib/apiSchema";
+import type { RunRecord } from "../lib/apiSchema";
 
 type Props = {
   initialRuns: RunRecord[];
@@ -74,7 +74,7 @@ export function RunsLive({ initialRuns }: Props) {
       } catch {
         return;
       }
-      const e = parsed as GlobalRunEvent;
+      const e = parsed as { run?: RunRecord };
       if (!e || typeof e !== "object") return;
       if (!("run" in e)) return;
       const run = (e as any).run as RunRecord | undefined;

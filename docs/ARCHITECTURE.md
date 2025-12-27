@@ -244,6 +244,6 @@ Future input mode (not implemented yet):
 ## Tech Debt Backlog (post-Phase 2.8)
 - Webhook tests: retry on 429 and signature coverage (DONE).
 - Environment variable naming consistency (DONE).
-- Race condition tests (EventBuffer/RunManager/scheduler).
+- Race condition tests (Scheduler guard+test DONE; EventBuffer/RunManager pending).
 - Missing tests: graceful shutdown sequence, symlink handling.
 - Optional: address npm audit vulnerabilities.

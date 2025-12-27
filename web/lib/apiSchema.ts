@@ -9,7 +9,6 @@ export type RunCreateResponse = components["schemas"]["RunCreateResponse"];
 export type RunPlan = components["schemas"]["RunPlan"];
 export type RunPlanResponse = components["schemas"]["RunPlanResponse"];
 export type RunArtifactsResponse = components["schemas"]["RunArtifactsResponse"];
-export type GlobalRunEvent = components["schemas"]["GlobalRunEvent"];
 
 export type WatchlistEntry = components["schemas"]["WatchlistEntry"];
 export type WatchlistCreateRequest = components["schemas"]["WatchlistCreateRequest"];
