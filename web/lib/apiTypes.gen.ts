@@ -193,7 +193,7 @@ export interface paths {
          * @description Server-Sent Events stream for global run updates. Event names include:
          *     - run:created
          *     - run:updated
-         *     Data is JSON matching the GlobalRunEvent schema.
+         *     Data is JSON: { type, run, timestamp }.
          */
         get: operations["streamGlobalEvents"];
         put?: never;
@@ -783,13 +783,6 @@ export interface components {
         RunArtifactsResponse: {
             run: components["schemas"]["RunRecord"];
             artifacts: components["schemas"]["RunArtifacts"];
-        };
-        /** @enum {string} */
-        GlobalRunEventType: "run:created" | "run:updated";
-        GlobalRunEvent: {
-            type: components["schemas"]["GlobalRunEventType"];
-            run: components["schemas"]["RunRecord"];
-            timestamp: string;
         };
     };
     responses: {
