@@ -15,17 +15,22 @@ class FakeResponse {
 }
 
 function withEnv(key: string | undefined, fn: () => void) {
-  const prev = process.env.Y2T_API_KEY;
+  const prevKey = process.env.Y2T_API_KEY;
+  const prevInsecure = process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
   if (key === undefined) {
     delete process.env.Y2T_API_KEY;
   } else {
     process.env.Y2T_API_KEY = key;
   }
+  // Always disable insecure mode during tests to ensure consistent behavior
+  delete process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
   try {
     fn();
   } finally {
-    if (prev === undefined) delete process.env.Y2T_API_KEY;
-    else process.env.Y2T_API_KEY = prev;
+    if (prevKey === undefined) delete process.env.Y2T_API_KEY;
+    else process.env.Y2T_API_KEY = prevKey;
+    if (prevInsecure === undefined) delete process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
+    else process.env.Y2T_ALLOW_INSECURE_NO_API_KEY = prevInsecure;
   }
 }
 

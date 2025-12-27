@@ -450,7 +450,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             return;
           }
           const entry = await watchlistStore.update(id, {
-            intervalMinutes: intervalResult.value.intervalMinutes ?? parsed.data.intervalMinutes,
+            intervalMinutes:
+              intervalResult.value.intervalMinutes ?? parsed.data.intervalMinutes ?? undefined,
             enabled: parsed.data.enabled,
           });
           if (!entry) return notFound(res);
@@ -554,7 +555,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           badRequest(res, "Invalid languageCode for manual languageDetection");
           return;
         }
-        const plan = await planRunFn(url, mergedConfig, { force });
+        const plan = await planRunFn(url, mergedConfig, { force: force ?? false });
         json(res, 200, { plan });
         return;
       }

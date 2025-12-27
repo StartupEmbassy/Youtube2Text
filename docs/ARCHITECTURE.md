@@ -242,8 +242,10 @@ Future input mode (not implemented yet):
 - Accept direct audio file input (skip yt-dlp) for automation use cases.
 
 ## Tech Debt Backlog (post-Phase 2.8)
-- Webhook tests: retry on 429 and signature coverage (DONE).
-- Environment variable naming consistency (DONE).
-- Race condition tests (Scheduler guard+test DONE; EventBuffer/RunManager pending).
+- Normalize null/undefined handling across API/settings inputs (DONE).
+- Reduce `as any` for external data (YouTube metadata/comments) with guards/parsers.
+- Validation unification: clarify Zod vs validation.ts split (or consolidate).
+- Harden settings input schema (reduce `z.record(z.unknown())`).
+- Race condition tests (EventBuffer/RunManager pending).
 - Missing tests: graceful shutdown sequence, symlink handling.
 - Optional: address npm audit vulnerabilities.

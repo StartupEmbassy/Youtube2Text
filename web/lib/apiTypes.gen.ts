@@ -559,7 +559,7 @@ export interface components {
         WatchlistCreateRequest: {
             /** @description YouTube channel or playlist URL (watchlist is for recurring sources, not single videos). */
             channelUrl: string;
-            intervalMinutes?: number;
+            intervalMinutes?: number | null;
             enabled?: boolean;
         };
         WatchlistUpdateRequest: {
@@ -654,14 +654,14 @@ export interface components {
         };
         RunCreateRequest: {
             url: string;
-            force?: boolean;
+            force?: boolean | null;
             /**
              * @description Limit this run to at most N NEW (unprocessed) videos.
              *     Applied AFTER skipping already-processed videos so repeated runs can backfill incrementally.
              */
-            maxNewVideos?: number;
+            maxNewVideos?: number | null;
             /** @description Only include videos after YYYY-MM-DD (best-effort; based on yt-dlp upload_date). */
-            afterDate?: string;
+            afterDate?: string | null;
             /**
              * @description Optional. If set, the API sends a POST webhook when the run ends:
              *     - `run:done` when status becomes done
@@ -671,7 +671,7 @@ export interface components {
              *     - `X-Y2T-Timestamp` (ISO)
              *     - `X-Y2T-Signature` (HMAC-SHA256 of `${timestamp}.${body}`)
              */
-            callbackUrl?: string;
+            callbackUrl?: string | null;
             config?: {
                 [key: string]: unknown;
             };

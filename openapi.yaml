@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.22.4
+  version: 0.23.1
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -885,7 +885,7 @@ components:
         channelUrl:
           type: string
           description: YouTube channel or playlist URL (watchlist is for recurring sources, not single videos).
-        intervalMinutes: { type: integer }
+        intervalMinutes: { type: [integer, "null"] }
         enabled: { type: boolean }
 
     WatchlistUpdateRequest:
@@ -1039,17 +1039,17 @@ components:
       required: [url]
       properties:
         url: { type: string }
-        force: { type: boolean }
+        force: { type: [boolean, "null"] }
         maxNewVideos:
-          type: integer
+          type: [integer, "null"]
           description: |
             Limit this run to at most N NEW (unprocessed) videos.
             Applied AFTER skipping already-processed videos so repeated runs can backfill incrementally.
         afterDate:
-          type: string
+          type: [string, "null"]
           description: Only include videos after YYYY-MM-DD (best-effort; based on yt-dlp upload_date).
         callbackUrl:
-          type: string
+          type: [string, "null"]
           description: |
             Optional. If set, the API sends a POST webhook when the run ends:
             - `run:done` when status becomes done

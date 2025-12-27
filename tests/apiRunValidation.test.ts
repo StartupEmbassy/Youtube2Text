@@ -65,3 +65,49 @@ test("POST /runs/plan clamps maxNewVideos and validates afterDate", async () => 
   }
 });
 
+test("POST /runs/plan treats null optional inputs as unset", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "y2t-run-null-"));
+  const config = configSchema.parse({
+    assemblyAiApiKey: "test",
+    outputDir: dir,
+    audioDir: join(dir, "audio"),
+  });
+
+  const { server } = await startApiServer(config, {
+    host: "127.0.0.1",
+    port: 0,
+    maxBufferedEventsPerRun: 10,
+    persistRuns: false,
+    deps: {
+      planRun: async (_url: string, cfg: any) => ({
+        inputUrl: _url,
+        force: false,
+        channelId: "C1",
+        channelTitle: "Chan",
+        totalVideos: 0,
+        alreadyProcessed: 0,
+        toProcess: 0,
+        filters: {},
+        videos: [],
+        maxNewVideosSeen: cfg.maxNewVideos ?? null,
+        afterDateSeen: cfg.afterDate ?? null,
+      }),
+    },
+  });
+  await listenServer(server);
+  const port = (server.address() as any).port as number;
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/runs/plan`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": "test" },
+      body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc", maxNewVideos: null, afterDate: null }),
+    });
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as any;
+    assert.equal(body.plan.maxNewVideosSeen, null);
+    assert.equal(body.plan.afterDateSeen, null);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

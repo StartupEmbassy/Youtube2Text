@@ -193,6 +193,9 @@ Rate limiting (write endpoints):
 Run timeout safety net:
 - `Y2T_RUN_TIMEOUT_MINUTES` (default `240`, set `0` to disable) marks a run as `error` if it stays `running` too long.
 
+Null handling:
+- For optional API inputs, `null` is treated as "unset" (e.g. `maxNewVideos`, `afterDate`, `intervalMinutes` on watchlist create).
+
 Graceful shutdown (server/Docker):
 - On `SIGTERM`/`SIGINT`, the API stops the scheduler and requests cancellation for queued/running runs, then waits up to `Y2T_SHUTDOWN_TIMEOUT_SECONDS` before exiting.
 

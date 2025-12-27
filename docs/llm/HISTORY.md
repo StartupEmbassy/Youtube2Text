@@ -6,6 +6,10 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-26 - GPT-5.2 - Tech debt: normalize null/undefined handling for optional API inputs (Zod preprocess), allow nulls in OpenAPI, add null-handling tests, update docs, and bump version to 0.23.1 - Files: [src/api/schemas.ts, tests/apiRunValidation.test.ts, tests/apiWatchlistValidation.test.ts, openapi.yaml, README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json] - Version impact: yes (0.23.0 -> 0.23.1)
+
+2025-12-26 - GPT-5.2 - Roadmap update: reprioritize tech debt around null/undefined normalization, external data guards, validation consolidation, and settings schema hardening; bump version to 0.23.0 - Files: [docs/llm/HANDOFF.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/VERSIONING_RULES.md, docs/llm/HISTORY.md, package.json, openapi.yaml] - Version impact: yes (0.22.4 -> 0.23.0)
+
 2025-12-26 - GPT-5.2 - Tech debt: add scheduler concurrency guard + test to avoid overlapping triggerOnce runs, update roadmap docs, and bump version to 0.22.4 - Files: [src/api/scheduler.ts, tests/scheduler.test.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.22.3 -> 0.22.4)
 
 2025-12-26 - GPT-5.2 - Tech debt: add env var aliases with Y2T_ prefixes, document legacy names, add env alias tests, and bump version to 0.22.3 - Files: [src/config/loader.ts, src/api/settings.ts, .env.example, README.md, docs/STRUCTURE.md, tests/configEnvAliases.test.ts, tests/all.test.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.22.2 -> 0.22.3)

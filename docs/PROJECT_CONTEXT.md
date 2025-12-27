@@ -68,7 +68,7 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Tech debt: race condition tests (EventBuffer/RunManager remaining), shutdown/symlink tests, optional npm audit fixes.
+- Tech debt: external data guards, validation consolidation, settings input hardening, then race tests and shutdown/symlink tests.
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
