@@ -80,3 +80,42 @@ test("PATCH /settings persists and influences /runs/plan effective config", asyn
     assert.equal(planBody2.plan.maxNewVideosSeen, 2);
   });
 });
+
+test("PATCH /settings clamps numeric ranges and normalizes languageCode", async () => {
+  await withServer(async (baseUrl) => {
+    const res = await fetch(`${baseUrl}/settings`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", "x-api-key": "test" },
+      body: JSON.stringify({
+        settings: {
+          concurrency: 999,
+          pollIntervalMs: 50,
+          downloadRetries: 50,
+          commentsMax: 9999,
+          catalogMaxAgeHours: 99999,
+          languageDetection: "manual",
+          languageCode: "EN-US",
+        },
+      }),
+    });
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as any;
+    assert.equal(body.settings.concurrency, 10);
+    assert.equal(body.settings.pollIntervalMs, 1000);
+    assert.equal(body.settings.downloadRetries, 10);
+    assert.equal(body.settings.commentsMax, 2000);
+    assert.equal(body.settings.catalogMaxAgeHours, 8760);
+    assert.equal(body.settings.languageCode, "en_us");
+  });
+});
+
+test("PATCH /settings rejects invalid afterDate", async () => {
+  await withServer(async (baseUrl) => {
+    const res = await fetch(`${baseUrl}/settings`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", "x-api-key": "test" },
+      body: JSON.stringify({ settings: { afterDate: "2024-99-99" } }),
+    });
+    assert.equal(res.status, 400);
+  });
+});

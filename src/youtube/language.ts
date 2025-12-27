@@ -63,6 +63,14 @@ export function mapToAssemblyAiLanguageCode(ytLang: string): string | undefined 
   return undefined; // Not supported
 }
 
+export function normalizeAssemblyAiLanguageCode(input: string): string | undefined {
+  return mapToAssemblyAiLanguageCode(input);
+}
+
+export function isAssemblyAiLanguageCode(input: string): boolean {
+  return mapToAssemblyAiLanguageCode(input) !== undefined;
+}
+
 function pickSupportedLanguageKey(obj: unknown): string | undefined {
   if (!obj || typeof obj !== "object") return undefined;
   const keys = Object.keys(obj as Record<string, unknown>);

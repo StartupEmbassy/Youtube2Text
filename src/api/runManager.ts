@@ -408,7 +408,10 @@ export class RunManager {
   }
 
   private enqueuePersist(task: () => Promise<void>) {
-    this.persistChain = this.persistChain.then(task).catch(() => {});
+    this.persistChain = this.persistChain.then(task).catch((error) => {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.warn("[api] Persist failure:", err);
+    });
   }
 
   private persistRun(record: RunRecord) {

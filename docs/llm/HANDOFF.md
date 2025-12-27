@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.20.2 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.21.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -87,10 +87,13 @@ All content should be ASCII-only to avoid Windows encoding issues.
 1. Update ARCHITECTURE.md status (clarity)
 2. Then proceed with rate limiting
 
+## Phase 2.8.3 (DONE): Rate limiting
+- Write endpoints are rate limited per API key (or IP) with 429 + Retry-After.
+- Config via `Y2T_RATE_LIMIT_WRITE_MAX` and `Y2T_RATE_LIMIT_WINDOW_MS`.
+
 ## Next Steps
 
-1) **Phase 2.8.3 (hardening)**: Rate limiting for write endpoints (per API key/IP) + 429 OpenAPI/doc updates.
-2) **Ops hardening**: Runtime timeouts, Docker healthcheck.
+1) **Ops hardening**: Runtime timeouts, Docker healthcheck.
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE

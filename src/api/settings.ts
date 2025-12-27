@@ -10,6 +10,7 @@ import {
   type NonSecretSettings,
 } from "../config/settings.js";
 import { loadConfigSourceSnapshots } from "../config/loader.js";
+import { normalizeNonSecretSettings } from "./validation.js";
 
 export type SettingsGetResponse = {
   outputDir: string;
@@ -24,6 +25,20 @@ export type SettingsPatchRequest = {
   // Values may be null to clear optional fields.
   settings: Partial<Record<keyof NonSecretSettings, unknown>> & Record<string, unknown>;
 };
+
+export function normalizeSettingsPatchInput(input: unknown): {
+  settings: Partial<NonSecretSettings>;
+  errors: string[];
+} {
+  if (!input || typeof input !== "object") return { settings: {}, errors: ["settings must be an object"] };
+  const cleanedInput = { ...(input as Record<string, unknown>) };
+  for (const [k, v] of Object.entries(cleanedInput)) {
+    if (v === null) delete cleanedInput[k];
+  }
+  const sanitized = sanitizeNonSecretSettings(cleanedInput);
+  const normalized = normalizeNonSecretSettings(sanitized);
+  return { settings: normalized.value, errors: normalized.errors };
+}
 
 export async function getSettingsResponse(baseConfig: AppConfig): Promise<SettingsGetResponse> {
   const file = await readSettingsFile(baseConfig.outputDir);
@@ -48,13 +63,7 @@ export async function patchSettings(
   const current = await readSettingsFile(baseConfig.outputDir);
   const currentSettings = sanitizeNonSecretSettings(current?.settings);
 
-  // Allow null to clear a key (by deleting).
-  const cleanedInput = { ...(req.settings ?? {}) };
-  for (const [k, v] of Object.entries(cleanedInput)) {
-    if (v === null) delete cleanedInput[k];
-  }
-
-  const updates = sanitizeNonSecretSettings(cleanedInput);
+  const updates = sanitizeNonSecretSettings(req.settings ?? {});
   const merged = { ...currentSettings, ...updates };
   await writeSettingsFile(baseConfig.outputDir, merged);
   return getSettingsResponse(baseConfig);

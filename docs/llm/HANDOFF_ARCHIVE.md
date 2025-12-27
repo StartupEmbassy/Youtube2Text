@@ -2249,3 +2249,51 @@ Follow-up (not implemented yet):
 - None currently. Track new unknowns in `docs/llm/HISTORY.md` and convert stable choices into `docs/llm/DECISIONS.md`.
 
 Note: deeper rationale/tradeoffs for Phase 2 integration live in `docs/llm/DECISIONS.md` (D-014 / D-015).
+
+---
+
+## Documentation Audit (2025-12-20) - Archived 2025-12-27
+
+Claude Opus 4.5 performed a full documentation cleanup:
+
+**Changes made:**
+1. `docs/PROJECT_CONTEXT.md` - Updated date from 2025-12-17 to 2025-12-20
+2. `docs/ARCHITECTURE.md` - Updated version 1.1.6-draft to 1.1.7, date to 2025-12-20
+3. `docs/llm/HANDOFF.md` - Condensed from ~220 lines to ~90 lines:
+   - Removed 100+ lines of CSS/component specs (already implemented)
+   - Consolidated Phase 2.7 section into summary table
+   - Moved implementation specs to HANDOFF_ARCHIVE.md
+4. `docs/llm/HANDOFF_ARCHIVE.md` - Added new section with:
+   - Tooltip CSS specs (Gemini-designed)
+   - Tooltip component pattern (with GPT accessibility enhancements)
+   - Help text table for all 16 fields
+   - v0.17.3-v0.17.5 change summaries
+
+**Verified:**
+- Code matches documentation (Settings UI, globals.css, SettingsForm.tsx)
+- Version 0.17.5 synced in package.json and openapi.yaml
+- All DONE items in HANDOFF are actually implemented
+
+---
+
+## UX Decision (2025-12-20): Settings effective hints cleanup - v0.17.6 - Archived 2025-12-27
+
+**Problem:** Inline `effective: value (source)` text on every field (16 fields) creates visual clutter.
+
+**3-LLM Consensus (Gemini recommendation weighted highest):**
+
+| Option | Gemini | Claude | Decision |
+|--------|--------|--------|----------|
+| Inline text always visible | NO - too cluttered | NO | Rejected |
+| Placeholder text | NO - accessibility issues, disappears on focus | NO | Rejected |
+| Separate summary table | NO - disconnected from fields | NO | Rejected |
+| Info icon with tooltip | YES - clean, discoverable, mobile-friendly | YES - use existing `?` tooltip | **Approved** |
+| Auto-save | NO - accidental changes with 16 fields | NO | Rejected |
+| Explicit Save button | YES - deliberate actions | YES - but move to top | **Approved** |
+
+**Implementation (v0.17.6):**
+1. Remove all inline `effective: ... (source)` text
+2. Add effective value info to existing `?` tooltip (combines help text + effective value)
+3. Move Save button to top of the form (more accessible)
+
+**Source:** Gemini CLI consultation + Claude review.

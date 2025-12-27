@@ -10,6 +10,7 @@ import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
 import { FileSystemStorageAdapter, saveChannelMetaJson } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
 import { requireApiKey } from "./auth.js";
+import { createRateLimiter, getRateLimitConfigFromEnv } from "./rateLimit.js";
 import {
   runCreateSchema,
   runPlanSchema,
@@ -188,6 +189,18 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
     audioFormat: config.audioFormat,
   });
 
+  const writeRateLimiter = createRateLimiter(getRateLimitConfigFromEnv());
+
+  const isWriteMethod = (method: string | undefined) =>
+    method === "POST" || method === "PATCH" || method === "DELETE";
+
+  const rateLimitKey = (req: IncomingMessage): string => {
+    const apiKey = typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined;
+    if (apiKey && apiKey.trim().length > 0) return `key:${apiKey}`;
+    const ip = req.socket.remoteAddress ?? "unknown";
+    return `ip:${ip}`;
+  };
+
   async function getEffectiveConfig(): Promise<AppConfig> {
     const file = await readSettingsFile(config.outputDir);
     const settings = sanitizeNonSecretSettings(file?.settings);
@@ -203,6 +216,17 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
     }
 
     if (!requireApiKey(req, res)) return;
+
+    if (writeRateLimiter && isWriteMethod(req.method)) {
+      const decision = writeRateLimiter.check(rateLimitKey(req));
+      if (!decision.allowed) {
+        if (decision.retryAfterSeconds !== undefined) {
+          res.setHeader("retry-after", String(decision.retryAfterSeconds));
+        }
+        json(res, 429, { error: "rate_limited", message: "Rate limit exceeded" });
+        return;
+      }
+    }
 
     const seg = segments(req);
 

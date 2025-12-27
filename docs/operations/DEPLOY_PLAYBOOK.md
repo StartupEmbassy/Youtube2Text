@@ -24,6 +24,7 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_API_KEY` (required; enforces `X-API-Key` on all API endpoints except `GET /health`)
 - `Y2T_CORS_ORIGINS` (comma-separated exact origin allowlist)
   - Example: `https://y2t.example.com`
+- `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints)
 
 If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
 If you expose the API port publicly in that state, anyone can call it.

@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-26 - GPT-5.2 - Phase 2.8.3 hardening: add write rate limiting (per API key/IP), expose env config, add 429 OpenAPI responses + unit test, and bump version to 0.21.0 - Files: [src/api/rateLimit.ts, src/api/server.ts, tests/apiRateLimit.test.ts, tests/all.test.ts, README.md, .env.example, docs/operations/DEPLOY_PLAYBOOK.md, openapi.yaml, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json] - Version impact: yes (0.20.2 -> 0.21.0)
+
 2025-12-26 - GPT-5.2 - Phase 2.8.2b hardening: add Zod schemas for API request bodies, remove unsafe casts in server routes, update docs/roadmap, and bump version to 0.20.2 - Files: [src/api/schemas.ts, src/api/server.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.20.1 -> 0.20.2)
 
 2025-12-26 - GPT-5.2 - Phase 2.8.2b hardening: sanitize API 500 responses, log persistence failures, update roadmap/docs, and bump version to 0.20.1 - Files: [src/api/server.ts, src/api/runManager.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.20.0 -> 0.20.1)

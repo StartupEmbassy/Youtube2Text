@@ -792,7 +792,19 @@ export interface components {
             timestamp: string;
         };
     };
-    responses: never;
+    responses: {
+        /** @description Rate limit exceeded */
+        RateLimited: {
+            headers: {
+                /** @description Seconds until the rate limit window resets */
+                "Retry-After"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+    };
     parameters: {
         RunId: string;
         ChannelDirName: string;
@@ -861,6 +873,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     getSettings: {
@@ -932,6 +945,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     listWatchlist: {
@@ -994,6 +1008,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     getWatchlistEntry: {
@@ -1056,6 +1071,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     updateWatchlistEntry: {
@@ -1091,6 +1107,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     getSchedulerStatus: {
@@ -1149,6 +1166,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     stopScheduler: {
@@ -1178,6 +1196,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     triggerSchedulerOnce: {
@@ -1207,6 +1226,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     streamGlobalEvents: {
@@ -1330,6 +1350,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     planRun: {
@@ -1363,6 +1384,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     getRun: {
@@ -1483,6 +1505,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            429: components["responses"]["RateLimited"];
         };
     };
     getRunArtifacts: {

@@ -109,6 +109,7 @@ Y2T_CATALOG_MAX_AGE_HOURS=168
 
 Notes:
 - Boolean env vars like `CSV_ENABLED` / `COMMENTS_ENABLED` only override config when set; accepted truthy values: `true`, `1`, `yes`.
+- API/settings inputs are normalized server-side: numeric fields are clamped to safe bounds, `afterDate` must be YYYY-MM-DD, and manual `languageCode` must be a supported AssemblyAI code (invalid inputs return 400).
 
 Example files:
 
@@ -180,6 +181,13 @@ Auth (optional, recommended for server/Docker):
   - For local development only, you can set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to start the API server without auth.
 - Example:
   - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
+
+Rate limiting (write endpoints):
+- In-memory rate limit for `POST/PATCH/DELETE` (per API key or IP).
+- Configure via env:
+  - `Y2T_RATE_LIMIT_WRITE_MAX` (default `60`, set `0` to disable)
+  - `Y2T_RATE_LIMIT_WINDOW_MS` (default `60000`)
+- Exceeded limits return HTTP 429 with `Retry-After`.
 
 Graceful shutdown (server/Docker):
 - On `SIGTERM`/`SIGINT`, the API stops the scheduler and requests cancellation for queued/running runs, then waits up to `Y2T_SHUTDOWN_TIMEOUT_SECONDS` before exiting.

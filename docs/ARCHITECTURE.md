@@ -1,6 +1,6 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.2.0
+> Version: 1.2.1
 > Last Updated: 2025-12-26
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
@@ -223,8 +223,8 @@ Phase 2.8 - Security hardening for hosted use (IN PROGRESS; do in order):
    - Sanitize 500 responses (no internal error leaks).
    - Log persistence failures (no silent catch).
    - Replace unsafe request-body casts with schema validation (Zod).
-4) Rate limiting (write limiting) (NEXT)
-   - Per API key (primary) and optionally per IP; stricter limits on write endpoints (`POST /runs`, `PATCH /settings`, watchlist mutations, scheduler triggers).
+4) Rate limiting (write limiting) (DONE in v0.21.0)
+    - Per API key (primary) and optionally per IP; stricter limits on write endpoints (`POST /runs`, `PATCH /settings`, watchlist mutations, scheduler triggers).
 5) Tests + docs
    - Unit tests for auth-required mode, clamp behavior, and rate limiting.
    - Update README + OpenAPI error responses for 401/429 where relevant.
