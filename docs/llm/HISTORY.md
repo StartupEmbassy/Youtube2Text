@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-26 - GPT-5.2 - Tech debt: add webhook tests for 429 retry and missing signature, update roadmap docs, and bump version to 0.22.2 - Files: [tests/apiWebhooks.test.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.22.1 -> 0.22.2)
+
 2025-12-26 - GPT-5.2 - Ops: sync package-lock.json version with package.json via npm install; note audit vulnerabilities; update HANDOFF next steps - Files: [package-lock.json, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-26 - GPT-5.2 - Docs/contract cleanup: remove unused GlobalRunEvent schema to eliminate OpenAPI warning, and bump version to 0.22.1 - Files: [openapi.yaml, package.json, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: yes (0.22.0 -> 0.22.1)

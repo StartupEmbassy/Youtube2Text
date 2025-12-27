@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.22.1 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.22.2 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,11 +44,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.22.1)
+## Review Notes (GPT v0.22.2)
 - Docs/code alignment looks good for v0.22.x.
-- Tests: `npm test` passes (73/73).
-- `package-lock.json` still shows version 0.17.5 - run `npm install` to sync.
-- OpenAPI warning: `GlobalRunEvent` schema unused (Redocly warns).
+- Tests: `npm test` passes (75/75).
 
 ## Code Review (Claude 2025-12-27)
 
@@ -87,9 +85,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Add run timeout safety net for long-running runs.
 - Add Docker healthcheck to `/health`.
 
-## Next Steps
-
-1) Optional: address `npm audit` moderate vulnerabilities (if desired).
+## Tech Debt Backlog (do in order)
+1) Webhook tests: add retry-on-429 and signature coverage (DONE).
+2) Environment variable naming consistency (document and align prefixes) (IN PROGRESS).
+3) Race condition tests (EventBuffer/RunManager/scheduler).
+4) Missing tests: graceful shutdown sequence, symlink handling.
+5) Optional: address `npm audit` moderate vulnerabilities.
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE

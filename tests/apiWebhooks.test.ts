@@ -15,6 +15,16 @@ test("buildWebhookHeaders includes signature when secret is set", () => {
   assert.equal(headers["x-y2t-timestamp"], "2025-01-01T00:00:00.000Z");
 });
 
+test("buildWebhookHeaders omits signature when secret is missing", () => {
+  const headers = buildWebhookHeaders({
+    secret: "",
+    timestamp: "2025-01-01T00:00:00.000Z",
+    body: "{\"ok\":true}",
+    eventType: "run:done",
+  });
+  assert.equal(headers["x-y2t-signature"], undefined);
+});
+
 test("deliverWebhook retries on 500 and succeeds", async () => {
   let calls = 0;
   const fakeFetch = async () => {
@@ -22,6 +32,33 @@ test("deliverWebhook retries on 500 and succeeds", async () => {
     return { ok: calls >= 2, status: calls >= 2 ? 200 : 500 } as any;
   };
   process.env.Y2T_WEBHOOK_RETRIES = "2";
+  process.env.Y2T_WEBHOOK_TIMEOUT_MS = "2000";
+  const res = await deliverWebhook(
+    "https://example.com/hook",
+    {
+      type: "run:done",
+      timestamp: new Date().toISOString(),
+      run: {
+        runId: "r1",
+        status: "done",
+        inputUrl: "u",
+        force: false,
+        createdAt: new Date().toISOString(),
+      } as any,
+    },
+    { fetch: fakeFetch as any }
+  );
+  assert.equal(res.ok, true);
+  assert.equal(calls, 2);
+});
+
+test("deliverWebhook retries on 429 and succeeds", async () => {
+  let calls = 0;
+  const fakeFetch = async () => {
+    calls += 1;
+    return { ok: calls >= 2, status: calls >= 2 ? 200 : 429 } as any;
+  };
+  process.env.Y2T_WEBHOOK_RETRIES = "1";
   process.env.Y2T_WEBHOOK_TIMEOUT_MS = "2000";
   const res = await deliverWebhook(
     "https://example.com/hook",
@@ -70,4 +107,3 @@ test("deliverWebhook does not retry on 400", async () => {
   assert.equal(res.status, 400);
   assert.equal(calls, 1);
 });
-
