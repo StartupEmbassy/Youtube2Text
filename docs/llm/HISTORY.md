@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-26 - GPT-5.2 - Ops: sync package-lock.json version with package.json via npm install; note audit vulnerabilities; update HANDOFF next steps - Files: [package-lock.json, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-26 - GPT-5.2 - Docs/contract cleanup: remove unused GlobalRunEvent schema to eliminate OpenAPI warning, and bump version to 0.22.1 - Files: [openapi.yaml, package.json, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: yes (0.22.0 -> 0.22.1)
 
 2025-12-26 - GPT-5.2 - Ops hardening: add run timeout safety net (Y2T_RUN_TIMEOUT_MINUTES) and Docker healthcheck, update docs/env examples, and bump version to 0.22.0 - Files: [src/api/runManager.ts, src/api/server.ts, Dockerfile, .env.example, README.md, docs/operations/DEPLOY_PLAYBOOK.md, docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.21.0 -> 0.22.0)

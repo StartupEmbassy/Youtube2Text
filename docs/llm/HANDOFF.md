@@ -89,7 +89,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Next Steps
 
-1) Optional: package-lock version sync (`npm install`).
+1) Optional: address `npm audit` moderate vulnerabilities (if desired).
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE
