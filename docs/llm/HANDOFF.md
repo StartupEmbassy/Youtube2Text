@@ -52,22 +52,11 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Code Review (Claude 2025-12-27)
 
-### CRITICAL - Fix before Phase 2.8.3
+### CRITICAL - DONE in Phase 2.8.2b
 
-1. **Unsafe `as any` casts in server.ts (80+ instances)**
-   - Request bodies cast without validation: `(await readJsonBody(req)) as any`
-   - Risk: type validation bypass
-   - Fix: use Zod schemas like `runRequestSchema.safeParse(body)`
-
-2. **Error messages exposed to clients (server.ts:907)**
-   - Global catch returns `error.message` directly to HTTP response
-   - Risk: internal details leaked
-   - Fix: sanitize to generic message, log full error internally
-
-3. **Silent persistence failures (runManager.ts:411)**
-   - `.catch(() => {})` swallows errors silently
-   - Risk: data loss without operator awareness
-   - Fix: at minimum log the error
+1. **Unsafe `as any` casts in server.ts (80+ instances)** - DONE
+2. **Error messages exposed to clients (server.ts:907)** - DONE
+3. **Silent persistence failures (runManager.ts:411)** - DONE
 
 ### MEDIUM - Technical debt
 
@@ -95,16 +84,13 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ### Recommended order before Phase 2.8.3
 
-1. Sanitize HTTP error responses (security)
-2. Log persistence failures (observability)
-3. Update ARCHITECTURE.md status (clarity)
-4. Then proceed with rate limiting
+1. Update ARCHITECTURE.md status (clarity)
+2. Then proceed with rate limiting
 
 ## Next Steps
 
-1) **Phase 2.8.3 (hardening)**: Add rate limiting before any new features.
-2) **Phase 2.8.3**: Rate limiting for write endpoints (per API key/IP) + 429 OpenAPI/doc updates.
-3) **Ops hardening**: Runtime timeouts, Docker healthcheck.
+1) **Phase 2.8.3 (hardening)**: Rate limiting for write endpoints (per API key/IP) + 429 OpenAPI/doc updates.
+2) **Ops hardening**: Runtime timeouts, Docker healthcheck.
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE
