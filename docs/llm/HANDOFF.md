@@ -44,7 +44,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.22.0)
+## Review Notes (GPT v0.22.1)
 - Docs/code alignment looks good for v0.22.x.
 - Tests: `npm test` passes (73/73).
 - `package-lock.json` still shows version 0.17.5 - run `npm install` to sync.
