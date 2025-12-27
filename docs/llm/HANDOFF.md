@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.19.3 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.20.2 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -34,14 +34,82 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Responsive: 900px breakpoint, right-aligned labels on desktop
 - Full implementation specs: `docs/llm/HANDOFF_ARCHIVE.md`
 
+## Phase 2.8.2 (DONE): Server-side clamps/validation
+- Added server-side validation/clamping for settings, runs, and watchlist inputs.
+- Invalid `afterDate` or manual `languageCode` returns 400; numeric fields clamp to safe bounds.
+- New helper: `src/api/validation.ts` with shared limits.
+
+## Phase 2.8.2b (DONE): API hardening follow-ups
+- Done: sanitize 500 responses (no internal error leaks).
+- Done: log persistence failures (no silent `.catch(() => {})`).
+- Done: request-body schema validation via Zod (remove unsafe casts).
+
+## Review Notes (GPT v0.20.2)
+- Docs/code alignment looks good for v0.20.x.
+- Tests: `npm test` passes (71/71).
+- `package-lock.json` still shows version 0.17.5 - run `npm install` to sync.
+- OpenAPI warning: `GlobalRunEvent` schema unused (Redocly warns).
+
+## Code Review (Claude 2025-12-27)
+
+### CRITICAL - Fix before Phase 2.8.3
+
+1. **Unsafe `as any` casts in server.ts (80+ instances)**
+   - Request bodies cast without validation: `(await readJsonBody(req)) as any`
+   - Risk: type validation bypass
+   - Fix: use Zod schemas like `runRequestSchema.safeParse(body)`
+
+2. **Error messages exposed to clients (server.ts:907)**
+   - Global catch returns `error.message` directly to HTTP response
+   - Risk: internal details leaked
+   - Fix: sanitize to generic message, log full error internally
+
+3. **Silent persistence failures (runManager.ts:411)**
+   - `.catch(() => {})` swallows errors silently
+   - Risk: data loss without operator awareness
+   - Fix: at minimum log the error
+
+### MEDIUM - Technical debt
+
+4. **Race conditions (no tests)**
+   - `EventBuffer` concurrent append/read
+   - `RunManager` mutable maps without locking
+   - Scheduler potential double-enqueue
+
+5. **Documentation drift**
+   - ARCHITECTURE.md says "Phase 2.5 future" but `/metrics` already exists
+   - `GET /runs/:id/logs` implemented but docs say "planned"
+   - Update ARCHITECTURE.md status from "Design/Roadmap" to "Production"
+
+6. **Environment variable naming inconsistent**
+   - `FILENAME_STYLE` vs `Y2T_CATALOG_MAX_AGE_HOURS` (prefix inconsistent)
+   - `YTDLP_PATH` vs `YT_DLP_PATH` (both accepted, not documented)
+
+### MINOR - Cleanup
+
+7. **Missing tests**
+   - Webhook retry/HMAC validation
+   - Graceful shutdown sequence
+   - Concurrent runs race conditions
+   - Symlinks in output directory
+
+### Recommended order before Phase 2.8.3
+
+1. Sanitize HTTP error responses (security)
+2. Log persistence failures (observability)
+3. Update ARCHITECTURE.md status (clarity)
+4. Then proceed with rate limiting
+
+## Next Steps
+
+1) **Phase 2.8.3 (hardening)**: Add rate limiting before any new features.
+2) **Phase 2.8.3**: Rate limiting for write endpoints (per API key/IP) + 429 OpenAPI/doc updates.
+3) **Ops hardening**: Runtime timeouts, Docker healthcheck.
+
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE
 - Update relevant docs for every behavior change
 - Add entry to `docs/llm/HISTORY.md` for every version bump
-
-## Next Steps (Future, lower priority)
-1) Phase 2.8 security hardening for hosted use: make `Y2T_API_KEY` mandatory (non-local), add server-side clamps/validation, and add rate limiting for write endpoints.
-2) Add runtime timeouts and Docker healthcheck (ops hardening).
 
 ## Testing / Sanity Pass
 - `npm test`
@@ -58,52 +126,4 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)
 - `docs/llm/DECISIONS.md` (why we chose things)
-- `docs/llm/HANDOFF_ARCHIVE.md` (older handoff content)
-
----
-
-## Documentation Audit (2025-12-20)
-
-Claude Opus 4.5 performed a full documentation cleanup:
-
-**Changes made:**
-1. `docs/PROJECT_CONTEXT.md` - Updated date from 2025-12-17 to 2025-12-20
-2. `docs/ARCHITECTURE.md` - Updated version 1.1.6-draft to 1.1.7, date to 2025-12-20
-3. `docs/llm/HANDOFF.md` - Condensed from ~220 lines to ~90 lines:
-   - Removed 100+ lines of CSS/component specs (already implemented)
-   - Consolidated Phase 2.7 section into summary table
-   - Moved implementation specs to HANDOFF_ARCHIVE.md
-4. `docs/llm/HANDOFF_ARCHIVE.md` - Added new section with:
-   - Tooltip CSS specs (Gemini-designed)
-   - Tooltip component pattern (with GPT accessibility enhancements)
-   - Help text table for all 16 fields
-   - v0.17.3-v0.17.5 change summaries
-
-**Verified:**
-- Code matches documentation (Settings UI, globals.css, SettingsForm.tsx)
-- Version 0.17.5 synced in package.json and openapi.yaml
-- All DONE items in HANDOFF are actually implemented
-
----
-
-## UX Decision (2025-12-20): Settings effective hints cleanup - v0.17.6
-
-**Problem:** Inline `effective: value (source)` text on every field (16 fields) creates visual clutter.
-
-**3-LLM Consensus (Gemini recommendation weighted highest):**
-
-| Option | Gemini | Claude | Decision |
-|--------|--------|--------|----------|
-| Inline text always visible | NO - too cluttered | NO | Rejected |
-| Placeholder text | NO - accessibility issues, disappears on focus | NO | Rejected |
-| Separate summary table | NO - disconnected from fields | NO | Rejected |
-| Info icon with tooltip | YES - clean, discoverable, mobile-friendly | YES - use existing `?` tooltip | **Approved** |
-| Auto-save | NO - accidental changes with 16 fields | NO | Rejected |
-| Explicit Save button | YES - deliberate actions | YES - but move to top | **Approved** |
-
-**Implementation (v0.17.6):**
-1. Remove all inline `effective: ... (source)` text
-2. Add effective value info to existing `?` tooltip (combines help text + effective value)
-3. Move Save button to top of the form (more accessible)
-
-**Source:** Gemini CLI consultation + Claude review.
+- `docs/llm/HANDOFF_ARCHIVE.md` (older handoff content, audits, UX decisions)

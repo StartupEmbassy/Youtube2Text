@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.1.7
-> Last Updated: 2025-12-20
+> Version: 1.2.0
+> Last Updated: 2025-12-26
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
@@ -213,15 +213,19 @@ Phase 2.7 - Settings + planning performance (DONE):
   - Maintain a fast processed-id scan (set of ids) derived from `output/<channelDir>/*.json` transcripts.
   - Used by `POST /runs/plan` and runs to avoid per-video filesystem checks.
 
-Phase 2.8 - Security hardening for hosted use (NEXT; do in order):
-1) Make API auth mandatory for non-local deployments
+Phase 2.8 - Security hardening for hosted use (IN PROGRESS; do in order):
+1) Make API auth mandatory for non-local deployments (DONE)
    - Require `Y2T_API_KEY` by default in Docker/hosted mode; keep a deliberate escape hatch for local dev only.
-2) Server-side clamps/validation for config inputs
+2) Server-side clamps/validation for config inputs (DONE in v0.20.0)
    - Reject or clamp pathological values for: concurrency, pollIntervalMs, maxPollMinutes, retries, commentsMax, catalogMaxAgeHours, afterDate format, manual languageCode allowlist.
    - Apply to: `PATCH /settings`, `POST /runs`, `POST /watchlist` (and any future endpoints that accept overrides).
-3) Rate limiting (write limiting)
+3) Harden API error handling and persistence (DONE in v0.20.2)
+   - Sanitize 500 responses (no internal error leaks).
+   - Log persistence failures (no silent catch).
+   - Replace unsafe request-body casts with schema validation (Zod).
+4) Rate limiting (write limiting) (NEXT)
    - Per API key (primary) and optionally per IP; stricter limits on write endpoints (`POST /runs`, `PATCH /settings`, watchlist mutations, scheduler triggers).
-4) Tests + docs
+5) Tests + docs
    - Unit tests for auth-required mode, clamp behavior, and rate limiting.
    - Update README + OpenAPI error responses for 401/429 where relevant.
 

@@ -10,6 +10,13 @@ import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
 import { FileSystemStorageAdapter, saveChannelMetaJson } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
 import { requireApiKey } from "./auth.js";
+import {
+  runCreateSchema,
+  runPlanSchema,
+  settingsPatchSchema,
+  watchlistCreateSchema,
+  watchlistUpdateSchema,
+} from "./schemas.js";
 import { sanitizeConfigOverrides } from "./sanitize.js";
 import { planRun } from "../pipeline/plan.js";
 import { classifyYoutubeUrl, tryExtractVideoIdFromUrl } from "../youtube/url.js";
@@ -20,8 +27,14 @@ import { runRetentionCleanup } from "./retention.js";
 import { Scheduler, loadSchedulerConfigFromEnv } from "./scheduler.js";
 import { WatchlistStore } from "./watchlist.js";
 import { getCatalogMetricsSnapshot } from "../youtube/catalogMetrics.js";
-import { getSettingsResponse, patchSettings } from "./settings.js";
+import { getSettingsResponse, normalizeSettingsPatchInput, patchSettings } from "./settings.js";
 import { applySettingsToConfig, readSettingsFile, sanitizeNonSecretSettings } from "../config/settings.js";
+import {
+  normalizeConfigOverrides,
+  normalizeRunNumericInputs,
+  normalizeWatchlistInterval,
+} from "./validation.js";
+import { normalizeAssemblyAiLanguageCode } from "../youtube/language.js";
 
 type ServerOptions = {
   port: number;
@@ -309,15 +322,17 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           badRequest(res, "Invalid JSON body");
           return;
         }
-        if (!body || typeof body !== "object") {
-          badRequest(res, "Expected JSON body");
+        const parsed = settingsPatchSchema.safeParse(body);
+        if (!parsed.success) {
+          badRequest(res, "Invalid settings payload");
           return;
         }
-        if (!(body as any).settings || typeof (body as any).settings !== "object") {
-          badRequest(res, "Missing settings");
+        const { settings, errors } = normalizeSettingsPatchInput(parsed.data.settings);
+        if (errors.length > 0) {
+          badRequest(res, `Invalid settings: ${errors.join(", ")}`);
           return;
         }
-        const updated = await patchSettings(config, body as any);
+        const updated = await patchSettings(config, { settings });
         json(res, 200, updated);
         return;
       }
@@ -341,11 +356,15 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           badRequest(res, "Invalid JSON body");
           return;
         }
-        const channelUrl = (body as any)?.channelUrl;
-        const intervalMinutes = (body as any)?.intervalMinutes;
-        const enabled = (body as any)?.enabled;
-        if (typeof channelUrl !== "string" || channelUrl.trim().length === 0) {
-          badRequest(res, "Missing channelUrl");
+        const parsed = watchlistCreateSchema.safeParse(body);
+        if (!parsed.success) {
+          badRequest(res, "Invalid watchlist payload");
+          return;
+        }
+        const { channelUrl, intervalMinutes, enabled } = parsed.data;
+        const intervalResult = normalizeWatchlistInterval(intervalMinutes);
+        if (intervalResult.errors.length > 0) {
+          badRequest(res, `Invalid intervalMinutes: ${intervalResult.errors.join(", ")}`);
           return;
         }
         const allowAny = (process.env.Y2T_WATCHLIST_ALLOW_ANY_URL ?? "").trim().toLowerCase();
@@ -359,8 +378,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const entry = await watchlistStore.add({
           channelUrl,
-          intervalMinutes: typeof intervalMinutes === "number" ? intervalMinutes : undefined,
-          enabled: enabled === undefined ? undefined : Boolean(enabled),
+          intervalMinutes: intervalResult.value.intervalMinutes ?? undefined,
+          enabled,
         });
         json(res, 201, { entry });
         return;
@@ -385,9 +404,19 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             badRequest(res, "Invalid JSON body");
             return;
           }
+          const parsed = watchlistUpdateSchema.safeParse(body);
+          if (!parsed.success) {
+            badRequest(res, "Invalid watchlist payload");
+            return;
+          }
+          const intervalResult = normalizeWatchlistInterval(parsed.data.intervalMinutes);
+          if (intervalResult.errors.length > 0) {
+            badRequest(res, `Invalid intervalMinutes: ${intervalResult.errors.join(", ")}`);
+            return;
+          }
           const entry = await watchlistStore.update(id, {
-            intervalMinutes: (body as any)?.intervalMinutes,
-            enabled: (body as any)?.enabled,
+            intervalMinutes: intervalResult.value.intervalMinutes ?? parsed.data.intervalMinutes,
+            enabled: parsed.data.enabled,
           });
           if (!entry) return notFound(res);
           json(res, 200, { entry });
@@ -455,35 +484,41 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           badRequest(res, "Invalid JSON body");
           return;
         }
-        if (!body || typeof body !== "object") {
-          badRequest(res, "Expected JSON body");
+        const parsed = runPlanSchema.safeParse(body);
+        if (!parsed.success) {
+          badRequest(res, "Invalid run payload");
           return;
         }
-        const url = (body as any).url;
-        const force = Boolean((body as any).force);
-        const maxNewVideos = (body as any).maxNewVideos;
-        const afterDate = (body as any).afterDate;
-        const configOverrides = (body as any).config;
-        if (typeof url !== "string" || url.trim().length === 0) {
-          badRequest(res, "Missing url");
-          return;
-        }
-        if (maxNewVideos !== undefined && typeof maxNewVideos !== "number") {
-          badRequest(res, "Invalid maxNewVideos");
-          return;
-        }
-        if (afterDate !== undefined && typeof afterDate !== "string") {
-          badRequest(res, "Invalid afterDate");
+        const { url, force, maxNewVideos, afterDate, config: configOverrides } = parsed.data;
+        const normalized = normalizeRunNumericInputs({ maxNewVideos, afterDate });
+        if (normalized.errors.length > 0) {
+          badRequest(res, `Invalid input: ${normalized.errors.join(", ")}`);
           return;
         }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
+        const normalizedOverrides = normalizeConfigOverrides(sanitizedOverrides);
+        if (normalizedOverrides.errors.length > 0) {
+          badRequest(res, `Invalid config overrides: ${normalizedOverrides.errors.join(", ")}`);
+          return;
+        }
         const requestOverrides = {
-          ...sanitizedOverrides,
-          ...(typeof maxNewVideos === "number" ? { maxNewVideos } : {}),
-          ...(typeof afterDate === "string" ? { afterDate } : {}),
+          ...normalizedOverrides.value,
+          ...(normalized.value.maxNewVideos !== undefined
+            ? { maxNewVideos: normalized.value.maxNewVideos }
+            : {}),
+          ...(normalized.value.afterDate !== undefined
+            ? { afterDate: normalized.value.afterDate }
+            : {}),
         };
         const effectiveBase = await getEffectiveConfig();
         const mergedConfig = { ...effectiveBase, ...requestOverrides };
+        if (
+          mergedConfig.languageDetection === "manual" &&
+          normalizeAssemblyAiLanguageCode(mergedConfig.languageCode) === undefined
+        ) {
+          badRequest(res, "Invalid languageCode for manual languageDetection");
+          return;
+        }
         const plan = await planRunFn(url, mergedConfig, { force });
         json(res, 200, { plan });
         return;
@@ -620,40 +655,48 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           badRequest(res, "Invalid JSON body");
           return;
         }
-        if (!body || typeof body !== "object") {
-          badRequest(res, "Expected JSON body");
+        const parsed = runCreateSchema.safeParse(body);
+        if (!parsed.success) {
+          badRequest(res, "Invalid run payload");
           return;
         }
-        const url = (body as any).url;
-        const force = Boolean((body as any).force);
-        const maxNewVideos = (body as any).maxNewVideos;
-        const afterDate = (body as any).afterDate;
-        const callbackUrl = (body as any).callbackUrl;
-        const configOverrides = (body as any).config;
-        if (typeof url !== "string" || url.trim().length === 0) {
-          badRequest(res, "Missing url");
-          return;
-        }
-        if (maxNewVideos !== undefined && typeof maxNewVideos !== "number") {
-          badRequest(res, "Invalid maxNewVideos");
-          return;
-        }
-        if (afterDate !== undefined && typeof afterDate !== "string") {
-          badRequest(res, "Invalid afterDate");
-          return;
-        }
-        if (callbackUrl !== undefined && typeof callbackUrl !== "string") {
-          badRequest(res, "Invalid callbackUrl");
+        const {
+          url,
+          force,
+          maxNewVideos,
+          afterDate,
+          callbackUrl,
+          config: configOverrides,
+        } = parsed.data;
+        const normalized = normalizeRunNumericInputs({ maxNewVideos, afterDate });
+        if (normalized.errors.length > 0) {
+          badRequest(res, `Invalid input: ${normalized.errors.join(", ")}`);
           return;
         }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
+        const normalizedOverrides = normalizeConfigOverrides(sanitizedOverrides);
+        if (normalizedOverrides.errors.length > 0) {
+          badRequest(res, `Invalid config overrides: ${normalizedOverrides.errors.join(", ")}`);
+          return;
+        }
         const requestOverrides = {
-          ...sanitizedOverrides,
-          ...(typeof maxNewVideos === "number" ? { maxNewVideos } : {}),
-          ...(typeof afterDate === "string" ? { afterDate } : {}),
+          ...normalizedOverrides.value,
+          ...(normalized.value.maxNewVideos !== undefined
+            ? { maxNewVideos: normalized.value.maxNewVideos }
+            : {}),
+          ...(normalized.value.afterDate !== undefined
+            ? { afterDate: normalized.value.afterDate }
+            : {}),
         };
         const effectiveBase = await getEffectiveConfig();
         const mergedConfig = { ...effectiveBase, ...requestOverrides };
+        if (
+          mergedConfig.languageDetection === "manual" &&
+          normalizeAssemblyAiLanguageCode(mergedConfig.languageCode) === undefined
+        ) {
+          badRequest(res, "Invalid languageCode for manual languageDetection");
+          return;
+        }
 
         // Ensure runs started by the manager also inherit current settings (without storing secrets).
         const settingsForRun = sanitizeNonSecretSettings((await readSettingsFile(config.outputDir))?.settings);
@@ -862,8 +905,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
 
       return notFound(res);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      json(res, 500, { error: "internal_error", message });
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("[api] Unhandled error:", err);
+      json(res, 500, { error: "internal_error", message: "Internal server error" });
     }
   });
 

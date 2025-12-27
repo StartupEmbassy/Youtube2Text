@@ -44,7 +44,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (2025-12-20)
+## Current Status (2025-12-26)
 MVP CLI is functional. The core is being hardened so it can be embedded as a service later without breaking CLI usage.
 
 Completed:
@@ -68,7 +68,7 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Phase 2.8: security hardening for hosted use (mandatory API key, server-side clamps/validation, rate limiting on write endpoints).
+- Phase 2.8: security hardening for hosted use (rate limiting on write endpoints).
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
