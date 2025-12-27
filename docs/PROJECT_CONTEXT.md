@@ -68,7 +68,7 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Ops hardening: runtime timeouts and Docker healthcheck.
+- Optional cleanup: remove unused OpenAPI schema warnings (GlobalRunEvent).
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.

@@ -32,4 +32,5 @@ import "./apiMetrics.test.js";
 import "./apiSettings.test.js";
 import "./apiRunValidation.test.js";
 import "./apiRateLimit.test.js";
+import "./apiRunTimeout.test.js";
 import "./apiLibrarySecurity.test.js";

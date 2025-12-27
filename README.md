@@ -189,6 +189,9 @@ Rate limiting (write endpoints):
   - `Y2T_RATE_LIMIT_WINDOW_MS` (default `60000`)
 - Exceeded limits return HTTP 429 with `Retry-After`.
 
+Run timeout safety net:
+- `Y2T_RUN_TIMEOUT_MINUTES` (default `240`, set `0` to disable) marks a run as `error` if it stays `running` too long.
+
 Graceful shutdown (server/Docker):
 - On `SIGTERM`/`SIGINT`, the API stops the scheduler and requests cancellation for queued/running runs, then waits up to `Y2T_SHUTDOWN_TIMEOUT_SECONDS` before exiting.
 
@@ -260,6 +263,8 @@ Endpoints:
 ## Docker (API runner)
 
 Docker runs the HTTP API runner (and optionally the web UI via docker-compose). It does not replace the CLI.
+
+Note: the Docker image includes a container healthcheck that polls `GET /health`.
 
 Prerequisites:
 - Docker + Docker Compose

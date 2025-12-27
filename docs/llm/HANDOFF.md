@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.21.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.22.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,9 +44,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.21.0)
-- Docs/code alignment looks good for v0.21.x.
-- Tests: `npm test` passes (72/72).
+## Review Notes (GPT v0.22.0)
+- Docs/code alignment looks good for v0.22.x.
+- Tests: `npm test` passes (73/73).
 - `package-lock.json` still shows version 0.17.5 - run `npm install` to sync.
 - OpenAPI warning: `GlobalRunEvent` schema unused (Redocly warns).
 
@@ -83,9 +83,13 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Write endpoints are rate limited per API key (or IP) with 429 + Retry-After.
 - Config via `Y2T_RATE_LIMIT_WRITE_MAX` and `Y2T_RATE_LIMIT_WINDOW_MS`.
 
+## Ops hardening (DONE)
+- Add run timeout safety net for long-running runs.
+- Add Docker healthcheck to `/health`.
+
 ## Next Steps
 
-1) **Ops hardening**: Runtime timeouts, Docker healthcheck.
+1) Optional: clean up `GlobalRunEvent` OpenAPI warning.
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE

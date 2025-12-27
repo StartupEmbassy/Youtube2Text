@@ -63,6 +63,7 @@ export type RunManagerOptions = {
   maxBufferedEventsPerRun: number;
   persistRuns: boolean;
   persistDir?: string;
+  runTimeoutMs?: number;
   deps?: { runPipeline?: typeof runPipeline };
 };
 
@@ -80,8 +81,10 @@ export class RunManager {
   private persistence?: RunPersistence;
   private persistChain: Promise<void> = Promise.resolve();
   private abortControllers = new Map<string, AbortController>();
+  private runTimeouts = new Map<string, NodeJS.Timeout>();
   private runPipelineFn: typeof runPipeline;
   private activeRunPromises = new Map<string, Promise<void>>();
+  private runTimeoutMs?: number;
 
   constructor(
     private baseConfig: AppConfig,
@@ -95,6 +98,7 @@ export class RunManager {
       this.persistence = createRunPersistence(dir);
     }
     this.runPipelineFn = options.deps?.runPipeline ?? runPipeline;
+    this.runTimeoutMs = options.runTimeoutMs;
   }
 
   async init(): Promise<void> {
@@ -275,6 +279,10 @@ export class RunManager {
     };
     const controller = new AbortController();
     this.abortControllers.set(runId, controller);
+    if (this.runTimeoutMs && this.runTimeoutMs > 0) {
+      const handle = setTimeout(() => this.onRunTimeout(runId), this.runTimeoutMs);
+      this.runTimeouts.set(runId, handle);
+    }
 
     run.status = "running";
     run.startedAt = new Date().toISOString();
@@ -329,8 +337,26 @@ export class RunManager {
       .finally(() => {
         this.abortControllers.delete(runId);
         this.activeRunPromises.delete(runId);
+        const handle = this.runTimeouts.get(runId);
+        if (handle) clearTimeout(handle);
+        this.runTimeouts.delete(runId);
       });
     this.activeRunPromises.set(runId, p);
+  }
+
+  private onRunTimeout(runId: string) {
+    const run = this.runs.get(runId);
+    if (!run) return;
+    if (run.status !== "running") return;
+
+    run.status = "error";
+    run.finishedAt = new Date().toISOString();
+    run.error = `timeout after ${Math.ceil((this.runTimeoutMs ?? 0) / 60000)} minutes`;
+    run.cancelRequested = true;
+    this.persistRun(run);
+    this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
+    this.abortControllers.get(runId)?.abort();
+    void deliverRunTerminalWebhook(run, "run:error");
   }
 
   private onEvent(runId: string, event: PipelineEvent) {

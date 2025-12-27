@@ -164,10 +164,21 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const fetchChannelMetadataFn = opts.deps?.fetchChannelMetadata ?? fetchChannelMetadata;
   const safeChannelThumbnailUrlFn = opts.deps?.safeChannelThumbnailUrl ?? safeChannelThumbnailUrl;
 
+  const runTimeoutMinutesRaw = process.env.Y2T_RUN_TIMEOUT_MINUTES;
+  const runTimeoutMinutes = runTimeoutMinutesRaw ? Number(runTimeoutMinutesRaw) : 240;
+  if (runTimeoutMinutesRaw && !Number.isFinite(runTimeoutMinutes)) {
+    console.warn(`[api] Invalid Y2T_RUN_TIMEOUT_MINUTES: ${runTimeoutMinutesRaw}`);
+  }
+  const runTimeoutMs =
+    Number.isFinite(runTimeoutMinutes) && runTimeoutMinutes > 0
+      ? Math.trunc(runTimeoutMinutes * 60 * 1000)
+      : undefined;
+
   const manager = new RunManager(config, {
     maxBufferedEventsPerRun: opts.maxBufferedEventsPerRun,
     persistRuns: opts.persistRuns,
     persistDir: opts.persistDir,
+    runTimeoutMs,
   });
   await manager.init();
 
