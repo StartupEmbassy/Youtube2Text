@@ -68,7 +68,7 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Tech debt: webhook tests (429/signature), env var naming consistency, race condition tests, shutdown/symlink tests, optional npm audit fixes.
+- Tech debt: race condition tests, shutdown/symlink tests, optional npm audit fixes.
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.

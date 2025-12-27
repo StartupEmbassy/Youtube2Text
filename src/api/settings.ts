@@ -78,9 +78,9 @@ function computeNonSecretSettingSources(
   });
 
   const envHas = (key: keyof NonSecretSettings): boolean => {
-    const envVar = envVarForSetting(key);
-    if (!envVar) return false;
-    return process.env[envVar] !== undefined;
+    const envVars = envVarsForSetting(key);
+    if (envVars.length === 0) return false;
+    return envVars.some((envVar) => process.env[envVar] !== undefined);
   };
 
   const sourceFor = (key: keyof NonSecretSettings): NonSecretSettingSource => {
@@ -117,39 +117,39 @@ function computeNonSecretSettingSources(
   return out as Record<keyof NonSecretSettings, NonSecretSettingSource>;
 }
 
-function envVarForSetting(key: keyof NonSecretSettings): string | undefined {
+function envVarsForSetting(key: keyof NonSecretSettings): string[] {
   switch (key) {
     case "filenameStyle":
-      return "FILENAME_STYLE";
+      return ["Y2T_FILENAME_STYLE", "FILENAME_STYLE"];
     case "audioFormat":
-      return "AUDIO_FORMAT";
+      return ["Y2T_AUDIO_FORMAT", "AUDIO_FORMAT"];
     case "languageDetection":
-      return "LANGUAGE_DETECTION";
+      return ["Y2T_LANGUAGE_DETECTION", "LANGUAGE_DETECTION"];
     case "languageCode":
-      return "LANGUAGE_CODE";
+      return ["Y2T_LANGUAGE_CODE", "LANGUAGE_CODE"];
     case "concurrency":
-      return "CONCURRENCY";
+      return ["Y2T_CONCURRENCY", "CONCURRENCY"];
     case "maxNewVideos":
-      return "MAX_NEW_VIDEOS";
+      return ["Y2T_MAX_NEW_VIDEOS", "MAX_NEW_VIDEOS"];
     case "afterDate":
-      return "AFTER_DATE";
+      return ["Y2T_AFTER_DATE", "AFTER_DATE"];
     case "csvEnabled":
-      return "CSV_ENABLED";
+      return ["Y2T_CSV_ENABLED", "CSV_ENABLED"];
     case "commentsEnabled":
-      return "COMMENTS_ENABLED";
+      return ["Y2T_COMMENTS_ENABLED", "COMMENTS_ENABLED"];
     case "commentsMax":
-      return "COMMENTS_MAX";
+      return ["Y2T_COMMENTS_MAX", "COMMENTS_MAX"];
     case "pollIntervalMs":
-      return "POLL_INTERVAL_MS";
+      return ["Y2T_POLL_INTERVAL_MS", "POLL_INTERVAL_MS"];
     case "maxPollMinutes":
-      return "MAX_POLL_MINUTES";
+      return ["Y2T_MAX_POLL_MINUTES", "MAX_POLL_MINUTES"];
     case "downloadRetries":
-      return "DOWNLOAD_RETRIES";
+      return ["Y2T_DOWNLOAD_RETRIES", "DOWNLOAD_RETRIES"];
     case "transcriptionRetries":
-      return "TRANSCRIPTION_RETRIES";
+      return ["Y2T_TRANSCRIPTION_RETRIES", "TRANSCRIPTION_RETRIES"];
     case "catalogMaxAgeHours":
-      return "Y2T_CATALOG_MAX_AGE_HOURS";
+      return ["Y2T_CATALOG_MAX_AGE_HOURS"];
     default:
-      return undefined;
+      return [];
   }
 }

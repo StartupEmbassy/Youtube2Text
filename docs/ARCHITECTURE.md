@@ -242,8 +242,8 @@ Future input mode (not implemented yet):
 - Accept direct audio file input (skip yt-dlp) for automation use cases.
 
 ## Tech Debt Backlog (post-Phase 2.8)
-- Webhook tests: retry on 429 and signature coverage.
-- Environment variable naming consistency.
+- Webhook tests: retry on 429 and signature coverage (DONE).
+- Environment variable naming consistency (DONE).
 - Race condition tests (EventBuffer/RunManager/scheduler).
 - Missing tests: graceful shutdown sequence, symlink handling.
 - Optional: address npm audit vulnerabilities.

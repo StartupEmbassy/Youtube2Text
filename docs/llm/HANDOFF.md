@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.22.2 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.22.3 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,9 +44,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.22.2)
+## Review Notes (GPT v0.22.3)
 - Docs/code alignment looks good for v0.22.x.
-- Tests: `npm test` passes (75/75).
+- Tests: `npm test` passes (77/77).
 
 ## Code Review (Claude 2025-12-27)
 
@@ -65,9 +65,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 5. **Documentation drift** - DONE (aligned in docs)
 
-6. **Environment variable naming inconsistent**
-   - `FILENAME_STYLE` vs `Y2T_CATALOG_MAX_AGE_HOURS` (prefix inconsistent)
-   - `YTDLP_PATH` vs `YT_DLP_PATH` (both accepted, not documented)
+6. **Environment variable naming inconsistent** - DONE (Y2T_ preferred; legacy documented)
 
 ### MINOR - Cleanup
 
@@ -87,7 +85,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Tech Debt Backlog (do in order)
 1) Webhook tests: add retry-on-429 and signature coverage (DONE).
-2) Environment variable naming consistency (document and align prefixes) (IN PROGRESS).
+2) Environment variable naming consistency (document and align prefixes) (DONE).
 3) Race condition tests (EventBuffer/RunManager/scheduler).
 4) Missing tests: graceful shutdown sequence, symlink handling.
 5) Optional: address `npm audit` moderate vulnerabilities.

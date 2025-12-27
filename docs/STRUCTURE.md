@@ -52,7 +52,7 @@ This document describes the current repository layout for Youtube2Text.
 
 - Canonical identifiers: YouTube `channel_id` and `video_id`.
 - Outputs live under `output/<channel_title_slug>__<channel_id>/`.
-- File basenames are configurable (see `FILENAME_STYLE` in README).
+- File basenames are configurable (see `Y2T_FILENAME_STYLE` in README).
 - Generated directories (`output/`, `audio/`) should not be committed.
 - Environment variables are uppercase with underscores (e.g., `ASSEMBLYAI_API_KEY`).
 

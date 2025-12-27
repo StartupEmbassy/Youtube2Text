@@ -57,10 +57,10 @@ If you installed `yt-dlp` via `winget`, PowerShell can sometimes resolve it via 
 If Youtube2Text reports "yt-dlp not found" but `yt-dlp --version` works in your shell, restart the shell or ensure the real `yt-dlp.exe` path is on PATH.
 The pipeline also attempts to resolve the executable via PowerShell automatically.
 
-If VSCode's integrated terminal still cannot find it, set an explicit path:
+If VSCode's integrated terminal still cannot find it, set an explicit path (preferred `Y2T_YT_DLP_PATH`, legacy `YT_DLP_PATH` also supported):
 
 ```powershell
-$env:YT_DLP_PATH="C:\path\to\yt-dlp.exe"
+$env:Y2T_YT_DLP_PATH="C:\path\to\yt-dlp.exe"
 npm run dev
 ```
 
@@ -90,25 +90,26 @@ Example environment variables:
 
 ```
 ASSEMBLYAI_API_KEY=your_key_here
-OUTPUT_DIR=output
-AUDIO_DIR=audio
-FILENAME_STYLE=title_id   # id | id_title | title_id
-AUDIO_FORMAT=mp3
-LANGUAGE_CODE=en_us
-LANGUAGE_DETECTION=auto   # auto | manual
-CONCURRENCY=2
-MAX_NEW_VIDEOS=
-AFTER_DATE=
-CSV_ENABLED=false
-ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
-ASSEMBLYAI_MIN_BALANCE_MINUTES=60
-COMMENTS_ENABLED=false
-COMMENTS_MAX=
+Y2T_OUTPUT_DIR=output
+Y2T_AUDIO_DIR=audio
+Y2T_FILENAME_STYLE=title_id   # id | id_title | title_id
+Y2T_AUDIO_FORMAT=mp3
+Y2T_LANGUAGE_CODE=en_us
+Y2T_LANGUAGE_DETECTION=auto   # auto | manual
+Y2T_CONCURRENCY=2
+Y2T_MAX_NEW_VIDEOS=
+Y2T_AFTER_DATE=
+Y2T_CSV_ENABLED=false
+ Y2T_ASSEMBLYAI_CREDITS_CHECK=warn   # warn | abort | none
+ Y2T_ASSEMBLYAI_MIN_BALANCE_MINUTES=60
+Y2T_COMMENTS_ENABLED=false
+Y2T_COMMENTS_MAX=
 Y2T_CATALOG_MAX_AGE_HOURS=168
 ```
 
 Notes:
-- Boolean env vars like `CSV_ENABLED` / `COMMENTS_ENABLED` only override config when set; accepted truthy values: `true`, `1`, `yes`.
+- Boolean env vars like `Y2T_CSV_ENABLED` / `Y2T_COMMENTS_ENABLED` only override config when set; accepted truthy values: `true`, `1`, `yes`.
+- For consistency, prefer `Y2T_*` env vars. Legacy unprefixed names (e.g. `OUTPUT_DIR`, `CONCURRENCY`, `COMMENTS_ENABLED`, `YT_DLP_PATH`) are still supported.
 - API/settings inputs are normalized server-side: numeric fields are clamped to safe bounds, `afterDate` must be YYYY-MM-DD, and manual `languageCode` must be a supported AssemblyAI code (invalid inputs return 400).
 
 Example files:
