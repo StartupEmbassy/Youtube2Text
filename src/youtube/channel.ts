@@ -12,6 +12,11 @@ function getString(obj: Record<string, unknown>, key: string): string | undefine
   return typeof v === "string" && v.trim().length > 0 ? v.trim() : undefined;
 }
 
+function getNumber(obj: Record<string, unknown>, key: string): number | undefined {
+  const v = obj[key];
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
 function isLikelyChannelImageUrl(url: string): boolean {
   return (
     url.includes("yt3.googleusercontent.com") ||
@@ -29,26 +34,21 @@ function isSquareish(width: number, height: number): boolean {
 
 function bestFromThumbnails(thumbnails: unknown): string | undefined {
   if (!Array.isArray(thumbnails)) return undefined;
-  const parsed: ThumbnailCandidate[] = thumbnails
+  const parsed = thumbnails
     .filter((t) => isRecord(t))
     .map((t) => ({
-      url: (t as any).url,
-      width: (t as any).width,
-      height: (t as any).height,
-    }));
-  const usableAll = parsed
-    .map((t) => ({
-      url: typeof t.url === "string" ? t.url : undefined,
-      width: typeof t.width === "number" ? t.width : 0,
-      height: typeof t.height === "number" ? t.height : 0,
+      url: getString(t, "url"),
+      width: getNumber(t, "width") ?? 0,
+      height: getNumber(t, "height") ?? 0,
     }))
-    .filter((t) => !!t.url);
-  if (usableAll.length === 0) return undefined;
+    .filter(
+      (t): t is { url: string; width: number; height: number } =>
+        typeof t.url === "string"
+    );
+  if (parsed.length === 0) return undefined;
 
-  const channelCandidates = usableAll.filter((t) =>
-    isLikelyChannelImageUrl(t.url as string)
-  );
-  const usable = channelCandidates.length > 0 ? channelCandidates : usableAll;
+  const channelCandidates = parsed.filter((t) => isLikelyChannelImageUrl(t.url));
+  const usable = channelCandidates.length > 0 ? channelCandidates : parsed;
 
   // Prefer square images (avatars) over wide images (banners)
   const squareImages = usable.filter((t) => isSquareish(t.width, t.height));

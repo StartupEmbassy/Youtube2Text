@@ -246,13 +246,12 @@ export async function runPipeline(
 
       if (!channelThumbnailUrl) {
       const firstVideoUrl = selectedVideos[0]?.url;
-      if (firstVideoUrl) {
-        const videoMeta = await fetchVideoMetadata(firstVideoUrl, ytDlpCommand, ytDlpExtraArgs);
-        const uploaderUrl =
-          (videoMeta as any)?.uploader_url ||
-            (videoMeta as any)?.channel_url ||
-            undefined;
-          if (typeof uploaderUrl === "string" && uploaderUrl.trim().length > 0) {
+        if (firstVideoUrl) {
+          const videoMeta = await fetchVideoMetadata(firstVideoUrl, ytDlpCommand, ytDlpExtraArgs);
+          const uploaderUrl = [videoMeta?.uploader_url, videoMeta?.channel_url].find(
+            (value) => typeof value === "string" && value.trim().length > 0
+          );
+          if (uploaderUrl) {
             const chanMeta = await fetchChannelMetadata(
               uploaderUrl,
               ytDlpCommand,

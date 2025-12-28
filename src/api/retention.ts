@@ -29,6 +29,10 @@ function cutoffMs(days: number, nowMs: number): number {
   return nowMs - days * 24 * 60 * 60 * 1000;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
 async function listDirs(path: string): Promise<string[]> {
   const entries = await fs.readdir(path, { withFileTypes: true });
   return entries.filter((e) => e.isDirectory()).map((e) => join(path, e.name));
@@ -58,12 +62,15 @@ async function runDirTimestampMs(dir: string): Promise<number | undefined> {
   try {
     const runJson = join(dir, "run.json");
     const raw = await fs.readFile(runJson, "utf8");
-    const parsed = JSON.parse(raw) as any;
-    return (
-      parseIsoMs(parsed.finishedAt) ??
-      parseIsoMs(parsed.startedAt) ??
-      parseIsoMs(parsed.createdAt)
-    );
+    const parsed = JSON.parse(raw);
+    if (isRecord(parsed)) {
+      return (
+        parseIsoMs(parsed.finishedAt) ??
+        parseIsoMs(parsed.startedAt) ??
+        parseIsoMs(parsed.createdAt)
+      );
+    }
+    return undefined;
   } catch {
     try {
       const stat = await fs.stat(dir);
@@ -182,4 +189,3 @@ export async function runRetentionCleanup(opts: {
     },
   };
 }
-

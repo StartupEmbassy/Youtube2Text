@@ -6,6 +6,8 @@ export type YoutubeVideoMetadata = {
   subtitles?: Record<string, unknown>;
   automatic_captions?: Record<string, unknown>;
   language?: string;
+  uploader_url?: string;
+  channel_url?: string;
 };
 
 export async function fetchVideoMetadata(
