@@ -28,7 +28,7 @@ import { runRetentionCleanup } from "./retention.js";
 import { Scheduler, loadSchedulerConfigFromEnv } from "./scheduler.js";
 import { WatchlistStore } from "./watchlist.js";
 import { getCatalogMetricsSnapshot } from "../youtube/catalogMetrics.js";
-import { getSettingsResponse, normalizeSettingsPatchInput, patchSettings } from "./settings.js";
+import { getSettingsResponse, patchSettings } from "./settings.js";
 import { applySettingsToConfig, readSettingsFile, sanitizeNonSecretSettings } from "../config/settings.js";
 import {
   normalizeConfigOverrides,
@@ -360,12 +360,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           badRequest(res, "Invalid settings payload");
           return;
         }
-        const { settings, errors } = normalizeSettingsPatchInput(parsed.data.settings);
-        if (errors.length > 0) {
-          badRequest(res, `Invalid settings: ${errors.join(", ")}`);
-          return;
-        }
-        const updated = await patchSettings(config, { settings });
+        const updated = await patchSettings(config, { settings: parsed.data.settings });
         json(res, 200, updated);
         return;
       }

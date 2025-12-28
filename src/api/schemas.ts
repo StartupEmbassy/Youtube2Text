@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeAssemblyAiLanguageCode } from "../youtube/language.js";
 
 const optionalString = () =>
   z.preprocess((value) => (value === null ? undefined : value), z.string().optional());
@@ -62,8 +63,80 @@ const optionalIsoDateOrEmpty = () =>
       .optional()
   );
 
+const optionalIsoDateOrEmptyOrNull = () =>
+  z.preprocess(
+    (value) => {
+      if (value === null) return null;
+      if (value === undefined) return undefined;
+      if (typeof value !== "string") return value;
+      return value.trim();
+    },
+    z
+      .union([
+        z.literal(""),
+        z.string().refine((v) => isValidIsoDate(v), {
+          message: "must be YYYY-MM-DD",
+        }),
+        z.literal(null),
+      ])
+      .optional()
+  );
+
+const optionalBooleanOrNull = () =>
+  z.preprocess(
+    (value) => (value === undefined ? undefined : value),
+    z.union([z.boolean(), z.literal(null)]).optional()
+  );
+
+const optionalEnumOrNull = <T extends [string, ...string[]]>(values: T) =>
+  z.preprocess(
+    (value) => (value === undefined ? undefined : value),
+    z.union([z.enum(values), z.literal(null)]).optional()
+  );
+
+const optionalLanguageCodeOrNull = () =>
+  z.preprocess(
+    (value) => (value === undefined ? undefined : value),
+    z
+      .union([
+        z
+          .string()
+          .transform((raw, ctx) => {
+            const normalized = normalizeAssemblyAiLanguageCode(raw.trim());
+            if (!normalized) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "languageCode must be a supported AssemblyAI language code",
+              });
+              return z.NEVER;
+            }
+            return normalized;
+          }),
+        z.literal(null),
+      ])
+      .optional()
+  );
+
 export const settingsPatchSchema = z.object({
-  settings: z.record(z.unknown()),
+  settings: z
+    .object({
+      filenameStyle: optionalEnumOrNull(["id", "id_title", "title_id"]),
+      audioFormat: optionalEnumOrNull(["mp3", "wav"]),
+      languageDetection: optionalEnumOrNull(["auto", "manual"]),
+      languageCode: optionalLanguageCodeOrNull(),
+      concurrency: optionalClampedIntOrNull(1, 10),
+      maxNewVideos: optionalClampedIntOrNull(1, 5000),
+      afterDate: optionalIsoDateOrEmptyOrNull(),
+      csvEnabled: optionalBooleanOrNull(),
+      commentsEnabled: optionalBooleanOrNull(),
+      commentsMax: optionalClampedIntOrNull(1, 2000),
+      pollIntervalMs: optionalClampedIntOrNull(1000, 60000),
+      maxPollMinutes: optionalClampedIntOrNull(1, 240),
+      downloadRetries: optionalClampedIntOrNull(0, 10),
+      transcriptionRetries: optionalClampedIntOrNull(0, 10),
+      catalogMaxAgeHours: optionalClampedIntOrNull(-1, 8760),
+    })
+    .strict(),
 });
 
 export const watchlistCreateSchema = z.object({

@@ -541,8 +541,6 @@ export interface components {
                 downloadRetries?: number | null;
                 transcriptionRetries?: number | null;
                 catalogMaxAgeHours?: number | null;
-            } & {
-                [key: string]: unknown;
             };
         };
         WatchlistEntry: {

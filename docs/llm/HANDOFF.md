@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.23.3 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.23.4 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,12 +44,13 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.23.3)
+## Review Notes (GPT v0.23.4)
 - Docs/code alignment looks good for v0.23.x.
-- Tests last known: `npm test` 80/80 (not re-run after 0.23.3).
-- Build: OK (TypeScript errors fixed by GPT).
+- Tests last known: `npm test` 80/80 (not re-run after 0.23.4).
+- Build: OK.
 - Docker: healthy.
 - Fix (Claude): `apiAuth.test.ts` now isolates `Y2T_ALLOW_INSECURE_NO_API_KEY` to prevent env pollution.
+- npm audit: 3 moderate (js-yaml in @redocly/cli devDep) - low priority, not in prod.
 
 ## Code Review (Claude 2025-12-27)
 
@@ -88,15 +89,22 @@ All content should be ASCII-only to avoid Windows encoding issues.
 1) Normalize null/undefined handling across API/settings inputs (DONE).
 2) Reduce `as any` for external data (YouTube metadata/comments) with guards/parsers (DONE).
 3) Validation unification: clarify Zod vs validation.ts split (or consolidate) (DONE).
-4) Harden settings input schema (reduce `z.record(z.unknown())`).
+4) Harden settings input schema (reduce `z.record(z.unknown())`) (DONE).
 5) Race condition tests (EventBuffer/RunManager pending).
 6) Missing tests: graceful shutdown sequence, symlink handling.
-7) Optional: address `npm audit` moderate vulnerabilities.
+7) Optional: `npm audit` - 3 moderate vulns in `js-yaml` (prototype pollution), only affects
+   `@redocly/cli` devDependency. NOT in production. Low priority, can ignore.
+
+## Next (Plan for tech debt #5-7)
+- Add race-condition tests for EventBuffer/RunManager.
+- Add graceful shutdown test coverage (and symlink handling).
+- Optional: run `npm audit` and address moderate vulnerabilities.
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE
 - Update relevant docs for every behavior change
 - Add entry to `docs/llm/HISTORY.md` for every version bump
+- TODO: Move Phase 2.7 version table (lines 16-29) to ARCHIVE to reduce HANDOFF size
 
 ## Testing / Sanity Pass
 - `npm test`

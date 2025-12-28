@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-28 - GPT-5.2 - Tech debt: harden settings PATCH schema (allowlist, bounds, null clears, reject unknown keys), remove redundant settings validation, update OpenAPI, and bump version to 0.23.4 - Files: [src/api/schemas.ts, src/api/settings.ts, src/api/server.ts, openapi.yaml, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json] - Version impact: yes (0.23.3 -> 0.23.4)
+
 2025-12-27 - GPT-5.2 - Tech debt: consolidate run/watchlist validation into Zod schemas, remove duplicate runtime validators, and bump version to 0.23.3 - Files: [src/api/schemas.ts, src/api/server.ts, src/api/validation.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.2 -> 0.23.3)
 
 2025-12-27 - GPT-5.2 - Tech debt: reduce external data `as any` usage by tightening YouTube metadata/thumbnail parsing and retention JSON guards; bump version to 0.23.2 - Files: [src/youtube/channel.ts, src/youtube/metadata.ts, src/pipeline/run.ts, src/api/retention.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.1 -> 0.23.2)

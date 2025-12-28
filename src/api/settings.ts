@@ -10,7 +10,6 @@ import {
   type NonSecretSettings,
 } from "../config/settings.js";
 import { loadConfigSourceSnapshots } from "../config/loader.js";
-import { normalizeNonSecretSettings } from "./validation.js";
 
 export type SettingsGetResponse = {
   outputDir: string;
@@ -22,23 +21,9 @@ export type SettingsGetResponse = {
 };
 
 export type SettingsPatchRequest = {
-  // Values may be null to clear optional fields.
-  settings: Partial<Record<keyof NonSecretSettings, unknown>> & Record<string, unknown>;
+  // Values may be null to clear a field (remove it from the settings file).
+  settings: Partial<Record<keyof NonSecretSettings, NonSecretSettings[keyof NonSecretSettings] | null>>;
 };
-
-export function normalizeSettingsPatchInput(input: unknown): {
-  settings: Partial<NonSecretSettings>;
-  errors: string[];
-} {
-  if (!input || typeof input !== "object") return { settings: {}, errors: ["settings must be an object"] };
-  const cleanedInput = { ...(input as Record<string, unknown>) };
-  for (const [k, v] of Object.entries(cleanedInput)) {
-    if (v === null) delete cleanedInput[k];
-  }
-  const sanitized = sanitizeNonSecretSettings(cleanedInput);
-  const normalized = normalizeNonSecretSettings(sanitized);
-  return { settings: normalized.value, errors: normalized.errors };
-}
 
 export async function getSettingsResponse(baseConfig: AppConfig): Promise<SettingsGetResponse> {
   const file = await readSettingsFile(baseConfig.outputDir);
@@ -64,7 +49,14 @@ export async function patchSettings(
   const currentSettings = sanitizeNonSecretSettings(current?.settings);
 
   const updates = sanitizeNonSecretSettings(req.settings ?? {});
+  const clearKeys = new Set<keyof NonSecretSettings>();
+  for (const [key, value] of Object.entries(req.settings ?? {})) {
+    if (value === null) clearKeys.add(key as keyof NonSecretSettings);
+  }
   const merged = { ...currentSettings, ...updates };
+  for (const key of clearKeys) {
+    delete merged[key];
+  }
   await writeSettingsFile(baseConfig.outputDir, merged);
   return getSettingsResponse(baseConfig);
 }
