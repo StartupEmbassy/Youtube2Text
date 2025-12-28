@@ -18,7 +18,6 @@ const LIMITS = {
   downloadRetries: { min: 0, max: 10 },
   transcriptionRetries: { min: 0, max: 10 },
   catalogMaxAgeHours: { min: -1, max: 8760 },
-  watchlistIntervalMinutes: { min: 1, max: 10080 },
 } as const satisfies Record<string, IntBounds>;
 
 function clampInt(value: number, bounds: IntBounds): number {
@@ -219,37 +218,6 @@ export function normalizeConfigOverrides(
   Object.assign(out, normalized.value);
 
   return { value: out, errors };
-}
-
-export function normalizeRunNumericInputs(input: {
-  maxNewVideos?: unknown;
-  afterDate?: unknown;
-}): ValidationResult<{ maxNewVideos?: number; afterDate?: string }> {
-  const errors: string[] = [];
-  const out: { maxNewVideos?: number; afterDate?: string } = {};
-
-  const maxNewVideos = normalizeOptionalInt("maxNewVideos", input.maxNewVideos, LIMITS.maxNewVideos, errors);
-  if (maxNewVideos !== undefined) out.maxNewVideos = maxNewVideos;
-
-  const afterDate = normalizeOptionalDate("afterDate", input.afterDate, errors);
-  if (afterDate !== undefined) out.afterDate = afterDate;
-
-  return { value: out, errors };
-}
-
-export function normalizeWatchlistInterval(
-  raw: unknown
-): ValidationResult<{ intervalMinutes?: number | null }> {
-  const errors: string[] = [];
-  if (raw === undefined) return { value: {}, errors };
-  if (raw === null) return { value: { intervalMinutes: null }, errors };
-  const intervalMinutes = normalizeOptionalInt(
-    "intervalMinutes",
-    raw,
-    LIMITS.watchlistIntervalMinutes,
-    errors
-  );
-  return { value: { intervalMinutes }, errors };
 }
 
 export function getValidationLimits() {

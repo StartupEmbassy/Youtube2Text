@@ -32,8 +32,6 @@ import { getSettingsResponse, normalizeSettingsPatchInput, patchSettings } from 
 import { applySettingsToConfig, readSettingsFile, sanitizeNonSecretSettings } from "../config/settings.js";
 import {
   normalizeConfigOverrides,
-  normalizeRunNumericInputs,
-  normalizeWatchlistInterval,
 } from "./validation.js";
 import { normalizeAssemblyAiLanguageCode } from "../youtube/language.js";
 
@@ -397,11 +395,6 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           return;
         }
         const { channelUrl, intervalMinutes, enabled } = parsed.data;
-        const intervalResult = normalizeWatchlistInterval(intervalMinutes);
-        if (intervalResult.errors.length > 0) {
-          badRequest(res, `Invalid intervalMinutes: ${intervalResult.errors.join(", ")}`);
-          return;
-        }
         const allowAny = (process.env.Y2T_WATCHLIST_ALLOW_ANY_URL ?? "").trim().toLowerCase();
         const allowAnyUrl = allowAny === "true" || allowAny === "1" || allowAny === "yes";
         if (!allowAnyUrl) {
@@ -413,7 +406,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const entry = await watchlistStore.add({
           channelUrl,
-          intervalMinutes: intervalResult.value.intervalMinutes ?? undefined,
+          intervalMinutes,
           enabled,
         });
         json(res, 201, { entry });
@@ -444,14 +437,8 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             badRequest(res, "Invalid watchlist payload");
             return;
           }
-          const intervalResult = normalizeWatchlistInterval(parsed.data.intervalMinutes);
-          if (intervalResult.errors.length > 0) {
-            badRequest(res, `Invalid intervalMinutes: ${intervalResult.errors.join(", ")}`);
-            return;
-          }
           const entry = await watchlistStore.update(id, {
-            intervalMinutes:
-              intervalResult.value.intervalMinutes ?? parsed.data.intervalMinutes ?? undefined,
+            intervalMinutes: parsed.data.intervalMinutes,
             enabled: parsed.data.enabled,
           });
           if (!entry) return notFound(res);
@@ -526,11 +513,6 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           return;
         }
         const { url, force, maxNewVideos, afterDate, config: configOverrides } = parsed.data;
-        const normalized = normalizeRunNumericInputs({ maxNewVideos, afterDate });
-        if (normalized.errors.length > 0) {
-          badRequest(res, `Invalid input: ${normalized.errors.join(", ")}`);
-          return;
-        }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
         const normalizedOverrides = normalizeConfigOverrides(sanitizedOverrides);
         if (normalizedOverrides.errors.length > 0) {
@@ -539,11 +521,11 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const requestOverrides = {
           ...normalizedOverrides.value,
-          ...(normalized.value.maxNewVideos !== undefined
-            ? { maxNewVideos: normalized.value.maxNewVideos }
+          ...(maxNewVideos !== undefined
+            ? { maxNewVideos }
             : {}),
-          ...(normalized.value.afterDate !== undefined
-            ? { afterDate: normalized.value.afterDate }
+          ...(afterDate !== undefined
+            ? { afterDate }
             : {}),
         };
         const effectiveBase = await getEffectiveConfig();
@@ -704,11 +686,6 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           callbackUrl,
           config: configOverrides,
         } = parsed.data;
-        const normalized = normalizeRunNumericInputs({ maxNewVideos, afterDate });
-        if (normalized.errors.length > 0) {
-          badRequest(res, `Invalid input: ${normalized.errors.join(", ")}`);
-          return;
-        }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
         const normalizedOverrides = normalizeConfigOverrides(sanitizedOverrides);
         if (normalizedOverrides.errors.length > 0) {
@@ -717,11 +694,11 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const requestOverrides = {
           ...normalizedOverrides.value,
-          ...(normalized.value.maxNewVideos !== undefined
-            ? { maxNewVideos: normalized.value.maxNewVideos }
+          ...(maxNewVideos !== undefined
+            ? { maxNewVideos }
             : {}),
-          ...(normalized.value.afterDate !== undefined
-            ? { afterDate: normalized.value.afterDate }
+          ...(afterDate !== undefined
+            ? { afterDate }
             : {}),
         };
         const effectiveBase = await getEffectiveConfig();

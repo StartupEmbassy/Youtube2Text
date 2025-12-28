@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-27 - GPT-5.2 - Tech debt: consolidate run/watchlist validation into Zod schemas, remove duplicate runtime validators, and bump version to 0.23.3 - Files: [src/api/schemas.ts, src/api/server.ts, src/api/validation.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.2 -> 0.23.3)
+
 2025-12-27 - GPT-5.2 - Tech debt: reduce external data `as any` usage by tightening YouTube metadata/thumbnail parsing and retention JSON guards; bump version to 0.23.2 - Files: [src/youtube/channel.ts, src/youtube/metadata.ts, src/pipeline/run.ts, src/api/retention.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.1 -> 0.23.2)
 
 2025-12-26 - GPT-5.2 - Tech debt: normalize null/undefined handling for optional API inputs (Zod preprocess), allow nulls in OpenAPI, add null-handling tests, update docs, and bump version to 0.23.1 - Files: [src/api/schemas.ts, tests/apiRunValidation.test.ts, tests/apiWatchlistValidation.test.ts, openapi.yaml, README.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json] - Version impact: yes (0.23.0 -> 0.23.1)
