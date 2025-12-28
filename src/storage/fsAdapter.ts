@@ -33,6 +33,15 @@ async function tryReadJson<T>(path: string): Promise<T | undefined> {
   }
 }
 
+async function isSymlink(path: string): Promise<boolean> {
+  try {
+    const stat = await fs.lstat(path);
+    return stat.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 export class FileSystemStorageAdapter implements StorageAdapter {
   constructor(
     private dirs: { outputDir: string; audioDir: string; audioFormat: string }
@@ -45,6 +54,8 @@ export class FileSystemStorageAdapter implements StorageAdapter {
     const channels: ChannelInfo[] = [];
 
     for (const entry of entries) {
+      const entryPath = join(this.dirs.outputDir, entry.name);
+      if (await isSymlink(entryPath)) continue;
       if (!entry.isDirectory()) continue;
       // Reserved directories (not channels).
       if (entry.name.startsWith("_")) continue;
@@ -75,6 +86,8 @@ export class FileSystemStorageAdapter implements StorageAdapter {
 
     const videos: VideoInfo[] = [];
     for (const entry of entries) {
+      const entryPath = join(channelDir, entry.name);
+      if (await isSymlink(entryPath)) continue;
       if (!entry.isFile()) continue;
       if (!isTranscriptJsonFile(entry.name)) continue;
 

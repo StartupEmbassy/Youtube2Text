@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.23.5 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.23.6 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,9 +44,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.23.5)
+## Review Notes (GPT v0.23.6)
 - Docs/code alignment looks good for v0.23.x.
-- Tests last known: `npm test` 80/80 (not re-run after 0.23.5).
+- Tests last known: `npm test` 80/80 (not re-run after 0.23.6).
 - Build: OK.
 - Docker: healthy.
 - Fix (Claude): `apiAuth.test.ts` now isolates `Y2T_ALLOW_INSECURE_NO_API_KEY` to prevent env pollution.
@@ -91,12 +91,11 @@ All content should be ASCII-only to avoid Windows encoding issues.
 3) Validation unification: clarify Zod vs validation.ts split (or consolidate) (DONE).
 4) Harden settings input schema (reduce `z.record(z.unknown())`) (DONE).
 5) Race condition tests (EventBuffer/RunManager pending) (DONE).
-6) Missing tests: graceful shutdown sequence, symlink handling.
+6) Missing tests: graceful shutdown sequence, symlink handling (DONE).
 7) Optional: `npm audit` - 3 moderate vulns in `js-yaml` (prototype pollution), only affects
    `@redocly/cli` devDependency. NOT in production. Low priority, can ignore.
 
-## Next (Plan for tech debt #6-7)
-- Add graceful shutdown test coverage (and symlink handling).
+## Next (Plan for tech debt #7)
 - Optional: run `npm audit` and address moderate vulnerabilities.
 
 ### Docs hygiene (ongoing)

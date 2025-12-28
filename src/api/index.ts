@@ -2,6 +2,7 @@ import { loadConfig } from "../config/index.js";
 import { logInfo, logError } from "../utils/logger.js";
 import { startApiServer } from "./server.js";
 import { runRetentionCleanup } from "./retention.js";
+import { gracefulShutdown } from "./graceful.js";
 import { join } from "node:path";
 
 const port = process.env.PORT ? Number(process.env.PORT) : 8787;
@@ -44,24 +45,13 @@ async function main() {
     shuttingDown = true;
     const timeoutMs = Math.max(0, Math.trunc(shutdownTimeoutSeconds * 1000));
     logInfo(`Graceful shutdown (${signal}): stopping scheduler and requesting cancellation...`);
-    try {
-      scheduler?.stop();
-    } catch {
-      // ignore
-    }
-    try {
-      for (const run of manager.listRuns()) {
-        if (run.status === "queued" || run.status === "running") {
-          manager.cancelRun(run.runId);
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    await new Promise<void>((resolve) => server.close(() => resolve()));
-    const ok = await manager.waitForIdle(timeoutMs);
-    if (!ok) {
+    const result = await gracefulShutdown({
+      server,
+      manager,
+      scheduler,
+      shutdownTimeoutMs: timeoutMs,
+    });
+    if (result.timedOut) {
       logInfo(`Graceful shutdown timeout reached after ${shutdownTimeoutSeconds}s; exiting.`);
     }
     process.exit(0);
