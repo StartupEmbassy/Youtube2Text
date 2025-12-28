@@ -47,6 +47,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Review Notes (GPT v0.23.6)
 - Docs/code alignment looks good for v0.23.x.
 - Tests last known: `npm test` 80/80 (not re-run after 0.23.6).
+- Audit: `npm audit fix --force` applied; devDependency `@redocly/cli` updated; `npm audit` clean.
 - Build: OK.
 - Docker: healthy.
 - Fix (Claude): `apiAuth.test.ts` now isolates `Y2T_ALLOW_INSECURE_NO_API_KEY` to prevent env pollution.

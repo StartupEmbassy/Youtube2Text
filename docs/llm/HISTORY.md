@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-28 - GPT-5.2 - Tech debt: run `npm audit fix --force`, update devDependency lockfile, confirm contract check passes, and mark audit clean - Files: [package.json, package-lock.json, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-28 - GPT-5.2 - Tech debt: add graceful shutdown + symlink handling tests, refactor shutdown flow to reusable helper, and bump version to 0.23.6 - Files: [src/api/graceful.ts, src/api/index.ts, src/storage/fsAdapter.ts, tests/apiGracefulShutdown.test.ts, tests/storageSymlink.test.ts, tests/all.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.5 -> 0.23.6)
 
 2025-12-28 - GPT-5.2 - Tech debt: add EventBuffer and RunManager race-condition tests, update backlog, and bump version to 0.23.5 - Files: [tests/apiEventBufferRace.test.ts, tests/apiRunManagerRace.test.ts, tests/all.test.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.4 -> 0.23.5)
