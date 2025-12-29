@@ -10,7 +10,13 @@ import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
 import { FileSystemStorageAdapter, saveChannelMetaJson } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
 import { requireApiKey } from "./auth.js";
-import { createRateLimiter, getRateLimitConfigFromEnv } from "./rateLimit.js";
+import { getClientIp } from "./ip.js";
+import {
+  createRateLimiter,
+  getHealthRateLimitConfigFromEnv,
+  getRateLimitConfigFromEnv,
+  getReadRateLimitConfigFromEnv,
+} from "./rateLimit.js";
 import {
   runCreateSchema,
   runPlanSchema,
@@ -47,6 +53,13 @@ type ServerOptions = {
     safeChannelThumbnailUrl?: typeof safeChannelThumbnailUrl;
   };
 };
+
+function parseEnvInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.trunc(parsed);
+}
 
 function escapePromLabelValue(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/"/g, '\\"');
@@ -216,6 +229,11 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   });
 
   const writeRateLimiter = createRateLimiter(getRateLimitConfigFromEnv());
+  const readRateLimiter = createRateLimiter(getReadRateLimitConfigFromEnv());
+  const healthRateLimiter = createRateLimiter(getHealthRateLimitConfigFromEnv());
+  const sseMaxClients = Math.max(0, parseEnvInt(process.env.Y2T_SSE_MAX_CLIENTS, 1000));
+  let sseClients = 0;
+  const requestTimeoutMs = Math.max(0, parseEnvInt(process.env.Y2T_REQUEST_TIMEOUT_MS, 30_000));
 
   const isWriteMethod = (method: string | undefined) =>
     method === "POST" || method === "PATCH" || method === "DELETE";
@@ -223,8 +241,27 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const rateLimitKey = (req: IncomingMessage): string => {
     const apiKey = typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined;
     if (apiKey && apiKey.trim().length > 0) return `key:${apiKey}`;
-    const ip = req.socket.remoteAddress ?? "unknown";
-    return `ip:${ip}`;
+    return `ip:${getClientIp(req)}`;
+  };
+
+  const healthRateLimitKey = (req: IncomingMessage): string => `ip:${getClientIp(req)}`;
+
+  const registerSseClient = (req: IncomingMessage, res: ServerResponse): boolean => {
+    if (sseMaxClients > 0 && sseClients >= sseMaxClients) {
+      json(res, 429, { error: "rate_limited", message: "Too many SSE clients" });
+      return false;
+    }
+    sseClients += 1;
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      sseClients = Math.max(0, sseClients - 1);
+    };
+    req.on("close", cleanup);
+    res.on("close", cleanup);
+    res.on("error", cleanup);
+    return true;
   };
 
   async function getEffectiveConfig(): Promise<AppConfig> {
@@ -241,6 +278,27 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       return;
     }
 
+    const seg = segments(req);
+    const isSseRequest =
+      req.method === "GET" &&
+      ((seg.length === 1 && seg[0] === "events") ||
+        (seg.length === 3 && seg[0] === "runs" && seg[2] === "events"));
+
+    let timeout: NodeJS.Timeout | undefined;
+    if (!isSseRequest && requestTimeoutMs > 0) {
+      timeout = setTimeout(() => {
+        if (res.writableEnded) return;
+        json(res, 408, { error: "request_timeout", message: "Request timed out" });
+        req.destroy();
+      }, requestTimeoutMs);
+      timeout.unref?.();
+      const clear = () => {
+        if (timeout) clearTimeout(timeout);
+      };
+      res.on("finish", clear);
+      res.on("close", clear);
+    }
+
     if (!requireApiKey(req, res)) return;
 
     if (writeRateLimiter && isWriteMethod(req.method)) {
@@ -254,8 +312,6 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       }
     }
 
-    const seg = segments(req);
-
     try {
       if (req.method === "GET" && seg.length === 1 && seg[0] === "health") {
         const parsed = parseUrl(req.url ?? "/health", true);
@@ -264,6 +320,16 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           deepRaw === "true" ||
           deepRaw === "1" ||
           (Array.isArray(deepRaw) && (deepRaw.includes("true") || deepRaw.includes("1")));
+        if (deep && healthRateLimiter) {
+          const decision = healthRateLimiter.check(healthRateLimitKey(req));
+          if (!decision.allowed) {
+            if (decision.retryAfterSeconds !== undefined) {
+              res.setHeader("retry-after", String(decision.retryAfterSeconds));
+            }
+            json(res, 429, { error: "rate_limited", message: "Rate limit exceeded" });
+            return;
+          }
+        }
         const body = deep
           ? await getDeepHealth(config, {
               persistRuns: opts.persistRuns,
@@ -275,6 +341,17 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             });
         json(res, 200, body);
         return;
+      }
+
+      if (readRateLimiter && req.method === "GET") {
+        const decision = readRateLimiter.check(rateLimitKey(req));
+        if (!decision.allowed) {
+          if (decision.retryAfterSeconds !== undefined) {
+            res.setHeader("retry-after", String(decision.retryAfterSeconds));
+          }
+          json(res, 429, { error: "rate_limited", message: "Rate limit exceeded" });
+          return;
+        }
       }
 
       if (req.method === "GET" && seg.length === 1 && seg[0] === "metrics") {
@@ -841,6 +918,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         const runId = seg[1]!;
         const run = manager.getRun(runId);
         if (!run) return notFound(res);
+        if (!registerSseClient(req, res)) return;
 
         initSse(res);
         const lastSeenId = getLastEventId(req);
@@ -873,6 +951,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       }
 
       if (req.method === "GET" && seg.length === 1 && seg[0] === "events") {
+        if (!registerSseClient(req, res)) return;
         initSse(res);
         const lastSeenId = getLastEventId(req);
         for (const buffered of manager.listGlobalEventsAfter(lastSeenId)) {

@@ -21,19 +21,21 @@ function getMaxBodyBytes(): number {
 
 export async function readJsonBody(req: IncomingMessage): Promise<unknown> {
   const maxBytes = getMaxBodyBytes();
-  const chunks: Buffer[] = [];
+  const decoder = new TextDecoder("utf-8");
   let total = 0;
+  let raw = "";
   for await (const chunk of req) {
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     total += buf.length;
     if (total > maxBytes) {
       throw new BodyTooLargeError(`Request body too large (max ${maxBytes} bytes)`);
     }
-    chunks.push(buf);
+    raw += decoder.decode(buf, { stream: true });
   }
-  const raw = Buffer.concat(chunks).toString("utf8").trim();
-  if (raw.length === 0) return undefined;
-  return JSON.parse(raw) as unknown;
+  raw += decoder.decode();
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return undefined;
+  return JSON.parse(trimmed) as unknown;
 }
 
 export function json(

@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.23.8 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.24.1 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,12 +44,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.23.8)
+## Review Notes (GPT v0.24.1)
 - Docs/code alignment looks good for v0.23.x.
-- Tests: `npm test` 92/92 pass (verified by Claude 2025-12-28).
+- Tests: `npm test` 97/97 pass (verified by GPT-5.2 2025-12-29).
 - Build: OK (TypeScript errors fixed by Claude).
 - Docker: healthy (verified by Claude 2025-12-28).
-- Security audit (Claude 2025-12-28): remediations applied; see section below.
+- Security audit (Claude 2025-12-28): Phase 1 fixed; Phase 2 HIGH resolved; MEDIUM has 1 open item.
 - Fix (Claude): `webhooks.ts` - non-null assertions for array access after length check.
 - Fix (Claude): `server.ts:438` - convert null to undefined for intervalMinutes.
 
@@ -131,6 +131,37 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Error responses sanitized
 - Rate limiting for write operations
 
+## Security Audit Phase 2 (Claude 2025-12-28) - Additional Risks
+
+### HIGH SEVERITY (resolved in v0.23.9)
+
+1. **Memory leak in rate limiter buckets** - DONE
+   - Periodic cleanup removes buckets older than 2x window (auth + write limiters).
+
+2. **Redirect following in webhooks -> SSRF** - DONE
+   - Webhook fetch uses `redirect: "error"` to block redirects.
+
+3. **IP spoofing bypasses rate limiting** - DONE
+   - Added `Y2T_TRUST_PROXY=true` to honor `X-Forwarded-For` / `X-Real-IP`.
+
+4. **SSE connections unlimited** - DONE
+   - Added `Y2T_SSE_MAX_CLIENTS` cap (default 1000, `0` disables).
+
+### MEDIUM SEVERITY (backlog)
+
+5. **No API key header length limit** - DONE
+   - Added `Y2T_API_KEY_MAX_BYTES` to cap `X-API-Key`.
+6. **Buffer triple copy in readJsonBody()** - DONE
+   - Switched to streaming decode via `TextDecoder` to avoid Buffer.concat.
+7. **No rate limiting on GET endpoints** - DONE
+   - Added `Y2T_RATE_LIMIT_READ_MAX` / `Y2T_RATE_LIMIT_READ_WINDOW_MS`.
+8. **No global request timeout** - DONE
+   - Added `Y2T_REQUEST_TIMEOUT_MS` for non-SSE requests.
+9. **Health endpoint without rate limit** - DONE
+   - Added `Y2T_RATE_LIMIT_HEALTH_MAX` / `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` for `deep=true`.
+10. **Fixed window rate limit allows burst** - OPEN
+    - Consider token bucket or sliding window in a future hardening pass.
+
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE
 - Update relevant docs for every behavior change
@@ -148,7 +179,10 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Operator Notes
 - `.env` must include `ASSEMBLYAI_API_KEY`.
 - `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
-- Security note: `callbackUrl` webhooks allow any http(s) URL (SSRF risk if API key is leaked); keep API private or add URL allowlists in a future phase.
+- If the API is behind a trusted proxy/load balancer, set `Y2T_TRUST_PROXY=true`.
+- `Y2T_SSE_MAX_CLIENTS` caps concurrent SSE connections (default 1000, `0` disables).
+- `Y2T_API_KEY_MAX_BYTES` caps `X-API-Key` size; read/health rate limits and request timeout are configurable (see README).
+- Security note: `callbackUrl` webhooks allow any http(s) URL unless `Y2T_WEBHOOK_ALLOWED_DOMAINS` is set; keep API private or enable the allowlist.
 
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)

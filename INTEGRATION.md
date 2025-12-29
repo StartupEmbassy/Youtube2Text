@@ -9,6 +9,8 @@ Default local API:
 - `http://127.0.0.1:8787`
 
 If the server sets `Y2T_API_KEY`, all endpoints require `X-API-Key` (except `GET /health`).
+If the API sits behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` so rate limiting uses `X-Forwarded-For` / `X-Real-IP`.
+`Y2T_API_KEY_MAX_BYTES` caps the `X-API-Key` header size (default 256).
 
 Example (PowerShell):
 
@@ -94,6 +96,8 @@ SSE (run events):
 
 Global SSE (run list updates):
 - `GET /events`
+Use `Y2T_SSE_MAX_CLIENTS` to cap concurrent SSE connections (default 1000, `0` disables).
+Use `Y2T_REQUEST_TIMEOUT_MS` to bound non-SSE request time (default 30000, `0` disables).
 
 Example (bash/curl):
 
@@ -161,6 +165,7 @@ Retry policy:
 - Configure with:
   - `Y2T_WEBHOOK_RETRIES` (default `3`)
   - `Y2T_WEBHOOK_TIMEOUT_MS` (default `5000`)
+- Redirects are not followed (to prevent SSRF).
 
 Recommended replay protection (receiver):
 - Parse `X-Y2T-Timestamp` and reject if older than `X-Y2T-Max-Age` seconds.

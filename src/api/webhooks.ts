@@ -215,6 +215,7 @@ export async function deliverWebhook(
         headers,
         body,
         signal: controller.signal,
+        redirect: "error",
       });
       clearTimeout(timeout);
 

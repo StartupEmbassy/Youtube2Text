@@ -28,7 +28,13 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_WEBHOOK_MAX_AGE_SECONDS` (adds `X-Y2T-Max-Age` for replay protection)
 - `Y2T_MAX_BODY_BYTES` (request body limit, default 1,000,000)
 - `Y2T_AUTH_FAIL_MAX` + `Y2T_AUTH_FAIL_WINDOW_MS` (rate limit auth failures)
+- `Y2T_TRUST_PROXY=true` (if running behind a trusted reverse proxy; uses `X-Forwarded-For`/`X-Real-IP`)
+- `Y2T_API_KEY_MAX_BYTES` (cap `X-API-Key` header length; default 256)
 - `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints)
+- `Y2T_RATE_LIMIT_READ_MAX` + `Y2T_RATE_LIMIT_READ_WINDOW_MS` (rate limit read endpoints)
+- `Y2T_RATE_LIMIT_HEALTH_MAX` + `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (throttle deep health checks)
+- `Y2T_SSE_MAX_CLIENTS` (cap concurrent SSE connections; default 1000, `0` disables)
+- `Y2T_REQUEST_TIMEOUT_MS` (global request timeout for non-SSE requests)
 - `Y2T_RUN_TIMEOUT_MINUTES` (safety net for stuck runs)
 
 If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).

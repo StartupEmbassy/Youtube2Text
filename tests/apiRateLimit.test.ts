@@ -73,3 +73,73 @@ test("write rate limit returns 429 after exceeding max", async () => {
     });
   });
 });
+
+test("read rate limit returns 429 after exceeding max", async () => {
+  await withEnv("Y2T_RATE_LIMIT_READ_MAX", "1", async () => {
+    await withEnv("Y2T_RATE_LIMIT_READ_WINDOW_MS", "60000", async () => {
+      await withEnv("Y2T_RATE_LIMIT_WRITE_MAX", "0", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "y2t-read-limit-"));
+        const config = configSchema.parse({
+          assemblyAiApiKey: "test",
+          outputDir: dir,
+          audioDir: join(dir, "audio"),
+        });
+
+        const { server } = await startApiServer(config, {
+          host: "127.0.0.1",
+          port: 0,
+          maxBufferedEventsPerRun: 10,
+          persistRuns: false,
+        });
+        await listenServer(server);
+        const port = (server.address() as any).port as number;
+
+        try {
+          const res1 = await fetch(`http://127.0.0.1:${port}/runs`, {
+            headers: { "x-api-key": "test" },
+          });
+          assert.equal(res1.status, 200);
+
+          const res2 = await fetch(`http://127.0.0.1:${port}/runs`, {
+            headers: { "x-api-key": "test" },
+          });
+          assert.equal(res2.status, 429);
+        } finally {
+          await new Promise<void>((resolve) => server.close(() => resolve()));
+        }
+      });
+    });
+  });
+});
+
+test("deep health rate limit returns 429 after exceeding max", async () => {
+  await withEnv("Y2T_RATE_LIMIT_HEALTH_MAX", "1", async () => {
+    await withEnv("Y2T_RATE_LIMIT_HEALTH_WINDOW_MS", "60000", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "y2t-health-limit-"));
+      const config = configSchema.parse({
+        assemblyAiApiKey: "test",
+        outputDir: dir,
+        audioDir: join(dir, "audio"),
+      });
+
+      const { server } = await startApiServer(config, {
+        host: "127.0.0.1",
+        port: 0,
+        maxBufferedEventsPerRun: 10,
+        persistRuns: false,
+      });
+      await listenServer(server);
+      const port = (server.address() as any).port as number;
+
+      try {
+        const res1 = await fetch(`http://127.0.0.1:${port}/health?deep=true`);
+        assert.equal(res1.status, 200);
+
+        const res2 = await fetch(`http://127.0.0.1:${port}/health?deep=true`);
+        assert.equal(res2.status, 429);
+      } finally {
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    });
+  });
+});

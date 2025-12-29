@@ -1,9 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { timingSafeEqual } from "node:crypto";
+import { getClientIp } from "./ip.js";
 
 type AuthLimitDecision = { allowed: boolean; retryAfterSeconds?: number };
 
 type AuthLimitBucket = { windowStart: number; count: number };
+
+type ApiKeyLengthDecision = { ok: true } | { ok: false; reason: string };
 
 function getHeader(req: IncomingMessage, name: string): string | undefined {
   const raw = req.headers[name.toLowerCase()];
@@ -52,7 +55,17 @@ function parseEnvInt(raw: string | undefined, fallback: number): number {
   return Math.trunc(parsed);
 }
 
+function getApiKeyMaxBytes(): number {
+  const raw = parseEnvInt(process.env.Y2T_API_KEY_MAX_BYTES, 256);
+  const min = 32;
+  const max = 4096;
+  if (raw < min) return min;
+  if (raw > max) return max;
+  return raw;
+}
+
 let authFailureLimiter: { check: (key: string) => AuthLimitDecision } | undefined;
+let authFailureCleanupTimer: NodeJS.Timeout | undefined;
 
 function getAuthFailureLimiter() {
   if (authFailureLimiter) return authFailureLimiter;
@@ -61,6 +74,17 @@ function getAuthFailureLimiter() {
   if (maxRequests <= 0) return undefined;
 
   const buckets = new Map<string, AuthLimitBucket>();
+  const cleanupIntervalMs = Math.max(60_000, Math.min(windowMs, 300_000));
+  authFailureCleanupTimer = setInterval(() => {
+    const now = Date.now();
+    const expiryMs = windowMs * 2;
+    for (const [key, bucket] of buckets.entries()) {
+      if (now - bucket.windowStart > expiryMs) {
+        buckets.delete(key);
+      }
+    }
+  }, cleanupIntervalMs);
+  authFailureCleanupTimer.unref?.();
   authFailureLimiter = {
     check: (key: string): AuthLimitDecision => {
       const now = Date.now();
@@ -89,6 +113,10 @@ function getAuthFailureLimiter() {
 
 export function resetAuthFailureLimiterForTests(): void {
   authFailureLimiter = undefined;
+  if (authFailureCleanupTimer) {
+    clearInterval(authFailureCleanupTimer);
+    authFailureCleanupTimer = undefined;
+  }
 }
 
 function sendTooManyRequests(res: ServerResponse, retryAfterSeconds?: number): void {
@@ -98,10 +126,24 @@ function sendTooManyRequests(res: ServerResponse, retryAfterSeconds?: number): v
   res.end(JSON.stringify({ error: "rate_limited", message: "Too many auth failures" }));
 }
 
+function sendBadRequest(res: ServerResponse, message: string): void {
+  res.statusCode = 400;
+  res.setHeader("content-type", "application/json; charset=utf-8");
+  res.end(JSON.stringify({ error: "bad_request", message }));
+}
+
 export function sendUnauthorized(res: ServerResponse): void {
   res.statusCode = 401;
   res.setHeader("content-type", "application/json; charset=utf-8");
   res.end(JSON.stringify({ error: "unauthorized", message: "Missing or invalid X-API-Key" }));
+}
+
+function validateApiKeyLength(provided: string): ApiKeyLengthDecision {
+  const maxBytes = getApiKeyMaxBytes();
+  if (Buffer.byteLength(provided, "utf8") > maxBytes) {
+    return { ok: false, reason: `X-API-Key too long (max ${maxBytes} bytes)` };
+  }
+  return { ok: true };
 }
 
 export function requireApiKey(req: IncomingMessage, res: ServerResponse): boolean {
@@ -117,10 +159,17 @@ export function requireApiKey(req: IncomingMessage, res: ServerResponse): boolea
   }
   if (isPublicPath(req)) return true;
   const provided = extractProvidedApiKey(req);
+  if (provided) {
+    const lengthOk = validateApiKeyLength(provided);
+    if (!lengthOk.ok) {
+      sendBadRequest(res, lengthOk.reason);
+      return false;
+    }
+  }
   if (!provided || !safeEqual(expected, provided)) {
     const limiter = getAuthFailureLimiter();
     if (limiter) {
-      const key = `ip:${req.socket.remoteAddress ?? "unknown"}`;
+      const key = `ip:${getClientIp(req)}`;
       const decision = limiter.check(key);
       if (!decision.allowed) {
         sendTooManyRequests(res, decision.retryAfterSeconds);

@@ -114,3 +114,66 @@ test("requireApiKey rate limits repeated failures", () => {
     }
   });
 });
+
+test("requireApiKey rejects overly long api keys", () => {
+  withEnv("secret", () => {
+    const prevMax = process.env.Y2T_API_KEY_MAX_BYTES;
+    process.env.Y2T_API_KEY_MAX_BYTES = "32";
+    try {
+      const res = new FakeResponse();
+      const longKey = "x".repeat(64);
+      const ok = requireApiKey(
+        { url: "/runs", headers: { "x-api-key": longKey }, socket: { remoteAddress: "1.2.3.4" } } as any,
+        res as any
+      );
+      assert.equal(ok, false);
+      assert.equal(res.statusCode, 400);
+      assert.match(res.body, /too long/i);
+    } finally {
+      if (prevMax === undefined) delete process.env.Y2T_API_KEY_MAX_BYTES;
+      else process.env.Y2T_API_KEY_MAX_BYTES = prevMax;
+    }
+  });
+});
+
+test("requireApiKey rate limits by forwarded IP when trust proxy is enabled", () => {
+  withEnv("secret", () => {
+    const prevMax = process.env.Y2T_AUTH_FAIL_MAX;
+    const prevWindow = process.env.Y2T_AUTH_FAIL_WINDOW_MS;
+    const prevTrust = process.env.Y2T_TRUST_PROXY;
+    process.env.Y2T_AUTH_FAIL_MAX = "1";
+    process.env.Y2T_AUTH_FAIL_WINDOW_MS = "60000";
+    process.env.Y2T_TRUST_PROXY = "true";
+    resetAuthFailureLimiterForTests();
+    try {
+      const req1 = {
+        url: "/runs",
+        headers: { "x-api-key": "bad", "x-forwarded-for": "9.9.9.9" },
+        socket: { remoteAddress: "1.2.3.4" },
+      } as any;
+      const req2 = {
+        url: "/runs",
+        headers: { "x-api-key": "bad", "x-forwarded-for": "9.9.9.9" },
+        socket: { remoteAddress: "5.6.7.8" },
+      } as any;
+
+      const res1 = new FakeResponse();
+      const ok1 = requireApiKey(req1, res1 as any);
+      assert.equal(ok1, false);
+      assert.equal(res1.statusCode, 401);
+
+      const res2 = new FakeResponse();
+      const ok2 = requireApiKey(req2, res2 as any);
+      assert.equal(ok2, false);
+      assert.equal(res2.statusCode, 429);
+    } finally {
+      if (prevMax === undefined) delete process.env.Y2T_AUTH_FAIL_MAX;
+      else process.env.Y2T_AUTH_FAIL_MAX = prevMax;
+      if (prevWindow === undefined) delete process.env.Y2T_AUTH_FAIL_WINDOW_MS;
+      else process.env.Y2T_AUTH_FAIL_WINDOW_MS = prevWindow;
+      if (prevTrust === undefined) delete process.env.Y2T_TRUST_PROXY;
+      else process.env.Y2T_TRUST_PROXY = prevTrust;
+      resetAuthFailureLimiterForTests();
+    }
+  });
+});

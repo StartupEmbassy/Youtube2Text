@@ -40,3 +40,4 @@ import "./apiRateLimit.test.js";
 import "./apiRunTimeout.test.js";
 import "./apiLibrarySecurity.test.js";
 import "./apiRunManagerRace.test.js";
+import "./apiSseLimit.test.js";

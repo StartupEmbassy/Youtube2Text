@@ -190,6 +190,15 @@ Rate limiting (write endpoints):
   - `Y2T_RATE_LIMIT_WINDOW_MS` (default `60000`)
 - Exceeded limits return HTTP 429 with `Retry-After`.
 
+Rate limiting (read endpoints):
+- Optional in-memory rate limit for `GET` endpoints (per API key or IP).
+- Configure via env:
+  - `Y2T_RATE_LIMIT_READ_MAX` (default `300`, set `0` to disable)
+  - `Y2T_RATE_LIMIT_READ_WINDOW_MS` (default `60000`)
+
+Deep health throttle:
+- `Y2T_RATE_LIMIT_HEALTH_MAX` (default `30`) and `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (default `60000`).
+
 Run timeout safety net:
 - `Y2T_RUN_TIMEOUT_MINUTES` (default `240`, set `0` to disable) marks a run as `error` if it stays `running` too long.
 
@@ -209,6 +218,14 @@ Request body size limit:
 
 Auth failure rate limiting (brute-force protection):
 - `Y2T_AUTH_FAIL_MAX` (default 30) and `Y2T_AUTH_FAIL_WINDOW_MS` (default 60000).
+- If the API runs behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` to rate-limit by `X-Forwarded-For`/`X-Real-IP`.
+- `Y2T_API_KEY_MAX_BYTES` (default 256) caps the `X-API-Key` header size.
+
+SSE connection limit:
+- `Y2T_SSE_MAX_CLIENTS` (default 1000, set `0` to disable) caps concurrent SSE clients to avoid FD exhaustion.
+
+Request timeout:
+- `Y2T_REQUEST_TIMEOUT_MS` (default 30000, set `0` to disable) bounds non-SSE request lifetime.
 
 Retention / cleanup (ops hardening):
 - Configure via env:
@@ -242,6 +259,7 @@ Webhooks (optional):
   - `run:error` when status becomes `error`
   - `run:cancelled` when status becomes `cancelled`
 - `callbackUrl` must be http(s) and is blocked for localhost/private IPs by default.
+- Webhooks do not follow redirects (redirects return an error to prevent SSRF).
 - Optional domain allowlist: `Y2T_WEBHOOK_ALLOWED_DOMAINS=example.com,sub.example.com`
 - Optional replay window: `Y2T_WEBHOOK_MAX_AGE_SECONDS` adds `X-Y2T-Max-Age` to headers.
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:

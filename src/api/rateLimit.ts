@@ -36,10 +36,33 @@ export function getRateLimitConfigFromEnv(): RateLimitConfig {
   return { windowMs, maxRequests };
 }
 
+export function getReadRateLimitConfigFromEnv(): RateLimitConfig {
+  const windowMs = clampInt(parseEnvInt(process.env.Y2T_RATE_LIMIT_READ_WINDOW_MS, 60_000), 1_000, 3_600_000);
+  const maxRequests = clampInt(parseEnvInt(process.env.Y2T_RATE_LIMIT_READ_MAX, 300), 0, 100_000);
+  return { windowMs, maxRequests };
+}
+
+export function getHealthRateLimitConfigFromEnv(): RateLimitConfig {
+  const windowMs = clampInt(parseEnvInt(process.env.Y2T_RATE_LIMIT_HEALTH_WINDOW_MS, 60_000), 1_000, 3_600_000);
+  const maxRequests = clampInt(parseEnvInt(process.env.Y2T_RATE_LIMIT_HEALTH_MAX, 30), 0, 10_000);
+  return { windowMs, maxRequests };
+}
+
 export function createRateLimiter(config: RateLimitConfig): RateLimiter | undefined {
   if (config.maxRequests <= 0) return undefined;
 
   const buckets = new Map<string, Bucket>();
+  const cleanupIntervalMs = Math.max(60_000, Math.min(config.windowMs, 300_000));
+  const cleanup = setInterval(() => {
+    const now = Date.now();
+    const expiryMs = config.windowMs * 2;
+    for (const [key, bucket] of buckets.entries()) {
+      if (now - bucket.windowStart > expiryMs) {
+        buckets.delete(key);
+      }
+    }
+  }, cleanupIntervalMs);
+  cleanup.unref?.();
 
   return {
     check: (key: string): RateLimitDecision => {

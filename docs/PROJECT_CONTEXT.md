@@ -44,7 +44,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (2025-12-26)
+## Current Status (2025-12-29)
 MVP CLI is functional. The core is being hardened so it can be embedded as a service later without breaking CLI usage.
 
 Completed:
@@ -63,12 +63,12 @@ Completed:
 - API run/event persistence on disk (restart-safe by default)
 - Docker image + docker compose for the API runner
 - Phase 2.3 Scheduler/watchlist (cron): plan-first followed-channels automation
-- Phase 2.4 Control: cancel runs (cooperative)
+- Phase 2.4 Control: cancel runs (cooperative) + write rate limiting
 - Phase 2.4.x polish: OpenAPI 4XX completeness, graceful shutdown, debug logs endpoint
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Tech debt: external data guards, validation consolidation, settings input hardening, then race tests and shutdown/symlink tests.
+- Security Audit Phase 2 (MEDIUM): fixed-window burst behavior in rate limiting.
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
@@ -88,7 +88,7 @@ Done recently:
    - Phase 2.1 Integration MVP: API key auth, `POST /runs/plan`, webhooks, cache-first single-video, integration docs
    - Phase 2.2 Ops hardening: extended healthcheck, CORS allowlist, retention/cleanup
    - Phase 2.3 Scheduler/watchlist (cron): followed channels list + global/per-channel interval, uses `POST /runs/plan` to decide
-   - Phase 2.4 Control: cancel run (DONE), rate limiting (optional), optional worker/queue
+   - Phase 2.4 Control: cancel run (DONE), rate limiting (DONE), optional worker/queue
    - Phase 2.5: watchlist web UI + Prometheus metrics endpoint (DONE)
 7. Phase 3+: optional multi-tenant cloud platform
 

@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.2.2
-> Last Updated: 2025-12-26
+> Version: 1.2.3
+> Last Updated: 2025-12-29
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
@@ -213,7 +213,7 @@ Phase 2.7 - Settings + planning performance (DONE):
   - Maintain a fast processed-id scan (set of ids) derived from `output/<channelDir>/*.json` transcripts.
   - Used by `POST /runs/plan` and runs to avoid per-video filesystem checks.
 
-Phase 2.8 - Security hardening for hosted use (IN PROGRESS; do in order):
+Phase 2.8 - Security hardening for hosted use (DONE):
 1) Make API auth mandatory for non-local deployments (DONE)
    - Require `Y2T_API_KEY` by default in Docker/hosted mode; keep a deliberate escape hatch for local dev only.
 2) Server-side clamps/validation for config inputs (DONE in v0.20.0)
@@ -242,10 +242,5 @@ Future input mode (not implemented yet):
 - Accept direct audio file input (skip yt-dlp) for automation use cases.
 
 ## Tech Debt Backlog (post-Phase 2.8)
-- Normalize null/undefined handling across API/settings inputs (DONE).
-- Reduce `as any` for external data (YouTube metadata/comments) with guards/parsers.
-- Validation unification: clarify Zod vs validation.ts split (or consolidate).
-- Harden settings input schema (reduce `z.record(z.unknown())`).
-- Race condition tests (EventBuffer/RunManager pending).
-- Missing tests: graceful shutdown sequence, symlink handling.
-- Optional: address npm audit vulnerabilities.
+- Phase 2.8 backlog items completed in v0.23.x.
+- Remaining security backlog: see `docs/llm/HANDOFF.md` (Security Audit Phase 2 MEDIUM).
