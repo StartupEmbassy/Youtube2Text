@@ -7,6 +7,7 @@ runs:
     after: "2024-01-01"
     concurrency: 2
     csvEnabled: false
+    sttProvider: assemblyai
     filenameStyle: title_id
     languageDetection: auto
     languageCode: en_us
@@ -22,6 +23,7 @@ runs:
     outDir: "output_custom"
     audioDir: "audio_custom"
     csvEnabled: true
+    sttProvider: assemblyai
     filenameStyle: id_title
     languageDetection: manual
     languageCode: en_us

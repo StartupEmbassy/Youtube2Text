@@ -33,6 +33,7 @@ program
     "Output filename style: id | id_title | title_id"
   )
   .option("--audioFormat <fmt>", "mp3 or wav")
+  .option("--sttProvider <provider>", "Speech-to-text provider (assemblyai)")
   .option("--language <code>", "AssemblyAI language code")
   .option(
     "--languageDetection <mode>",
@@ -81,6 +82,8 @@ async function main() {
           | "title_id") ?? baseConfig.filenameStyle,
       audioFormat:
         (opts.audioFormat as "mp3" | "wav") ?? baseConfig.audioFormat,
+      sttProvider:
+        (opts.sttProvider as "assemblyai") ?? baseConfig.sttProvider,
       languageDetection:
         (opts.languageDetection as "auto" | "manual") ??
         (opts.language ? "manual" : baseConfig.languageDetection),
@@ -122,6 +125,7 @@ async function main() {
       audioDir: run.audioDir ?? baseConfig.audioDir,
       filenameStyle: run.filenameStyle ?? baseConfig.filenameStyle,
       audioFormat: run.audioFormat ?? baseConfig.audioFormat,
+      sttProvider: run.sttProvider ?? baseConfig.sttProvider,
       languageDetection:
         run.languageDetection ?? baseConfig.languageDetection,
       languageCode: run.languageCode ?? baseConfig.languageCode,

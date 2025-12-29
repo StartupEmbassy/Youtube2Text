@@ -122,6 +122,7 @@ export const settingsPatchSchema = z.object({
     .object({
       filenameStyle: optionalEnumOrNull(["id", "id_title", "title_id"]),
       audioFormat: optionalEnumOrNull(["mp3", "wav"]),
+      sttProvider: optionalEnumOrNull(["assemblyai"]),
       languageDetection: optionalEnumOrNull(["auto", "manual"]),
       languageCode: optionalLanguageCodeOrNull(),
       concurrency: optionalClampedIntOrNull(1, 10),

@@ -89,6 +89,7 @@ function computeNonSecretSettingSources(
   const keys: (keyof NonSecretSettings)[] = [
     "filenameStyle",
     "audioFormat",
+    "sttProvider",
     "languageDetection",
     "languageCode",
     "concurrency",
@@ -115,6 +116,8 @@ function envVarsForSetting(key: keyof NonSecretSettings): string[] {
       return ["Y2T_FILENAME_STYLE", "FILENAME_STYLE"];
     case "audioFormat":
       return ["Y2T_AUDIO_FORMAT", "AUDIO_FORMAT"];
+    case "sttProvider":
+      return ["Y2T_STT_PROVIDER", "STT_PROVIDER"];
     case "languageDetection":
       return ["Y2T_LANGUAGE_DETECTION", "LANGUAGE_DETECTION"];
     case "languageCode":

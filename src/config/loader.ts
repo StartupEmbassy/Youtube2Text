@@ -33,6 +33,7 @@ function loadEnvConfig(): PartialConfig {
   };
   return {
     assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
+    sttProvider: getEnv("Y2T_STT_PROVIDER", "STT_PROVIDER"),
     outputDir: getEnv("Y2T_OUTPUT_DIR", "OUTPUT_DIR"),
     audioDir: getEnv("Y2T_AUDIO_DIR", "AUDIO_DIR"),
     filenameStyle: getEnv("Y2T_FILENAME_STYLE", "FILENAME_STYLE"),

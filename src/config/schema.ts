@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const configSchema = z.object({
+  sttProvider: z.enum(["assemblyai"]).default("assemblyai"),
   assemblyAiApiKey: z.string().min(1),
   outputDir: z.string().default("output"),
   audioDir: z.string().default("audio"),

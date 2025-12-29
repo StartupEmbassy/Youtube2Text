@@ -9,6 +9,7 @@ type Sources = SettingsGetResponse["sources"];
 type TriBool = "" | "true" | "false";
 type FilenameStyleOpt = "" | "id" | "id_title" | "title_id";
 type AudioFormatOpt = "" | "mp3" | "wav";
+type SttProviderOpt = "" | "assemblyai";
 type LanguageDetectionOpt = "" | "auto" | "manual";
 
 function Tooltip({ text, effective }: { text: string; effective?: string }) {
@@ -92,11 +93,14 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
         : "";
     const audioFormat: AudioFormatOpt =
       s.audioFormat === "mp3" || s.audioFormat === "wav" ? s.audioFormat : "";
+    const sttProvider: SttProviderOpt =
+      s.sttProvider === "assemblyai" ? s.sttProvider : "";
     const languageDetection: LanguageDetectionOpt =
       s.languageDetection === "auto" || s.languageDetection === "manual" ? s.languageDetection : "";
     return {
       filenameStyle,
       audioFormat,
+      sttProvider,
       languageDetection,
       languageCode: (s.languageCode as string | undefined) ?? "",
       concurrency: s.concurrency === undefined ? "" : String(s.concurrency),
@@ -156,6 +160,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
         settings: {
           filenameStyle: form.filenameStyle === "" ? null : form.filenameStyle,
           audioFormat: form.audioFormat === "" ? null : form.audioFormat,
+          sttProvider: form.sttProvider === "" ? null : form.sttProvider,
           languageDetection: form.languageDetection === "" ? null : form.languageDetection,
           languageCode: form.languageCode.trim().length === 0 ? null : form.languageCode.trim(),
           concurrency: concurrency === null ? null : concurrency,
@@ -267,6 +272,27 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   <option value="wav">wav</option>
                 </select>
                 {form.audioFormat === "" && <span className="muted effectiveHint">{fmtEffective(effective.audioFormat)}</span>}
+              </div>
+
+              <div className="formRow">
+                <span className="formLabel">
+                  sttProvider
+                  <Tooltip
+                    text="Select the speech-to-text provider. Default is AssemblyAI."
+                    effective={form.sttProvider === "" ? `${fmtEffective(effective.sttProvider)} (${fmtSource(sources.sttProvider)})` : undefined}
+                  />
+                </span>
+                <select
+                  className="inputMd"
+                  value={form.sttProvider}
+                  onChange={(e) =>
+                    setForm({ ...form, sttProvider: e.target.value as SttProviderOpt })
+                  }
+                >
+                  <option value="">(inherit)</option>
+                  <option value="assemblyai">assemblyai</option>
+                </select>
+                {form.sttProvider === "" && <span className="muted effectiveHint">{fmtEffective(effective.sttProvider)}</span>}
               </div>
 
               <div className="formRow">

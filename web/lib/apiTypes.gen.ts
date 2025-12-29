@@ -480,6 +480,8 @@ export interface components {
             /** @enum {string} */
             audioFormat?: "mp3" | "wav";
             /** @enum {string} */
+            sttProvider?: "assemblyai";
+            /** @enum {string} */
             languageDetection?: "auto" | "manual";
             languageCode?: string;
             concurrency?: number;
@@ -503,6 +505,7 @@ export interface components {
             sources: {
                 filenameStyle?: components["schemas"]["NonSecretSettingSource"];
                 audioFormat?: components["schemas"]["NonSecretSettingSource"];
+                sttProvider?: components["schemas"]["NonSecretSettingSource"];
                 languageDetection?: components["schemas"]["NonSecretSettingSource"];
                 languageCode?: components["schemas"]["NonSecretSettingSource"];
                 concurrency?: components["schemas"]["NonSecretSettingSource"];
@@ -527,6 +530,8 @@ export interface components {
                 filenameStyle?: "id" | "id_title" | "title_id" | null;
                 /** @enum {string|null} */
                 audioFormat?: "mp3" | "wav" | null;
+                /** @enum {string|null} */
+                sttProvider?: "assemblyai" | null;
                 /** @enum {string|null} */
                 languageDetection?: "auto" | "manual" | null;
                 languageCode?: string | null;

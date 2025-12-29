@@ -150,6 +150,14 @@ export function normalizeNonSecretSettings(
   );
   if (audioFormat !== undefined) out.audioFormat = audioFormat;
 
+  const sttProvider = normalizeOptionalEnum(
+    "sttProvider",
+    input.sttProvider,
+    ["assemblyai"],
+    errors
+  );
+  if (sttProvider !== undefined) out.sttProvider = sttProvider;
+
   const languageDetection = normalizeOptionalEnum(
     "languageDetection",
     input.languageDetection,

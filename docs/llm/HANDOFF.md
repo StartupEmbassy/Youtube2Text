@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.25.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.26.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -21,18 +21,13 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.25.0)
+## Review Notes (GPT v0.26.0)
 - Docs/code alignment: 100% (Claude audit 2025-12-29).
 - Tests: `npm test` 97/97 pass.
 - Build: OK.
 - Docker: healthy.
 - Security audit: Phase 1 + Phase 2 complete.
-- Docs (Claude 2025-12-29): Completed .env.example with all 12 missing vars:
-  - Y2T_API_PERSIST_RUNS, Y2T_API_PERSIST_DIR, Y2T_SHUTDOWN_TIMEOUT_SECONDS
-  - Y2T_WEBHOOK_SECRET, Y2T_RATE_LIMIT_WRITE_MAX, Y2T_RATE_LIMIT_WINDOW_MS
-  - Y2T_RETENTION_RUNS_DAYS, Y2T_RETENTION_AUDIO_DAYS
-  - Y2T_SCHEDULER_ENABLED, Y2T_SCHEDULER_INTERVAL_MINUTES, Y2T_SCHEDULER_MAX_CONCURRENT_RUNS, Y2T_WATCHLIST_ALLOW_ANY_URL
-- Fixed README indentation (lines 103-104).
+- New: STT provider selection via `sttProvider` (default `assemblyai`) with factory wiring.
 
 ## Code Review (Claude 2025-12-27)
 
@@ -161,13 +156,11 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - Abstracts event emission strategy
 
 ### Changing Speech-to-Text Provider
-- Interface exists and is well-designed
-- Current issue: `src/pipeline/run.ts:100` directly instantiates `AssemblyAiProvider`
-- To add Whisper/Google/AWS: implement `TranscriptionProvider` + add factory pattern
-- Estimated effort: 2-4 hours refactor + provider implementation time
+- Interface exists and is used via `createTranscriptionProvider()` (no direct instantiation in pipeline).
+- To add Whisper/Google/AWS: implement `TranscriptionProvider` + extend factory switch.
+- Estimated effort: provider implementation time + config wiring (factory already exists).
 
 ### Future Improvement (optional)
-- Add factory pattern in `run.ts` to decouple provider instantiation
 - Replace 4 remaining `as any` in `settings.ts` with proper types
 
 ### Docs hygiene (ongoing)

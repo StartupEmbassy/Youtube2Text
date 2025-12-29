@@ -3,6 +3,7 @@
 
 outputDir: output
 audioDir: audio
+sttProvider: assemblyai
 filenameStyle: title_id   # id | id_title | title_id
 audioFormat: mp3
 languageDetection: auto   # auto | manual

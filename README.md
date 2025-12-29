@@ -92,6 +92,7 @@ Example environment variables:
 ASSEMBLYAI_API_KEY=your_key_here
 Y2T_OUTPUT_DIR=output
 Y2T_AUDIO_DIR=audio
+Y2T_STT_PROVIDER=assemblyai
 Y2T_FILENAME_STYLE=title_id   # id | id_title | title_id
 Y2T_AUDIO_FORMAT=mp3
 Y2T_LANGUAGE_CODE=en_us
@@ -110,6 +111,7 @@ Y2T_CATALOG_MAX_AGE_HOURS=168
 Notes:
 - Boolean env vars like `Y2T_CSV_ENABLED` / `Y2T_COMMENTS_ENABLED` only override config when set; accepted truthy values: `true`, `1`, `yes`.
 - For consistency, prefer `Y2T_*` env vars. Legacy unprefixed names (e.g. `OUTPUT_DIR`, `CONCURRENCY`, `COMMENTS_ENABLED`, `YT_DLP_PATH`) are still supported.
+- `Y2T_STT_PROVIDER` selects the speech-to-text backend (currently only `assemblyai` is implemented).
 - API/settings inputs are normalized server-side: numeric fields are clamped to safe bounds, `afterDate` must be YYYY-MM-DD, and manual `languageCode` must be a supported AssemblyAI code (invalid inputs return 400).
 
 Example files:
@@ -134,6 +136,7 @@ Options:
 | `--outDir` | path | `output` | Output root directory. |
 | `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
 | `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
+| `--sttProvider` | `assemblyai` | `assemblyai` | Speech-to-text provider. |
 | `--language` | string | `en_us` | Passed to AssemblyAI. |
 | `--languageDetection` | `auto|manual` | `auto` | Detect language per video via yt-dlp metadata/captions; if undetected, fall back to AssemblyAI automatic language detection. |
 | `--concurrency` | number | `2` | Parallel videos processed. |
@@ -271,6 +274,11 @@ Webhooks (optional):
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:
   - `X-Y2T-Timestamp` (ISO timestamp)
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`
+
+STT provider selection:
+- `Y2T_STT_PROVIDER` selects the speech-to-text provider.
+- Current implementation supports `assemblyai` only (default).
+- `Y2T_ASSEMBLYAI_CREDITS_CHECK` only applies when `sttProvider=assemblyai`.
 
 Run limiting:
 - `maxNewVideos` has the same semantics as the CLI: the limit is applied after skipping already-processed videos (incremental backfills). With `force=true`, it becomes "reprocess up to N videos".

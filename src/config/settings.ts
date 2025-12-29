@@ -15,6 +15,7 @@ export type NonSecretSettings = Pick<
   AppConfig,
   | "filenameStyle"
   | "audioFormat"
+  | "sttProvider"
   | "languageDetection"
   | "languageCode"
   | "concurrency"
@@ -88,6 +89,7 @@ export function sanitizeNonSecretSettings(input: unknown): Partial<NonSecretSett
 
   allow("filenameStyle", obj.filenameStyle);
   allow("audioFormat", obj.audioFormat);
+  allow("sttProvider", obj.sttProvider);
   allow("languageDetection", obj.languageDetection);
   allow("languageCode", obj.languageCode);
   allow("concurrency", obj.concurrency);
@@ -118,6 +120,7 @@ export function pickNonSecretSettings(config: AppConfig): NonSecretSettings {
   return {
     filenameStyle: config.filenameStyle,
     audioFormat: config.audioFormat,
+    sttProvider: config.sttProvider,
     languageDetection: config.languageDetection,
     languageCode: config.languageCode,
     concurrency: config.concurrency,

@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-29 - GPT-5.2 - Add STT provider selection: introduce `sttProvider` config, factory, settings/UI support, update docs/specs, and bump version to 0.26.0 - Files: [src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/config/settings.ts, src/api/schemas.ts, src/api/validation.ts, src/api/settings.ts, src/transcription/provider.ts, src/transcription/factory.ts, src/transcription/index.ts, src/pipeline/run.ts, src/cli/index.ts, web/app/settings/SettingsForm.tsx, web/lib/apiTypes.gen.ts, .env.example, config.yaml.example, runs.yaml.example, README.md, openapi.yaml, docs/VERSIONING_RULES.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json] - Version impact: yes (0.25.0 -> 0.26.0)
+
 2025-12-29 - GPT-5.2 - Docs cleanup: align .env.example with README env list, add TypeScript/interface notes to HANDOFF, and archive the Phase 2.7 table - Files: [.env.example, README.md, docs/llm/HANDOFF.md, docs/llm/HANDOFF_ARCHIVE.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-29 - GPT-5.2 - Rate limiting hardening: switch to token-bucket refill to prevent fixed-window bursts, update docs, and bump version to 0.25.0 - Files: [src/api/rateLimit.ts, README.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.24.1 -> 0.25.0)
