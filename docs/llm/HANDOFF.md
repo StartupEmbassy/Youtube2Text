@@ -23,12 +23,16 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Review Notes (GPT v0.25.0)
 - Docs/code alignment: 100% (Claude audit 2025-12-29).
-- Tests: `npm test` 97/97 pass (verified by GPT-5.2 2025-12-29).
-- Build: OK (TypeScript errors fixed by Claude).
-- Docker: healthy (verified by Claude 2025-12-28).
-- Security audit (Claude 2025-12-28): Phase 1 fixed; Phase 2 HIGH resolved; MEDIUM complete.
-- Fix (Claude): `webhooks.ts` - non-null assertions for array access after length check.
-- Fix (Claude): `server.ts:438` - convert null to undefined for intervalMinutes.
+- Tests: `npm test` 97/97 pass.
+- Build: OK.
+- Docker: healthy.
+- Security audit: Phase 1 + Phase 2 complete.
+- Docs (Claude 2025-12-29): Completed .env.example with all 12 missing vars:
+  - Y2T_API_PERSIST_RUNS, Y2T_API_PERSIST_DIR, Y2T_SHUTDOWN_TIMEOUT_SECONDS
+  - Y2T_WEBHOOK_SECRET, Y2T_RATE_LIMIT_WRITE_MAX, Y2T_RATE_LIMIT_WINDOW_MS
+  - Y2T_RETENTION_RUNS_DAYS, Y2T_RETENTION_AUDIO_DAYS
+  - Y2T_SCHEDULER_ENABLED, Y2T_SCHEDULER_INTERVAL_MINUTES, Y2T_SCHEDULER_MAX_CONCURRENT_RUNS, Y2T_WATCHLIST_ALLOW_ANY_URL
+- Fixed README indentation (lines 103-104).
 
 ## Code Review (Claude 2025-12-27)
 
@@ -138,6 +142,33 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - Added `Y2T_RATE_LIMIT_HEALTH_MAX` / `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` for `deep=true`.
 10. **Fixed window rate limit allows burst** - DONE
     - Switched to token-bucket style refill in `rateLimit.ts`.
+
+## TypeScript & Interfaces (Claude 2025-12-29)
+
+### Configuration
+- `strict: true` enabled in tsconfig.json
+- `noUncheckedIndexedAccess: true` enabled
+- Only 4 `as any` instances remain (in `settings.ts`, low impact)
+
+### Key Interfaces
+1. **TranscriptionProvider** (`src/transcription/provider.ts:3-6`)
+   - Abstracts speech-to-text provider
+   - `AssemblyAiProvider` implements this interface
+2. **StorageAdapter** (`src/storage/adapter.ts:21-33`)
+   - Abstracts file system operations
+   - `FileSystemStorageAdapter` implements this
+3. **PipelineEventEmitter** (`src/pipeline/events.ts:96-98`)
+   - Abstracts event emission strategy
+
+### Changing Speech-to-Text Provider
+- Interface exists and is well-designed
+- Current issue: `src/pipeline/run.ts:100` directly instantiates `AssemblyAiProvider`
+- To add Whisper/Google/AWS: implement `TranscriptionProvider` + add factory pattern
+- Estimated effort: 2-4 hours refactor + provider implementation time
+
+### Future Improvement (optional)
+- Add factory pattern in `run.ts` to decouple provider instantiation
+- Replace 4 remaining `as any` in `settings.ts` with proper types
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE

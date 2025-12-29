@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-29 - GPT-5.2 - Docs cleanup: align .env.example with README env list, add TypeScript/interface notes to HANDOFF, and archive the Phase 2.7 table - Files: [.env.example, README.md, docs/llm/HANDOFF.md, docs/llm/HANDOFF_ARCHIVE.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-29 - GPT-5.2 - Rate limiting hardening: switch to token-bucket refill to prevent fixed-window bursts, update docs, and bump version to 0.25.0 - Files: [src/api/rateLimit.ts, README.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.24.1 -> 0.25.0)
 
 2025-12-29 - GPT-5.2 - Security Phase 2 (MEDIUM) follow-up: reduce request-body memory usage via streaming decode in readJsonBody(), update docs, and bump version to 0.24.1 - Files: [src/api/http.ts, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.24.0 -> 0.24.1)
