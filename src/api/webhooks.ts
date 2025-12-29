@@ -36,7 +36,8 @@ function isPrivateIpv4(host: string): boolean {
   if (host.startsWith("0.")) return true;
   const parts = host.split(".").map((p) => Number.parseInt(p, 10));
   if (parts.length !== 4 || parts.some((p) => !Number.isFinite(p))) return false;
-  const [a, b] = parts;
+  const a = parts[0]!;
+  const b = parts[1]!;
   if (a === 172 && b >= 16 && b <= 31) return true;
   if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
   return false;

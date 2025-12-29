@@ -435,7 +435,7 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
             return;
           }
           const entry = await watchlistStore.update(id, {
-            intervalMinutes: parsed.data.intervalMinutes,
+            intervalMinutes: parsed.data.intervalMinutes ?? undefined,
             enabled: parsed.data.enabled,
           });
           if (!entry) return notFound(res);

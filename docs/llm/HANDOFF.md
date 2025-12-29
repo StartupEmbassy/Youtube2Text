@@ -46,10 +46,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Review Notes (GPT v0.23.8)
 - Docs/code alignment looks good for v0.23.x.
-- Tests: `npm test` 89/89 pass (v0.23.8).
-- Build: not re-run after 0.23.8.
-- Docker: not re-run after 0.23.8.
+- Tests: `npm test` 92/92 pass (verified by Claude 2025-12-28).
+- Build: OK (TypeScript errors fixed by Claude).
+- Docker: healthy (verified by Claude 2025-12-28).
 - Security audit (Claude 2025-12-28): remediations applied; see section below.
+- Fix (Claude): `webhooks.ts` - non-null assertions for array access after length check.
+- Fix (Claude): `server.ts:438` - convert null to undefined for intervalMinutes.
 
 ## Code Review (Claude 2025-12-27)
 
@@ -63,8 +65,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 4. **Race conditions (partial)**
    - Scheduler concurrent trigger guard + test DONE
-   - `EventBuffer` concurrent append/read pending
-   - `RunManager` mutable maps without locking pending
+   - `EventBuffer` concurrent append/read DONE
+   - `RunManager` concurrent list DONE
 
 5. **Documentation drift** - DONE (aligned in docs)
 
@@ -112,10 +114,6 @@ All content should be ASCII-only to avoid Windows encoding issues.
 4. **Request body no size limit** - FIXED
    - Added `Y2T_MAX_BODY_BYTES` (default 1,000,000) and 413 responses.
 
-4. **Request body no size limit** - LOW
-   - File: `src/api/http.ts:3-11`
-   - Problem: `readJsonBody()` has no size limit, attacker can send huge body -> OOM
-   - Fix: Add `MAX_BODY_SIZE = 1MB` check in the read loop
 
 ### LOW (partial)
 
