@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-29 - GPT-5.2 - Rate limiting hardening: switch to token-bucket refill to prevent fixed-window bursts, update docs, and bump version to 0.25.0 - Files: [src/api/rateLimit.ts, README.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.24.1 -> 0.25.0)
+
 2025-12-29 - GPT-5.2 - Security Phase 2 (MEDIUM) follow-up: reduce request-body memory usage via streaming decode in readJsonBody(), update docs, and bump version to 0.24.1 - Files: [src/api/http.ts, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.24.0 -> 0.24.1)
 
 2025-12-29 - GPT-5.2 - Security Phase 2 (MEDIUM) hardening: API key header length cap, read + health rate limits, request timeout, new tests/docs, and bump version to 0.24.0 - Files: [src/api/auth.ts, src/api/rateLimit.ts, src/api/server.ts, tests/apiAuth.test.ts, tests/apiRateLimit.test.ts, tests/all.test.ts, .env.example, README.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.9 -> 0.24.0)

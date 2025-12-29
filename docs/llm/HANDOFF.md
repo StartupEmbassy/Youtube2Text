@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.24.1 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.25.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,12 +44,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.24.1)
+## Review Notes (GPT v0.25.0)
 - Docs/code alignment looks good for v0.23.x.
 - Tests: `npm test` 97/97 pass (verified by GPT-5.2 2025-12-29).
 - Build: OK (TypeScript errors fixed by Claude).
 - Docker: healthy (verified by Claude 2025-12-28).
-- Security audit (Claude 2025-12-28): Phase 1 fixed; Phase 2 HIGH resolved; MEDIUM has 1 open item.
+- Security audit (Claude 2025-12-28): Phase 1 fixed; Phase 2 HIGH resolved; MEDIUM complete.
 - Fix (Claude): `webhooks.ts` - non-null assertions for array access after length check.
 - Fix (Claude): `server.ts:438` - convert null to undefined for intervalMinutes.
 
@@ -159,8 +159,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - Added `Y2T_REQUEST_TIMEOUT_MS` for non-SSE requests.
 9. **Health endpoint without rate limit** - DONE
    - Added `Y2T_RATE_LIMIT_HEALTH_MAX` / `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` for `deep=true`.
-10. **Fixed window rate limit allows burst** - OPEN
-    - Consider token bucket or sliding window in a future hardening pass.
+10. **Fixed window rate limit allows burst** - DONE
+    - Switched to token-bucket style refill in `rateLimit.ts`.
 
 ### Docs hygiene (ongoing)
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE

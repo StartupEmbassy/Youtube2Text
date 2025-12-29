@@ -68,7 +68,7 @@ Completed:
 - Phase 2.5: watchlist web UI + Prometheus metrics endpoint
 
 In progress / next:
-- Security Audit Phase 2 (MEDIUM): fixed-window burst behavior in rate limiting.
+- Security Audit Phase 2 (MEDIUM): complete; consider additional hardening as needed.
 
 Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.

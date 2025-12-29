@@ -189,12 +189,14 @@ Rate limiting (write endpoints):
   - `Y2T_RATE_LIMIT_WRITE_MAX` (default `60`, set `0` to disable)
   - `Y2T_RATE_LIMIT_WINDOW_MS` (default `60000`)
 - Exceeded limits return HTTP 429 with `Retry-After`.
+ - Uses a token-bucket refill to avoid fixed-window bursts.
 
 Rate limiting (read endpoints):
 - Optional in-memory rate limit for `GET` endpoints (per API key or IP).
 - Configure via env:
   - `Y2T_RATE_LIMIT_READ_MAX` (default `300`, set `0` to disable)
   - `Y2T_RATE_LIMIT_READ_WINDOW_MS` (default `60000`)
+ - Uses a token-bucket refill to avoid fixed-window bursts.
 
 Deep health throttle:
 - `Y2T_RATE_LIMIT_HEALTH_MAX` (default `30`) and `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (default `60000`).
