@@ -153,12 +153,18 @@ Signature (optional):
   - `X-Y2T-Timestamp` (ISO)
   - `X-Y2T-Signature` (`sha256=<hex>`) where HMAC-SHA256 is computed over:
     - `${timestamp}.${body}`
+  - If `Y2T_WEBHOOK_MAX_AGE_SECONDS` is set, the API also includes `X-Y2T-Max-Age`.
+    Use it (or your own fixed window) to reject old/replayed requests.
 
 Retry policy:
 - Retries for `429`, `5xx`, and network errors.
 - Configure with:
   - `Y2T_WEBHOOK_RETRIES` (default `3`)
   - `Y2T_WEBHOOK_TIMEOUT_MS` (default `5000`)
+
+Recommended replay protection (receiver):
+- Parse `X-Y2T-Timestamp` and reject if older than `X-Y2T-Max-Age` seconds.
+- Verify `X-Y2T-Signature` against the raw request body.
 
 ## n8n (suggested flow)
 

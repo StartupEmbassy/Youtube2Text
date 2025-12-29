@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-28 - GPT-5.2 - Security hardening follow-up: fix readJsonBodySafe scope, add webhook replay helper + max-age header, adjust tests, update docs, and bump version to 0.23.8 - Files: [src/api/server.ts, src/api/webhooks.ts, tests/apiBodyLimit.test.ts, tests/apiWebhooks.test.ts, tests/apiAuth.test.ts, tests/apiCors.test.ts, tests/all.test.ts, .env.example, README.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.7 -> 0.23.8)
+
 2025-12-28 - GPT-5.2 - Security hardening: timing-safe API key compare, webhook SSRF allowlist/blocks, CORS default closed, body size limit, auth failure rate limit, new tests, docs updates, and bump version to 0.23.7 - Files: [src/api/auth.ts, src/api/http.ts, src/api/server.ts, src/api/webhooks.ts, tests/apiBodyLimit.test.ts, tests/apiAuth.test.ts, tests/apiWebhooks.test.ts, tests/all.test.ts, .env.example, README.md, docs/operations/DEPLOY_PLAYBOOK.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json, openapi.yaml] - Version impact: yes (0.23.6 -> 0.23.7)
 
 2025-12-28 - GPT-5.2 - Tech debt: run `npm audit fix --force`, update devDependency lockfile, confirm contract check passes, and mark audit clean - Files: [package.json, package-lock.json, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

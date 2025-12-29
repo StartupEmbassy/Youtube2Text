@@ -44,7 +44,7 @@ test("POST /runs/plan rejects oversized JSON body with 413", async () => {
     try {
       const payload = {
         url: "https://www.youtube.com/watch?v=abc",
-        config: { padding: "x".repeat(400) },
+        config: { padding: "x".repeat(2000) },
       };
       const res = await fetch(`http://127.0.0.1:${port}/runs/plan`, {
         method: "POST",

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildWebhookHeaders, deliverWebhook } from "../src/api/webhooks.js";
+import { buildWebhookHeaders, deliverWebhook, verifyWebhookSignature } from "../src/api/webhooks.js";
 
 function withEnv(name: string, value: string | undefined, fn: () => Promise<void> | void) {
   const prev = process.env[name];
@@ -35,6 +35,18 @@ test("buildWebhookHeaders omits signature when secret is missing", () => {
     eventType: "run:done",
   });
   assert.equal(headers["x-y2t-signature"], undefined);
+});
+
+test("buildWebhookHeaders includes max age when configured", async () => {
+  await withEnv("Y2T_WEBHOOK_MAX_AGE_SECONDS", "300", async () => {
+    const headers = buildWebhookHeaders({
+      secret: "secret",
+      timestamp: "2025-01-01T00:00:00.000Z",
+      body: "{\"ok\":true}",
+      eventType: "run:done",
+    });
+    assert.equal(headers["x-y2t-max-age"], "300");
+  });
 });
 
 test("deliverWebhook retries on 500 and succeeds", async () => {
@@ -177,4 +189,45 @@ test("deliverWebhook enforces allowed domain list when configured", async () => 
     assert.equal(blocked.ok, false);
     assert.match(blocked.error, /allowlist/i);
   });
+});
+
+test("verifyWebhookSignature accepts valid signature within max age", () => {
+  const timestamp = new Date().toISOString();
+  const body = "{\"ok\":true}";
+  const headers = buildWebhookHeaders({
+    secret: "secret",
+    timestamp,
+    body,
+    eventType: "run:done",
+  });
+  const res = verifyWebhookSignature({
+    secret: "secret",
+    timestamp,
+    body,
+    signature: headers["x-y2t-signature"] as string,
+    maxAgeSeconds: 60,
+    nowMs: Date.parse(timestamp) + 1000,
+  });
+  assert.equal(res.ok, true);
+});
+
+test("verifyWebhookSignature rejects expired timestamp", () => {
+  const timestamp = "2025-01-01T00:00:00.000Z";
+  const body = "{\"ok\":true}";
+  const headers = buildWebhookHeaders({
+    secret: "secret",
+    timestamp,
+    body,
+    eventType: "run:done",
+  });
+  const res = verifyWebhookSignature({
+    secret: "secret",
+    timestamp,
+    body,
+    signature: headers["x-y2t-signature"] as string,
+    maxAgeSeconds: 60,
+    nowMs: Date.parse(timestamp) + 120_000,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.error ?? "", /timestamp/i);
 });

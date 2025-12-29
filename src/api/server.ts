@@ -78,19 +78,19 @@ async function getBuildVersion(): Promise<string> {
   return cachedBuildVersion;
 }
 
-  function setCors(req: IncomingMessage, res: ServerResponse) {
-    const raw = process.env.Y2T_CORS_ORIGINS;
-    const allowList =
-      typeof raw === "string" && raw.trim().length > 0
-        ? raw
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
+function setCors(req: IncomingMessage, res: ServerResponse) {
+  const raw = process.env.Y2T_CORS_ORIGINS;
+  const allowList =
+    typeof raw === "string" && raw.trim().length > 0
+      ? raw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
 
-    const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
-    const allowsAny = allowList.includes("*");
-    const allowsOrigin = !!origin && allowList.includes(origin);
+  const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
+  const allowsAny = allowList.includes("*");
+  const allowsOrigin = !!origin && allowList.includes(origin);
 
   if (allowsAny) {
     res.setHeader("access-control-allow-origin", "*");
@@ -99,28 +99,28 @@ async function getBuildVersion(): Promise<string> {
     res.setHeader("vary", "Origin");
   }
 
-  async function readJsonBodySafe(
-    req: IncomingMessage,
-    res: ServerResponse
-  ): Promise<{ ok: true; body: unknown } | { ok: false }> {
-    try {
-      const body = (await readJsonBody(req)) as unknown;
-      return { ok: true, body };
-    } catch (err) {
-      if (err instanceof BodyTooLargeError) {
-        payloadTooLarge(res, err.message);
-        return { ok: false };
-      }
-      badRequest(res, "Invalid JSON body");
-      return { ok: false };
-    }
-  }
-
   res.setHeader("access-control-allow-methods", "GET,POST,PATCH,DELETE,OPTIONS");
   res.setHeader(
     "access-control-allow-headers",
     "content-type,last-event-id,x-api-key"
   );
+}
+
+async function readJsonBodySafe(
+  req: IncomingMessage,
+  res: ServerResponse
+): Promise<{ ok: true; body: unknown } | { ok: false }> {
+  try {
+    const body = (await readJsonBody(req)) as unknown;
+    return { ok: true, body };
+  } catch (err) {
+    if (err instanceof BodyTooLargeError) {
+      payloadTooLarge(res, err.message);
+      return { ok: false };
+    }
+    badRequest(res, "Invalid JSON body");
+    return { ok: false };
+  }
 }
 
 function apiKeyIsConfigured(): boolean {

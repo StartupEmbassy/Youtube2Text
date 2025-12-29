@@ -243,6 +243,7 @@ Webhooks (optional):
   - `run:cancelled` when status becomes `cancelled`
 - `callbackUrl` must be http(s) and is blocked for localhost/private IPs by default.
 - Optional domain allowlist: `Y2T_WEBHOOK_ALLOWED_DOMAINS=example.com,sub.example.com`
+- Optional replay window: `Y2T_WEBHOOK_MAX_AGE_SECONDS` adds `X-Y2T-Max-Age` to headers.
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:
   - `X-Y2T-Timestamp` (ISO timestamp)
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`

@@ -55,7 +55,7 @@ test("requireApiKey allows /health without key", () => {
 test("requireApiKey rejects missing key", () => {
   withEnv("secret", () => {
     const res = new FakeResponse();
-    const ok = requireApiKey({ url: "/runs", headers: {} } as any, res as any);
+    const ok = requireApiKey({ url: "/runs", headers: {}, socket: { remoteAddress: "127.0.0.1" } } as any, res as any);
     assert.equal(ok, false);
     assert.equal(res.statusCode, 401);
     assert.match(res.body, /unauthorized/);
@@ -66,7 +66,7 @@ test("requireApiKey rejects wrong key", () => {
   withEnv("secret", () => {
     const res = new FakeResponse();
     const ok = requireApiKey(
-      { url: "/runs", headers: { "x-api-key": "nope" } } as any,
+      { url: "/runs", headers: { "x-api-key": "nope" }, socket: { remoteAddress: "127.0.0.1" } } as any,
       res as any
     );
     assert.equal(ok, false);

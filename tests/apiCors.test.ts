@@ -33,7 +33,7 @@ async function withServer<T>(fn: (baseUrl: string) => Promise<T>): Promise<T> {
   }
 }
 
-test("CORS defaults to allow any origin when Y2T_CORS_ORIGINS is unset", async () => {
+test("CORS defaults to no headers when Y2T_CORS_ORIGINS is unset", async () => {
   const prev = process.env.Y2T_CORS_ORIGINS;
   delete process.env.Y2T_CORS_ORIGINS;
   try {
@@ -42,7 +42,8 @@ test("CORS defaults to allow any origin when Y2T_CORS_ORIGINS is unset", async (
         headers: { Origin: "https://example.com" },
       });
       assert.equal(res.status, 200);
-      assert.equal(res.headers.get("access-control-allow-origin"), "*");
+      // Security hardening: no CORS headers by default
+      assert.equal(res.headers.get("access-control-allow-origin"), null);
     });
   } finally {
     if (prev === undefined) delete process.env.Y2T_CORS_ORIGINS;

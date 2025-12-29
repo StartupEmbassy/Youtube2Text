@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 import type { RunRecord } from "./runManager.js";
 
@@ -91,6 +91,11 @@ function parseIntEnv(name: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function getWebhookMaxAgeSeconds(): number | undefined {
+  const value = parseIntEnv("Y2T_WEBHOOK_MAX_AGE_SECONDS", 0);
+  return value > 0 ? value : undefined;
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -114,12 +119,63 @@ export function buildWebhookHeaders(params: {
     "x-y2t-event": params.eventType,
     "x-y2t-timestamp": params.timestamp,
   };
+  const maxAgeSeconds = getWebhookMaxAgeSeconds();
+  if (maxAgeSeconds) {
+    headers["x-y2t-max-age"] = String(maxAgeSeconds);
+  }
   if (params.secret && params.secret.trim().length > 0) {
     const payload = `${params.timestamp}.${params.body}`;
     const sig = createHmac("sha256", params.secret).update(payload).digest("hex");
     headers["x-y2t-signature"] = `sha256=${sig}`;
   }
   return headers;
+}
+
+export function verifyWebhookSignature(params: {
+  secret: string;
+  timestamp: string;
+  body: string;
+  signature: string;
+  maxAgeSeconds?: number;
+  nowMs?: number;
+}): { ok: boolean; error?: string } {
+  if (!params.secret || params.secret.trim().length === 0) {
+    return { ok: false, error: "Missing secret" };
+  }
+  const expectedPrefix = "sha256=";
+  if (!params.signature.startsWith(expectedPrefix)) {
+    return { ok: false, error: "Invalid signature format" };
+  }
+  const sigHex = params.signature.slice(expectedPrefix.length);
+  const payload = `${params.timestamp}.${params.body}`;
+  const expected = createHmac("sha256", params.secret).update(payload).digest("hex");
+
+  const a = Buffer.from(expected, "hex");
+  const b = Buffer.from(sigHex, "hex");
+  const maxLen = Math.max(a.length, b.length);
+  const ap = Buffer.alloc(maxLen);
+  const bp = Buffer.alloc(maxLen);
+  a.copy(ap);
+  b.copy(bp);
+  if (!timingSafeEqual(ap, bp) || a.length !== b.length) {
+    return { ok: false, error: "Signature mismatch" };
+  }
+
+  const tsMs = Date.parse(params.timestamp);
+  if (!Number.isFinite(tsMs)) {
+    return { ok: false, error: "Invalid timestamp" };
+  }
+  const maxAgeSeconds =
+    params.maxAgeSeconds ?? getWebhookMaxAgeSeconds() ?? undefined;
+  if (maxAgeSeconds && maxAgeSeconds > 0) {
+    const nowMs = params.nowMs ?? Date.now();
+    const ageMs = Math.abs(nowMs - tsMs);
+    if (ageMs > maxAgeSeconds * 1000) {
+      return { ok: false, error: "Timestamp outside allowed window" };
+    }
+  }
+
+  return { ok: true };
 }
 
 export async function deliverWebhook(

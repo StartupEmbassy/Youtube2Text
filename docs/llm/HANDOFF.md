@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.23.7 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.23.8 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -44,12 +44,11 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.23.7)
+## Review Notes (GPT v0.23.8)
 - Docs/code alignment looks good for v0.23.x.
-- Tests last known: `npm test` 85/85 (not re-run after 0.23.7).
-- Build: OK.
-- Docker: healthy.
-- Fix (Claude): `apiAuth.test.ts` now isolates `Y2T_ALLOW_INSECURE_NO_API_KEY` to prevent env pollution.
+- Tests: `npm test` 89/89 pass (v0.23.8).
+- Build: not re-run after 0.23.8.
+- Docker: not re-run after 0.23.8.
 - Security audit (Claude 2025-12-28): remediations applied; see section below.
 
 ## Code Review (Claude 2025-12-27)
@@ -122,8 +121,8 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 5. **No rate limit for auth failures** - FIXED
    - Added `Y2T_AUTH_FAIL_MAX` + `Y2T_AUTH_FAIL_WINDOW_MS`.
-6. **Webhook replay attacks** - TODO
-   - We sign timestamps but do not enforce max age; receiver should validate.
+6. **Webhook replay attacks** - PARTIAL
+   - Added `X-Y2T-Max-Age` header + `verifyWebhookSignature()` helper; receiver must enforce max age.
 
 ### What is GOOD
 
@@ -139,6 +138,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Update relevant docs for every behavior change
 - Add entry to `docs/llm/HISTORY.md` for every version bump
 - TODO: Move Phase 2.7 version table (lines 16-29) to ARCHIVE to reduce HANDOFF size
+- Process guardrail: do not continue or commit if tests are failing; fix tests first.
 
 ## Testing / Sanity Pass
 - `npm test`
