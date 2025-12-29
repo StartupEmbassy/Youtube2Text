@@ -2,6 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildWebhookHeaders, deliverWebhook } from "../src/api/webhooks.js";
 
+function withEnv(name: string, value: string | undefined, fn: () => Promise<void> | void) {
+  const prev = process.env[name];
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+  return Promise.resolve()
+    .then(fn)
+    .finally(() => {
+      if (prev === undefined) delete process.env[name];
+      else process.env[name] = prev;
+    });
+}
+
 test("buildWebhookHeaders includes signature when secret is set", () => {
   const headers = buildWebhookHeaders({
     secret: "secret",
@@ -106,4 +118,63 @@ test("deliverWebhook does not retry on 400", async () => {
   assert.equal(res.ok, false);
   assert.equal(res.status, 400);
   assert.equal(calls, 1);
+});
+
+test("deliverWebhook blocks localhost/private IP callbackUrl", async () => {
+  const res = await deliverWebhook(
+    "http://127.0.0.1/hook",
+    {
+      type: "run:done",
+      timestamp: new Date().toISOString(),
+      run: {
+        runId: "r1",
+        status: "done",
+        inputUrl: "u",
+        force: false,
+        createdAt: new Date().toISOString(),
+      } as any,
+    },
+    { fetch: (async () => ({ ok: true, status: 200 })) as any }
+  );
+  assert.equal(res.ok, false);
+  assert.match(res.error, /not allowed/i);
+});
+
+test("deliverWebhook enforces allowed domain list when configured", async () => {
+  await withEnv("Y2T_WEBHOOK_ALLOWED_DOMAINS", "example.com", async () => {
+    const ok = await deliverWebhook(
+      "https://sub.example.com/hook",
+      {
+        type: "run:done",
+        timestamp: new Date().toISOString(),
+        run: {
+          runId: "r1",
+          status: "done",
+          inputUrl: "u",
+          force: false,
+          createdAt: new Date().toISOString(),
+        } as any,
+      },
+      { fetch: (async () => ({ ok: true, status: 200 })) as any }
+    );
+    assert.equal(ok.ok, true);
+
+    const blocked = await deliverWebhook(
+      "https://other.com/hook",
+      {
+        type: "run:done",
+        timestamp: new Date().toISOString(),
+        run: {
+          runId: "r1",
+          status: "done",
+          inputUrl: "u",
+          force: false,
+          createdAt: new Date().toISOString(),
+        } as any,
+      },
+      { fetch: (async () => ({ ok: true, status: 200 })) as any }
+    );
+    assert.equal(blocked.ok, false);
+    assert.match(blocked.error, /allowlist/i);
+  });
 });

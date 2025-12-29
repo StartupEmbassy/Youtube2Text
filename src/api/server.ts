@@ -5,7 +5,7 @@ import { basename as pathBasename } from "node:path";
 import { parse as parseUrl } from "node:url";
 import type { AppConfig } from "../config/schema.js";
 import { RunManager } from "./runManager.js";
-import { badRequest, json, notFound, readJsonBody } from "./http.js";
+import { badRequest, json, notFound, payloadTooLarge, readJsonBody, BodyTooLargeError } from "./http.js";
 import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
 import { FileSystemStorageAdapter, saveChannelMetaJson } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
@@ -78,25 +78,42 @@ async function getBuildVersion(): Promise<string> {
   return cachedBuildVersion;
 }
 
-function setCors(req: IncomingMessage, res: ServerResponse) {
-  const raw = process.env.Y2T_CORS_ORIGINS;
-  const allowList =
-    typeof raw === "string" && raw.trim().length > 0
-      ? raw
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : ["*"];
+  function setCors(req: IncomingMessage, res: ServerResponse) {
+    const raw = process.env.Y2T_CORS_ORIGINS;
+    const allowList =
+      typeof raw === "string" && raw.trim().length > 0
+        ? raw
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
 
-  const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
-  const allowsAny = allowList.includes("*");
-  const allowsOrigin = !!origin && allowList.includes(origin);
+    const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
+    const allowsAny = allowList.includes("*");
+    const allowsOrigin = !!origin && allowList.includes(origin);
 
   if (allowsAny) {
     res.setHeader("access-control-allow-origin", "*");
   } else if (allowsOrigin) {
     res.setHeader("access-control-allow-origin", origin);
     res.setHeader("vary", "Origin");
+  }
+
+  async function readJsonBodySafe(
+    req: IncomingMessage,
+    res: ServerResponse
+  ): Promise<{ ok: true; body: unknown } | { ok: false }> {
+    try {
+      const body = (await readJsonBody(req)) as unknown;
+      return { ok: true, body };
+    } catch (err) {
+      if (err instanceof BodyTooLargeError) {
+        payloadTooLarge(res, err.message);
+        return { ok: false };
+      }
+      badRequest(res, "Invalid JSON body");
+      return { ok: false };
+    }
   }
 
   res.setHeader("access-control-allow-methods", "GET,POST,PATCH,DELETE,OPTIONS");
@@ -348,14 +365,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       }
 
       if (req.method === "PATCH" && seg.length === 1 && seg[0] === "settings") {
-        let body: unknown;
-        try {
-          body = (await readJsonBody(req)) as unknown;
-        } catch {
-          badRequest(res, "Invalid JSON body");
-          return;
-        }
-        const parsed = settingsPatchSchema.safeParse(body);
+        const read = await readJsonBodySafe(req, res);
+        if (!read.ok) return;
+        const parsed = settingsPatchSchema.safeParse(read.body);
         if (!parsed.success) {
           badRequest(res, "Invalid settings payload");
           return;
@@ -377,14 +389,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       }
 
       if (req.method === "POST" && seg.length === 1 && seg[0] === "watchlist") {
-        let body: unknown;
-        try {
-          body = (await readJsonBody(req)) as unknown;
-        } catch {
-          badRequest(res, "Invalid JSON body");
-          return;
-        }
-        const parsed = watchlistCreateSchema.safeParse(body);
+        const read = await readJsonBodySafe(req, res);
+        if (!read.ok) return;
+        const parsed = watchlistCreateSchema.safeParse(read.body);
         if (!parsed.success) {
           badRequest(res, "Invalid watchlist payload");
           return;
@@ -420,14 +427,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
 
         if (req.method === "PATCH") {
-          let body: unknown;
-          try {
-            body = (await readJsonBody(req)) as unknown;
-          } catch {
-            badRequest(res, "Invalid JSON body");
-            return;
-          }
-          const parsed = watchlistUpdateSchema.safeParse(body);
+          const read = await readJsonBodySafe(req, res);
+          if (!read.ok) return;
+          const parsed = watchlistUpdateSchema.safeParse(read.body);
           if (!parsed.success) {
             badRequest(res, "Invalid watchlist payload");
             return;
@@ -495,14 +497,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         seg[0] === "runs" &&
         seg[1] === "plan"
       ) {
-        let body: unknown;
-        try {
-          body = (await readJsonBody(req)) as unknown;
-        } catch {
-          badRequest(res, "Invalid JSON body");
-          return;
-        }
-        const parsed = runPlanSchema.safeParse(body);
+        const read = await readJsonBodySafe(req, res);
+        if (!read.ok) return;
+        const parsed = runPlanSchema.safeParse(read.body);
         if (!parsed.success) {
           badRequest(res, "Invalid run payload");
           return;
@@ -661,14 +658,9 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
       }
 
       if (req.method === "POST" && seg.length === 1 && seg[0] === "runs") {
-        let body: unknown;
-        try {
-          body = (await readJsonBody(req)) as unknown;
-        } catch {
-          badRequest(res, "Invalid JSON body");
-          return;
-        }
-        const parsed = runCreateSchema.safeParse(body);
+        const read = await readJsonBodySafe(req, res);
+        if (!read.ok) return;
+        const parsed = runCreateSchema.safeParse(read.body);
         if (!parsed.success) {
           badRequest(res, "Invalid run payload");
           return;

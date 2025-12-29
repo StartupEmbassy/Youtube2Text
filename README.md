@@ -200,9 +200,15 @@ Graceful shutdown (server/Docker):
 - On `SIGTERM`/`SIGINT`, the API stops the scheduler and requests cancellation for queued/running runs, then waits up to `Y2T_SHUTDOWN_TIMEOUT_SECONDS` before exiting.
 
 CORS (recommended for server deployments):
-- By default the API sends `Access-Control-Allow-Origin: *`.
-- To restrict browser access to specific origins, set `Y2T_CORS_ORIGINS` (comma-separated), e.g.:
+- By default the API sends no CORS headers (browser access blocked).
+- To allow browser access from specific origins, set `Y2T_CORS_ORIGINS` (comma-separated), e.g.:
   - `Y2T_CORS_ORIGINS=https://your-admin.example.com,http://localhost:3000`
+
+Request body size limit:
+- `Y2T_MAX_BODY_BYTES` (default 1,000,000). Requests above this limit return 413.
+
+Auth failure rate limiting (brute-force protection):
+- `Y2T_AUTH_FAIL_MAX` (default 30) and `Y2T_AUTH_FAIL_WINDOW_MS` (default 60000).
 
 Retention / cleanup (ops hardening):
 - Configure via env:
@@ -235,6 +241,8 @@ Webhooks (optional):
   - `run:done` when status becomes `done`
   - `run:error` when status becomes `error`
   - `run:cancelled` when status becomes `cancelled`
+- `callbackUrl` must be http(s) and is blocked for localhost/private IPs by default.
+- Optional domain allowlist: `Y2T_WEBHOOK_ALLOWED_DOMAINS=example.com,sub.example.com`
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:
   - `X-Y2T-Timestamp` (ISO timestamp)
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`

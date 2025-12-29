@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { isIP } from "node:net";
 import type { RunRecord } from "./runManager.js";
 
 export type RunWebhookEvent =
@@ -17,6 +18,71 @@ function isHttpUrl(urlString: string): boolean {
   } catch {
     return false;
   }
+}
+
+function parseAllowedDomains(): string[] {
+  const raw = process.env.Y2T_WEBHOOK_ALLOWED_DOMAINS ?? "";
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 0);
+}
+
+function isPrivateIpv4(host: string): boolean {
+  if (host.startsWith("10.")) return true;
+  if (host.startsWith("127.")) return true;
+  if (host.startsWith("192.168.")) return true;
+  if (host.startsWith("169.254.")) return true;
+  if (host.startsWith("0.")) return true;
+  const parts = host.split(".").map((p) => Number.parseInt(p, 10));
+  if (parts.length !== 4 || parts.some((p) => !Number.isFinite(p))) return false;
+  const [a, b] = parts;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+  return false;
+}
+
+function isPrivateIpv6(host: string): boolean {
+  const normalized = host.toLowerCase();
+  if (normalized === "::1") return true;
+  if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true; // fc00::/7
+  if (normalized.startsWith("fe80")) return true; // link-local
+  return false;
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+  if (host.endsWith(".local")) return true;
+  if (host === "metadata.google.internal") return true;
+  const ip = isIP(host);
+  if (ip === 4) return isPrivateIpv4(host);
+  if (ip === 6) return isPrivateIpv6(host);
+  return false;
+}
+
+function matchesAllowedDomain(hostname: string, allowed: string): boolean {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  const base = allowed.toLowerCase().replace(/\.$/, "");
+  if (host === base) return true;
+  return host.endsWith(`.${base}`);
+}
+
+function isAllowedWebhookUrl(urlString: string): { ok: boolean; error?: string } {
+  if (!isHttpUrl(urlString)) {
+    return { ok: false, error: "Invalid callbackUrl (must be http/https)" };
+  }
+  const url = new URL(urlString);
+  const hostname = url.hostname;
+  if (!hostname || isBlockedHostname(hostname)) {
+    return { ok: false, error: "callbackUrl host is not allowed" };
+  }
+  const allowlist = parseAllowedDomains();
+  if (allowlist.length > 0) {
+    const ok = allowlist.some((allowed) => matchesAllowedDomain(hostname, allowed));
+    if (!ok) return { ok: false, error: "callbackUrl host not in allowlist" };
+  }
+  return { ok: true };
 }
 
 function parseIntEnv(name: string, fallback: number): number {
@@ -62,10 +128,11 @@ export async function deliverWebhook(
   deps?: { fetch?: typeof fetch }
 ): Promise<WebhookDeliveryResult> {
   const f = deps?.fetch ?? fetch;
-  if (!isHttpUrl(callbackUrl)) {
+  const allowed = isAllowedWebhookUrl(callbackUrl);
+  if (!allowed.ok) {
     return {
       ok: false,
-      error: "Invalid callbackUrl (must be http/https)",
+      error: allowed.error ?? "Invalid callbackUrl",
       retryable: false,
     };
   }

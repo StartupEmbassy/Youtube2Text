@@ -7,7 +7,7 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 
 - Run API + Web via Docker Compose on a server.
 - Keep secrets out of the browser (web proxies API calls).
-- Make the deployment safe by default: require an API key and restrict CORS.
+- Make the deployment safe by default: require an API key, restrict CORS, and lock down webhooks.
 
 ## Prerequisites
 
@@ -24,6 +24,9 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_API_KEY` (required; enforces `X-API-Key` on all API endpoints except `GET /health`)
 - `Y2T_CORS_ORIGINS` (comma-separated exact origin allowlist)
   - Example: `https://y2t.example.com`
+- `Y2T_WEBHOOK_ALLOWED_DOMAINS` (comma-separated allowlist for `callbackUrl`)
+- `Y2T_MAX_BODY_BYTES` (request body limit, default 1,000,000)
+- `Y2T_AUTH_FAIL_MAX` + `Y2T_AUTH_FAIL_WINDOW_MS` (rate limit auth failures)
 - `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints)
 - `Y2T_RUN_TIMEOUT_MINUTES` (safety net for stuck runs)
 

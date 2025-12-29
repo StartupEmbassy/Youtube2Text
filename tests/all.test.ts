@@ -17,6 +17,7 @@ import "./apiPersistence.test.js";
 import "./apiGracefulShutdown.test.js";
 import "./storageFsAdapter.test.js";
 import "./storageSymlink.test.js";
+import "./apiBodyLimit.test.js";
 import "./apiGlobalEvents.test.js";
 import "./apiAuth.test.js";
 import "./apiPlan.test.js";

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { requireApiKey } from "../src/api/auth.js";
+import { requireApiKey, resetAuthFailureLimiterForTests } from "../src/api/auth.js";
 
 class FakeResponse {
   statusCode = 200;
@@ -83,5 +83,34 @@ test("requireApiKey accepts correct key", () => {
     );
     assert.equal(ok, true);
     assert.equal(res.statusCode, 200);
+  });
+});
+
+test("requireApiKey rate limits repeated failures", () => {
+  withEnv("secret", () => {
+    const prevMax = process.env.Y2T_AUTH_FAIL_MAX;
+    const prevWindow = process.env.Y2T_AUTH_FAIL_WINDOW_MS;
+    process.env.Y2T_AUTH_FAIL_MAX = "1";
+    process.env.Y2T_AUTH_FAIL_WINDOW_MS = "60000";
+    resetAuthFailureLimiterForTests();
+    try {
+      const req = { url: "/runs", headers: { "x-api-key": "bad" }, socket: { remoteAddress: "1.2.3.4" } } as any;
+
+      const res1 = new FakeResponse();
+      const ok1 = requireApiKey(req, res1 as any);
+      assert.equal(ok1, false);
+      assert.equal(res1.statusCode, 401);
+
+      const res2 = new FakeResponse();
+      const ok2 = requireApiKey(req, res2 as any);
+      assert.equal(ok2, false);
+      assert.equal(res2.statusCode, 429);
+    } finally {
+      if (prevMax === undefined) delete process.env.Y2T_AUTH_FAIL_MAX;
+      else process.env.Y2T_AUTH_FAIL_MAX = prevMax;
+      if (prevWindow === undefined) delete process.env.Y2T_AUTH_FAIL_WINDOW_MS;
+      else process.env.Y2T_AUTH_FAIL_WINDOW_MS = prevWindow;
+      resetAuthFailureLimiterForTests();
+    }
   });
 });
