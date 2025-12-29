@@ -225,6 +225,7 @@ Auth failure rate limiting (brute-force protection):
 
 SSE connection limit:
 - `Y2T_SSE_MAX_CLIENTS` (default 1000, set `0` to disable) caps concurrent SSE clients to avoid FD exhaustion.
+- `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (default `1000`) - Maximum events buffered per run for SSE replay.
 
 Request timeout:
 - `Y2T_REQUEST_TIMEOUT_MS` (default 30000, set `0` to disable) bounds non-SSE request lifetime.
@@ -264,6 +265,9 @@ Webhooks (optional):
 - Webhooks do not follow redirects (redirects return an error to prevent SSRF).
 - Optional domain allowlist: `Y2T_WEBHOOK_ALLOWED_DOMAINS=example.com,sub.example.com`
 - Optional replay window: `Y2T_WEBHOOK_MAX_AGE_SECONDS` adds `X-Y2T-Max-Age` to headers.
+- Delivery settings:
+  - `Y2T_WEBHOOK_RETRIES` (default `3`) - Number of retry attempts for failed deliveries.
+  - `Y2T_WEBHOOK_TIMEOUT_MS` (default `5000`) - Request timeout per attempt in milliseconds.
 - If `Y2T_WEBHOOK_SECRET` is set, requests include:
   - `X-Y2T-Timestamp` (ISO timestamp)
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`
@@ -456,6 +460,12 @@ output/<channel_id>/_errors.jsonl
 - A video is considered processed if the expected JSON file exists under the current `filenameStyle`.
 - Reprocessing requires `--force`.
 - Download and transcription retries are handled independently with exponential backoff.
+
+Polling and retry configuration (optional):
+- `Y2T_POLL_INTERVAL_MS` (default `5000`) - Polling interval for AssemblyAI transcription status.
+- `Y2T_MAX_POLL_MINUTES` (default `60`) - Maximum polling time before timeout.
+- `Y2T_DOWNLOAD_RETRIES` (default `2`) - Retry count for yt-dlp download failures.
+- `Y2T_TRANSCRIPTION_RETRIES` (default `2`) - Retry count for AssemblyAI transcription failures.
 
 ## Roadmap
 

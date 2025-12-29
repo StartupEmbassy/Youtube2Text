@@ -7,6 +7,28 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ---
 
+## Phase 2.7 (DONE): Settings + Polish - Archived 2025-12-29
+
+| Version | What was done |
+|---------|---------------|
+| v0.17.0 | Settings API + non-secret defaults in `output/_settings.json` |
+| v0.17.1 | Compact inputs, formRow layout, 3 cards |
+| v0.17.2 | Help tooltips with `?` icons (Gemini-designed) |
+| v0.17.3 | Renamed "yt-dlp" to "Advanced (download)", textarea resize fix |
+| v0.17.4 | Inline `effective: value` hints when field is unset |
+| v0.17.5 | Per-field source tracking (`env`, `config.yaml`, `settings file`, `default`) |
+| v0.17.6 | Move effective hints to tooltips (reduce clutter), Save button to top |
+| v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip, 8px spacing |
+| v0.18.0 | Remove unsafe arbitrary yt-dlp extra args setting (security) |
+| v0.19.0-v0.19.1 | Mandatory API key with `Y2T_ALLOW_INSECURE_NO_API_KEY` opt-out |
+| v0.19.2 | Bugfix: `requireApiKey` middleware now respects insecure mode |
+| v0.19.3 | Security: docker-compose insecure default false; prevent library path traversal |
+
+Key details:
+- Settings precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest)
+- Layout: 2 cards (Core+Language+Outputs, Planning+Polling+Retries)
+- Responsive: 900px breakpoint, right-aligned labels on desktop
+
 ## Settings UI Implementation Reference (v0.17.0-v0.17.5) - Archived 2025-12-20
 
 This section contains the CSS specs and component patterns that were implemented in v0.17.0-v0.17.5.

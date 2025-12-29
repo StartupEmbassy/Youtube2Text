@@ -11,29 +11,6 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
 
-## Phase 2.7 (DONE): Settings + Polish
-
-| Version | What was done |
-|---------|---------------|
-| v0.17.0 | Settings API + non-secret defaults in `output/_settings.json` |
-| v0.17.1 | Compact inputs, formRow layout, 3 cards |
-| v0.17.2 | Help tooltips with `?` icons (Gemini-designed) |
-| v0.17.3 | Renamed "yt-dlp" to "Advanced (download)", textarea resize fix |
-| v0.17.4 | Inline `effective: value` hints when field is unset |
-| v0.17.5 | Per-field source tracking (`env`, `config.yaml`, `settings file`, `default`) |
-| v0.17.6 | Move effective hints to tooltips (reduce clutter), Save button to top |
-| v0.17.7 | Show compact inline value only (no prefix), keep full info in tooltip, 8px spacing |
-| v0.18.0 | Remove unsafe arbitrary yt-dlp extra args setting (security) |
-| v0.19.0-v0.19.1 | Mandatory API key with `Y2T_ALLOW_INSECURE_NO_API_KEY` opt-out |
-| v0.19.2 | Bugfix: `requireApiKey` middleware now respects insecure mode |
-| v0.19.3 | Security: docker-compose insecure default false; prevent library path traversal |
-
-**Key details:**
-- Settings precedence: `output/_settings.json` (lowest) < `config.yaml` < `.env` (highest)
-- Layout: 2 cards (Core+Language+Outputs, Planning+Polling+Retries)
-- Responsive: 900px breakpoint, right-aligned labels on desktop
-- Full implementation specs: `docs/llm/HANDOFF_ARCHIVE.md`
-
 ## Phase 2.8.2 (DONE): Server-side clamps/validation
 - Added server-side validation/clamping for settings, runs, and watchlist inputs.
 - Invalid `afterDate` or manual `languageCode` returns 400; numeric fields clamp to safe bounds.
@@ -45,7 +22,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
 ## Review Notes (GPT v0.25.0)
-- Docs/code alignment looks good for v0.23.x.
+- Docs/code alignment: 100% (Claude audit 2025-12-29).
 - Tests: `npm test` 97/97 pass (verified by GPT-5.2 2025-12-29).
 - Build: OK (TypeScript errors fixed by Claude).
 - Docker: healthy (verified by Claude 2025-12-28).
@@ -166,7 +143,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Keep this HANDOFF short; move older content into HISTORY/DECISIONS/ARCHIVE
 - Update relevant docs for every behavior change
 - Add entry to `docs/llm/HISTORY.md` for every version bump
-- TODO: Move Phase 2.7 version table (lines 16-29) to ARCHIVE to reduce HANDOFF size
+- Phase 2.7 table archived in `docs/llm/HANDOFF_ARCHIVE.md` to keep this snapshot short
 - Process guardrail: do not continue or commit if tests are failing; fix tests first.
 
 ## Testing / Sanity Pass
