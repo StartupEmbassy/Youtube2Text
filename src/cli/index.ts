@@ -33,8 +33,18 @@ program
     "Output filename style: id | id_title | title_id"
   )
   .option("--audioFormat <fmt>", "mp3 or wav")
-  .option("--sttProvider <provider>", "Speech-to-text provider (assemblyai)")
-  .option("--language <code>", "AssemblyAI language code")
+  .option(
+    "--sttProvider <provider>",
+    "Speech-to-text provider (assemblyai | openai_whisper)"
+  )
+  .option("--openaiWhisperModel <name>", "OpenAI Whisper model (default whisper-1)")
+  .option("--maxAudioMB <n>", "Max audio size before splitting (MB)", (v) => Number(v))
+  .option(
+    "--splitOverlapSeconds <n>",
+    "Overlap seconds between chunks when splitting",
+    (v) => Number(v)
+  )
+  .option("--language <code>", "Language code (used when manual)")
   .option(
     "--languageDetection <mode>",
     "Language detection: auto | manual"
@@ -83,7 +93,11 @@ async function main() {
       audioFormat:
         (opts.audioFormat as "mp3" | "wav") ?? baseConfig.audioFormat,
       sttProvider:
-        (opts.sttProvider as "assemblyai") ?? baseConfig.sttProvider,
+        (opts.sttProvider as "assemblyai" | "openai_whisper") ??
+        baseConfig.sttProvider,
+      openaiWhisperModel: opts.openaiWhisperModel ?? baseConfig.openaiWhisperModel,
+      maxAudioMB: opts.maxAudioMB ?? baseConfig.maxAudioMB,
+      splitOverlapSeconds: opts.splitOverlapSeconds ?? baseConfig.splitOverlapSeconds,
       languageDetection:
         (opts.languageDetection as "auto" | "manual") ??
         (opts.language ? "manual" : baseConfig.languageDetection),
@@ -126,6 +140,9 @@ async function main() {
       filenameStyle: run.filenameStyle ?? baseConfig.filenameStyle,
       audioFormat: run.audioFormat ?? baseConfig.audioFormat,
       sttProvider: run.sttProvider ?? baseConfig.sttProvider,
+      openaiWhisperModel: run.openaiWhisperModel ?? baseConfig.openaiWhisperModel,
+      maxAudioMB: run.maxAudioMB ?? baseConfig.maxAudioMB,
+      splitOverlapSeconds: run.splitOverlapSeconds ?? baseConfig.splitOverlapSeconds,
       languageDetection:
         run.languageDetection ?? baseConfig.languageDetection,
       languageCode: run.languageCode ?? baseConfig.languageCode,

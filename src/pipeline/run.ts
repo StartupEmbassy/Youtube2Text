@@ -10,7 +10,10 @@ import {
   fetchChannelMetadata,
 } from "../youtube/index.js";
 import { getListingWithCatalogCache } from "../youtube/catalogCache.js";
-import { createTranscriptionProvider } from "../transcription/index.js";
+import {
+  createTranscriptionProvider,
+  getProviderCapabilities,
+} from "../transcription/index.js";
 import { formatTxt, formatCsv, formatMd, formatJsonl } from "../formatters/index.js";
 import {
   getOutputPaths,
@@ -33,6 +36,9 @@ import { validateYtDlpInstalled } from "../utils/deps.js";
 import { InsufficientCreditsError } from "../transcription/errors.js";
 import { PipelineEventEmitter, PipelineStage } from "./events.js";
 import { YtDlpError } from "../youtube/ytDlpErrors.js";
+import { splitAudioByLimit } from "../utils/audio.js";
+import { mergeChunkTranscripts } from "../transcription/merge.js";
+import { promises as fs } from "node:fs";
 
 type AssemblyAiAccountResponse = Record<string, unknown> & {
   credit_balance?: number;
@@ -40,6 +46,11 @@ type AssemblyAiAccountResponse = Record<string, unknown> & {
   minutes_remaining?: number;
   audio_seconds_remaining?: number;
 };
+
+async function isAudioTooLarge(path: string, maxBytes: number): Promise<boolean> {
+  const stats = await fs.stat(path);
+  return stats.size > maxBytes;
+}
 
 function getCreditsMinutesRemaining(
   account: AssemblyAiAccountResponse
@@ -278,6 +289,18 @@ export async function runPipeline(
 
   const provider = createTranscriptionProvider(config);
   const limit = pLimit(config.concurrency);
+  const providerCaps = getProviderCapabilities(config.sttProvider);
+  const providerMaxBytes = providerCaps?.maxAudioBytes;
+  const userMaxBytes =
+    typeof config.maxAudioMB === "number" ? config.maxAudioMB * 1024 * 1024 : undefined;
+  const effectiveMaxBytes =
+    userMaxBytes !== undefined && providerMaxBytes !== undefined
+      ? Math.min(userMaxBytes, providerMaxBytes)
+      : userMaxBytes ?? providerMaxBytes;
+  const splitOverlapSeconds =
+    typeof config.splitOverlapSeconds === "number"
+      ? config.splitOverlapSeconds
+      : 2;
 
   try {
     await Promise.all(
@@ -416,25 +439,61 @@ export async function runPipeline(
                     config.languageCode
                   );
 
-            const useAssemblyAiAld =
+            const useProviderAutoLanguageDetection =
               config.languageDetection !== "manual" && !language.detected;
 
-            if (useAssemblyAiAld) {
+            if (useProviderAutoLanguageDetection) {
               logStep(
                 "language",
-                "Undetected via yt-dlp; using AssemblyAI automatic language detection"
+                "Undetected via yt-dlp; using provider automatic language detection"
               );
             }
 
             stageForError = "transcribe";
             emitStage("transcribe", video.id, index, totalVideos);
-            const transcript = await provider.transcribe(audioPath, {
-              languageCode: useAssemblyAiAld ? undefined : language.languageCode,
-              languageDetection: useAssemblyAiAld ? true : undefined,
-              pollIntervalMs: config.pollIntervalMs,
-              maxPollMinutes: config.maxPollMinutes,
-              retries: config.transcriptionRetries,
-            });
+            let transcript;
+            if (effectiveMaxBytes && (await isAudioTooLarge(audioPath, effectiveMaxBytes))) {
+              stageForError = "split";
+              emitStage("split", video.id, index, totalVideos);
+              logStep(
+                "split",
+                `Audio exceeds ${Math.round(effectiveMaxBytes / (1024 * 1024))}MB; splitting`
+              );
+              const { chunks, cleanup } = await splitAudioByLimit(
+                audioPath,
+                effectiveMaxBytes,
+                splitOverlapSeconds
+              );
+              try {
+                const chunkResults = [];
+                for (const chunk of chunks) {
+                  stageForError = "transcribe";
+                  const chunkTranscript = await provider.transcribe(chunk.path, {
+                    languageCode: useProviderAutoLanguageDetection ? undefined : language.languageCode,
+                    languageDetection: useProviderAutoLanguageDetection ? true : undefined,
+                    pollIntervalMs: config.pollIntervalMs,
+                    maxPollMinutes: config.maxPollMinutes,
+                    retries: config.transcriptionRetries,
+                  });
+                  chunkResults.push({
+                    transcript: chunkTranscript,
+                    startSeconds: chunk.startSeconds,
+                    overlapSeconds: chunk.overlapSeconds,
+                  });
+                }
+                transcript = mergeChunkTranscripts(chunkResults);
+              } finally {
+                await cleanup();
+              }
+            } else {
+              transcript = await provider.transcribe(audioPath, {
+                languageCode: useProviderAutoLanguageDetection ? undefined : language.languageCode,
+                languageDetection: useProviderAutoLanguageDetection ? true : undefined,
+                pollIntervalMs: config.pollIntervalMs,
+                maxPollMinutes: config.maxPollMinutes,
+                retries: config.transcriptionRetries,
+              });
+            }
 
             const description =
               video.description ??
@@ -486,10 +545,10 @@ export async function runPipeline(
               languageCode:
                 typeof transcript.language_code === "string"
                   ? transcript.language_code
-                  : useAssemblyAiAld
+                  : useProviderAutoLanguageDetection
                     ? undefined
                     : language.languageCode,
-              languageDetection: useAssemblyAiAld ? true : undefined,
+              languageDetection: useProviderAutoLanguageDetection ? true : undefined,
               languageConfidence:
                 typeof transcript.language_confidence === "number"
                   ? transcript.language_confidence
@@ -515,7 +574,7 @@ export async function runPipeline(
                 uploadDate: video.uploadDate,
                 description,
                 languageCode: finalLanguageCode,
-                languageSource: useAssemblyAiAld ? "auto-detected" : "yt-dlp",
+                languageSource: useProviderAutoLanguageDetection ? "auto-detected" : "yt-dlp",
                 languageConfidence: finalLanguageConfidence,
               })
             );
@@ -530,7 +589,7 @@ export async function runPipeline(
                 uploadDate: video.uploadDate,
                 description,
                 languageCode: finalLanguageCode,
-                languageSource: useAssemblyAiAld ? "auto-detected" : "yt-dlp",
+                languageSource: useProviderAutoLanguageDetection ? "auto-detected" : "yt-dlp",
                 languageConfidence: finalLanguageConfidence,
               })
             );

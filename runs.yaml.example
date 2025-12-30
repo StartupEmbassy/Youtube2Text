@@ -8,6 +8,9 @@ runs:
     concurrency: 2
     csvEnabled: false
     sttProvider: assemblyai
+    openaiWhisperModel: whisper-1
+    maxAudioMB:
+    splitOverlapSeconds: 2
     filenameStyle: title_id
     languageDetection: auto
     languageCode: en_us
@@ -24,6 +27,9 @@ runs:
     audioDir: "audio_custom"
     csvEnabled: true
     sttProvider: assemblyai
+    openaiWhisperModel: whisper-1
+    maxAudioMB:
+    splitOverlapSeconds: 2
     filenameStyle: id_title
     languageDetection: manual
     languageCode: en_us

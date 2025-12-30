@@ -88,7 +88,7 @@ Runners decide how to consume events:
 
 ## Transcription, Language Handling, Credits
 
-Transcription is abstracted via a `TranscriptionProvider` (AssemblyAI first).
+Transcription is abstracted via a `TranscriptionProvider` (AssemblyAI + OpenAI Whisper).
 
 Language handling requirement: non-English videos transcribe poorly when forced to `en_us`.
 
@@ -98,7 +98,11 @@ Implemented approach (Phase 0):
    - `metadata.language` (most reliable)
    - `subtitles` (manually uploaded)
    - `automatic_captions` (filtered to AssemblyAI-supported codes)
-3. If still undetected, enable AssemblyAI automatic language detection (`language_detection: true`).
+3. If still undetected, enable provider automatic language detection (AssemblyAI `language_detection: true`, OpenAI Whisper by omitting language).
+
+Audio size limits:
+- Providers declare a max upload size (e.g., OpenAI Whisper 25 MB).
+- If an audio file exceeds the effective limit, the pipeline splits it into chunks with overlap, transcribes each chunk, then merges timestamps while trimming the overlap region.
 
 Persist detected language in per-video `.meta.json` for later UI/RAG use.
 

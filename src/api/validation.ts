@@ -17,6 +17,8 @@ const LIMITS = {
   maxPollMinutes: { min: 1, max: 240 },
   downloadRetries: { min: 0, max: 10 },
   transcriptionRetries: { min: 0, max: 10 },
+  maxAudioMB: { min: 1, max: 50000 },
+  splitOverlapSeconds: { min: 0, max: 30 },
   catalogMaxAgeHours: { min: -1, max: 8760 },
 } as const satisfies Record<string, IntBounds>;
 
@@ -74,6 +76,25 @@ function normalizeOptionalEnum<T extends string>(
     return undefined;
   }
   return v as T;
+}
+
+function normalizeOptionalString(
+  field: string,
+  raw: unknown,
+  errors: string[]
+): string | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return undefined;
+  if (typeof raw !== "string") {
+    errors.push(`${field} must be a string`);
+    return undefined;
+  }
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    errors.push(`${field} must not be empty`);
+    return undefined;
+  }
+  return trimmed;
 }
 
 function isValidIsoDate(value: string): boolean {
@@ -153,10 +174,28 @@ export function normalizeNonSecretSettings(
   const sttProvider = normalizeOptionalEnum(
     "sttProvider",
     input.sttProvider,
-    ["assemblyai"],
+    ["assemblyai", "openai_whisper"],
     errors
   );
   if (sttProvider !== undefined) out.sttProvider = sttProvider;
+
+  const openaiWhisperModel = normalizeOptionalString(
+    "openaiWhisperModel",
+    input.openaiWhisperModel,
+    errors
+  );
+  if (openaiWhisperModel !== undefined) out.openaiWhisperModel = openaiWhisperModel;
+
+  const maxAudioMB = normalizeOptionalInt("maxAudioMB", input.maxAudioMB, LIMITS.maxAudioMB, errors);
+  if (maxAudioMB !== undefined) out.maxAudioMB = maxAudioMB;
+
+  const splitOverlapSeconds = normalizeOptionalInt(
+    "splitOverlapSeconds",
+    input.splitOverlapSeconds,
+    LIMITS.splitOverlapSeconds,
+    errors
+  );
+  if (splitOverlapSeconds !== undefined) out.splitOverlapSeconds = splitOverlapSeconds;
 
   const languageDetection = normalizeOptionalEnum(
     "languageDetection",

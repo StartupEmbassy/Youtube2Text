@@ -6,6 +6,39 @@ async function tryCommand(cmd: string): Promise<boolean> {
   return res.exitCode === 0;
 }
 
+async function resolveBinary(
+  binaryName: string,
+  explicitPath?: string
+): Promise<string | undefined> {
+  if (explicitPath) {
+    try {
+      if (await fileExists(explicitPath) && (await tryCommand(explicitPath))) {
+        return explicitPath;
+      }
+    } catch {
+      return undefined;
+    }
+  }
+  const candidates = [binaryName, `${binaryName}.exe`];
+  for (const candidate of candidates) {
+    try {
+      if (await tryCommand(candidate)) return candidate;
+    } catch {
+      // continue
+    }
+  }
+  try {
+    const res = await execCommand("where.exe", [binaryName]);
+    const firstLine = res.stdout.split(/\r?\n/)[0]?.trim();
+    if (firstLine && (await fileExists(firstLine))) {
+      if (await tryCommand(firstLine)) return firstLine;
+    }
+  } catch {
+    // fall through
+  }
+  return undefined;
+}
+
 export async function resolveYtDlpCommand(
   explicitPath?: string
 ): Promise<string> {
@@ -24,27 +57,8 @@ export async function resolveYtDlpCommand(
     }
   }
 
-  try {
-    if (await tryCommand("yt-dlp")) return "yt-dlp";
-  } catch {
-    // fall through
-  }
-
-  try {
-    if (await tryCommand("yt-dlp.exe")) return "yt-dlp.exe";
-  } catch {
-    // fall through
-  }
-
-  try {
-    const res = await execCommand("where.exe", ["yt-dlp"]);
-    const firstLine = res.stdout.split(/\r?\n/)[0]?.trim();
-    if (firstLine && (await fileExists(firstLine))) {
-      if (await tryCommand(firstLine)) return firstLine;
-    }
-  } catch {
-    // fall through
-  }
+  const resolved = await resolveBinary("yt-dlp");
+  if (resolved) return resolved;
 
   try {
     const res = await execCommand("powershell", [
@@ -87,4 +101,32 @@ export async function validateYtDlpInstalled(
   explicitPath?: string
 ): Promise<string> {
   return resolveYtDlpCommand(explicitPath);
+}
+
+export async function validateFfmpegInstalled(
+  explicitPath?: string
+): Promise<string> {
+  const resolved =
+    (await resolveBinary("ffmpeg", explicitPath)) ||
+    (await resolveBinary("ffmpeg", process.env.FFMPEG_PATH));
+  if (resolved) return resolved;
+  throw new Error(
+    "ffmpeg not found. Install it:\n" +
+      "  https://ffmpeg.org/download.html\n" +
+      "If installed, ensure it is on PATH."
+  );
+}
+
+export async function validateFfprobeInstalled(
+  explicitPath?: string
+): Promise<string> {
+  const resolved =
+    (await resolveBinary("ffprobe", explicitPath)) ||
+    (await resolveBinary("ffprobe", process.env.FFPROBE_PATH));
+  if (resolved) return resolved;
+  throw new Error(
+    "ffprobe not found. Install ffmpeg (ffprobe is bundled):\n" +
+      "  https://ffmpeg.org/download.html\n" +
+      "If installed, ensure it is on PATH."
+  );
 }

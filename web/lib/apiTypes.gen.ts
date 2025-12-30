@@ -24,6 +24,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List transcription provider capabilities */
+        get: operations["listProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/maintenance/cleanup": {
         parameters: {
             query?: never;
@@ -473,6 +490,15 @@ export interface components {
                 };
             };
         };
+        ProviderCapability: {
+            /** @enum {string} */
+            id: "assemblyai" | "openai_whisper";
+            maxAudioBytes: number;
+            supportsDiarization: boolean;
+        };
+        ProvidersListResponse: {
+            providers: components["schemas"]["ProviderCapability"][];
+        };
         /** @description Persisted non-secret defaults. Secrets (API keys) are never stored here. */
         NonSecretSettings: {
             /** @enum {string} */
@@ -480,7 +506,10 @@ export interface components {
             /** @enum {string} */
             audioFormat?: "mp3" | "wav";
             /** @enum {string} */
-            sttProvider?: "assemblyai";
+            sttProvider?: "assemblyai" | "openai_whisper";
+            openaiWhisperModel?: string;
+            maxAudioMB?: number;
+            splitOverlapSeconds?: number;
             /** @enum {string} */
             languageDetection?: "auto" | "manual";
             languageCode?: string;
@@ -506,6 +535,9 @@ export interface components {
                 filenameStyle?: components["schemas"]["NonSecretSettingSource"];
                 audioFormat?: components["schemas"]["NonSecretSettingSource"];
                 sttProvider?: components["schemas"]["NonSecretSettingSource"];
+                openaiWhisperModel?: components["schemas"]["NonSecretSettingSource"];
+                maxAudioMB?: components["schemas"]["NonSecretSettingSource"];
+                splitOverlapSeconds?: components["schemas"]["NonSecretSettingSource"];
                 languageDetection?: components["schemas"]["NonSecretSettingSource"];
                 languageCode?: components["schemas"]["NonSecretSettingSource"];
                 concurrency?: components["schemas"]["NonSecretSettingSource"];
@@ -531,7 +563,10 @@ export interface components {
                 /** @enum {string|null} */
                 audioFormat?: "mp3" | "wav" | null;
                 /** @enum {string|null} */
-                sttProvider?: "assemblyai" | null;
+                sttProvider?: "assemblyai" | "openai_whisper" | null;
+                openaiWhisperModel?: string | null;
+                maxAudioMB?: number | null;
+                splitOverlapSeconds?: number | null;
                 /** @enum {string|null} */
                 languageDetection?: "auto" | "manual" | null;
                 languageCode?: string | null;
@@ -829,6 +864,35 @@ export interface operations {
                 };
                 content: {
                     "text/plain": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProvidersListResponse"];
                 };
             };
             /** @description Unauthorized */

@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.26.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.28.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -21,13 +21,15 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.26.0)
+## Review Notes (GPT v0.28.0)
 - Docs/code alignment: 100% (Claude audit 2025-12-29).
-- Tests: `npm test` 97/97 pass.
-- Build: OK.
+- Tests: `npm test` 101/101 pass.
+- Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`).
 - Docker: healthy.
 - Security audit: Phase 1 + Phase 2 complete.
-- New: STT provider selection via `sttProvider` (default `assemblyai`) with factory wiring.
+- New: OpenAI Whisper provider (`openai_whisper`) alongside AssemblyAI (config + settings + CLI).
+- New: Audio size policy + auto-splitting (provider caps + `maxAudioMB`, `splitOverlapSeconds`).
+- New: `GET /providers` endpoint for provider capabilities (max upload size, diarization).
 
 ## Code Review (Claude 2025-12-27)
 
@@ -148,7 +150,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ### Key Interfaces
 1. **TranscriptionProvider** (`src/transcription/provider.ts:3-6`)
    - Abstracts speech-to-text provider
-   - `AssemblyAiProvider` implements this interface
+   - `AssemblyAiProvider` + `OpenAiWhisperProvider` implement this interface
 2. **StorageAdapter** (`src/storage/adapter.ts:21-33`)
    - Abstracts file system operations
    - `FileSystemStorageAdapter` implements this
@@ -157,8 +159,21 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ### Changing Speech-to-Text Provider
 - Interface exists and is used via `createTranscriptionProvider()` (no direct instantiation in pipeline).
-- To add Whisper/Google/AWS: implement `TranscriptionProvider` + extend factory switch.
+- To add Google/AWS: implement `TranscriptionProvider` + extend factory switch.
 - Estimated effort: provider implementation time + config wiring (factory already exists).
+
+### STT Provider Comparison (Claude 2025-12-29)
+
+| Aspect | AssemblyAI | OpenAI Whisper |
+|--------|------------|----------------|
+| Provider key | `assemblyai` | `openai_whisper` |
+| Speaker diarization | Yes | No |
+| Price | ~$0.25/hour | ~$0.006/min (~$0.36/hour) |
+| Speed | Async (polling) | Sync (faster for short files) |
+| File size limit | 5GB | 25MB (auto-splits) |
+| Best for | Long videos, speaker labels | Short videos, quick results |
+
+**Note:** OpenAI Whisper 25MB limit is handled via auto-splitting with overlap trimming.
 
 ### Future Improvement (optional)
 - Replace 4 remaining `as any` in `settings.ts` with proper types
@@ -175,10 +190,12 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - `npm run build`
 - `npm --prefix web run build`
 - `npm run api:contract:check`
-- `npm run test:docker-smoke`
+- `npm run test:docker-smoke` (may take >5 min locally; timed out twice during image build)
 
 ## Operator Notes
-- `.env` must include `ASSEMBLYAI_API_KEY`.
+- `.env` must include `ASSEMBLYAI_API_KEY` when `sttProvider=assemblyai`.
+- `.env` must include `OPENAI_API_KEY` or `Y2T_OPENAI_API_KEY` when `sttProvider=openai_whisper`.
+- Optional: `Y2T_MAX_AUDIO_MB` (cap before splitting) + `Y2T_SPLIT_OVERLAP_SECONDS` (overlap between chunks).
 - `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
 - If the API is behind a trusted proxy/load balancer, set `Y2T_TRUST_PROXY=true`.
 - `Y2T_SSE_MAX_CLIENTS` caps concurrent SSE connections (default 1000, `0` disables).

@@ -88,6 +88,12 @@ const optionalBooleanOrNull = () =>
     z.union([z.boolean(), z.literal(null)]).optional()
   );
 
+const optionalStringOrNull = () =>
+  z.preprocess(
+    (value) => (value === undefined ? undefined : value),
+    z.union([z.string(), z.literal(null)]).optional()
+  );
+
 const optionalEnumOrNull = <T extends [string, ...string[]]>(values: T) =>
   z.preprocess(
     (value) => (value === undefined ? undefined : value),
@@ -122,7 +128,10 @@ export const settingsPatchSchema = z.object({
     .object({
       filenameStyle: optionalEnumOrNull(["id", "id_title", "title_id"]),
       audioFormat: optionalEnumOrNull(["mp3", "wav"]),
-      sttProvider: optionalEnumOrNull(["assemblyai"]),
+      sttProvider: optionalEnumOrNull(["assemblyai", "openai_whisper"]),
+      openaiWhisperModel: optionalStringOrNull(),
+      maxAudioMB: optionalClampedIntOrNull(1, 50000),
+      splitOverlapSeconds: optionalClampedIntOrNull(0, 30),
       languageDetection: optionalEnumOrNull(["auto", "manual"]),
       languageCode: optionalLanguageCodeOrNull(),
       concurrency: optionalClampedIntOrNull(1, 10),

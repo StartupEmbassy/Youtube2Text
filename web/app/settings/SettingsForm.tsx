@@ -9,7 +9,7 @@ type Sources = SettingsGetResponse["sources"];
 type TriBool = "" | "true" | "false";
 type FilenameStyleOpt = "" | "id" | "id_title" | "title_id";
 type AudioFormatOpt = "" | "mp3" | "wav";
-type SttProviderOpt = "" | "assemblyai";
+type SttProviderOpt = "" | "assemblyai" | "openai_whisper";
 type LanguageDetectionOpt = "" | "auto" | "manual";
 
 function Tooltip({ text, effective }: { text: string; effective?: string }) {
@@ -84,6 +84,9 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [data, setData] = useState<SettingsGetResponse>(initial);
+  const [providers, setProviders] = useState<
+    components["schemas"]["ProviderCapability"][] | undefined
+  >(undefined);
 
   const initialForm = useMemo(() => {
     const s = data.settings ?? {};
@@ -94,13 +97,19 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
     const audioFormat: AudioFormatOpt =
       s.audioFormat === "mp3" || s.audioFormat === "wav" ? s.audioFormat : "";
     const sttProvider: SttProviderOpt =
-      s.sttProvider === "assemblyai" ? s.sttProvider : "";
+      s.sttProvider === "assemblyai" || s.sttProvider === "openai_whisper"
+        ? s.sttProvider
+        : "";
     const languageDetection: LanguageDetectionOpt =
       s.languageDetection === "auto" || s.languageDetection === "manual" ? s.languageDetection : "";
     return {
       filenameStyle,
       audioFormat,
       sttProvider,
+      openaiWhisperModel: (s.openaiWhisperModel as string | undefined) ?? "",
+      maxAudioMB: s.maxAudioMB === undefined ? "" : String(s.maxAudioMB),
+      splitOverlapSeconds:
+        s.splitOverlapSeconds === undefined ? "" : String(s.splitOverlapSeconds),
       languageDetection,
       languageCode: (s.languageCode as string | undefined) ?? "",
       concurrency: s.concurrency === undefined ? "" : String(s.concurrency),
@@ -128,6 +137,41 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
   const effective = data.effective ?? ({} as any);
   const sources: Sources = (data.sources ?? {}) as any;
 
+  const effectiveProvider =
+    form.sttProvider !== "" ? form.sttProvider : (effective.sttProvider as string);
+  const providerLimitMb = useMemo(() => {
+    const match = providers?.find((p) => p.id === effectiveProvider);
+    if (!match || typeof match.maxAudioBytes !== "number") return undefined;
+    return Math.round(match.maxAudioBytes / (1024 * 1024));
+  }, [providers, effectiveProvider]);
+  const effectiveMaxAudioMb = useMemo(() => {
+    const raw = form.maxAudioMB.trim();
+    const input = raw.length > 0 ? Number(raw) : undefined;
+    const userLimit = Number.isFinite(input) ? input : undefined;
+    if (providerLimitMb !== undefined && userLimit !== undefined) {
+      return Math.min(providerLimitMb, userLimit);
+    }
+    return providerLimitMb ?? userLimit;
+  }, [form.maxAudioMB, providerLimitMb]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProviders() {
+      try {
+        const res = await fetch("/api/providers");
+        if (!res.ok) return;
+        const json = (await res.json()) as { providers?: components["schemas"]["ProviderCapability"][] };
+        if (!cancelled) setProviders(json.providers);
+      } catch {
+        // ignore
+      }
+    }
+    loadProviders();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function save() {
     setSaving(true);
     setError(undefined);
@@ -140,6 +184,8 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
       const downloadRetries = parseOptionalInt(form.downloadRetries);
       const transcriptionRetries = parseOptionalInt(form.transcriptionRetries);
       const catalogMaxAgeHours = parseOptionalInt(form.catalogMaxAgeHours);
+      const maxAudioMB = parseOptionalInt(form.maxAudioMB);
+      const splitOverlapSeconds = parseOptionalInt(form.splitOverlapSeconds);
 
       const badNums = [
         ["concurrency", concurrency],
@@ -150,6 +196,8 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
         ["downloadRetries", downloadRetries],
         ["transcriptionRetries", transcriptionRetries],
         ["catalogMaxAgeHours", catalogMaxAgeHours],
+        ["maxAudioMB", maxAudioMB],
+        ["splitOverlapSeconds", splitOverlapSeconds],
       ].filter(([, v]) => typeof v === "number" && Number.isNaN(v));
       if (badNums.length > 0) {
         setError(`Invalid number: ${badNums.map(([k]) => k).join(", ")}`);
@@ -161,6 +209,12 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
           filenameStyle: form.filenameStyle === "" ? null : form.filenameStyle,
           audioFormat: form.audioFormat === "" ? null : form.audioFormat,
           sttProvider: form.sttProvider === "" ? null : form.sttProvider,
+          openaiWhisperModel:
+            form.openaiWhisperModel.trim().length === 0
+              ? null
+              : form.openaiWhisperModel.trim(),
+          maxAudioMB: maxAudioMB === null ? null : maxAudioMB,
+          splitOverlapSeconds: splitOverlapSeconds === null ? null : splitOverlapSeconds,
           languageDetection: form.languageDetection === "" ? null : form.languageDetection,
           languageCode: form.languageCode.trim().length === 0 ? null : form.languageCode.trim(),
           concurrency: concurrency === null ? null : concurrency,
@@ -291,8 +345,74 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                 >
                   <option value="">(inherit)</option>
                   <option value="assemblyai">assemblyai</option>
+                  <option value="openai_whisper">openai_whisper</option>
                 </select>
                 {form.sttProvider === "" && <span className="muted effectiveHint">{fmtEffective(effective.sttProvider)}</span>}
+              </div>
+
+              <div className="formRow">
+                <span className="formLabel">
+                  openaiWhisperModel
+                  <Tooltip
+                    text="OpenAI Whisper model name (default whisper-1)."
+                    effective={form.openaiWhisperModel.trim().length === 0 ? `${fmtEffective(effective.openaiWhisperModel)} (${fmtSource(sources.openaiWhisperModel)})` : undefined}
+                  />
+                </span>
+                <input
+                  className="inputSm"
+                  value={form.openaiWhisperModel}
+                  onChange={(e) => setForm({ ...form, openaiWhisperModel: e.target.value })}
+                  placeholder="whisper-1"
+                />
+                {form.openaiWhisperModel.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.openaiWhisperModel)}</span>}
+              </div>
+
+              <div className="formRow">
+                <span className="formLabel">
+                  maxAudioMB
+                  <Tooltip
+                    text="Max audio size (MB) before splitting. Provider limits apply if lower."
+                    effective={
+                      form.maxAudioMB.trim().length === 0
+                        ? providerLimitMb !== undefined
+                          ? `provider limit ${providerLimitMb} MB (effective ${effectiveMaxAudioMb ?? "unset"} MB)`
+                          : `${fmtEffective(effective.maxAudioMB)} (${fmtSource(sources.maxAudioMB)})`
+                        : undefined
+                    }
+                  />
+                </span>
+                <input
+                  className="inputSm"
+                  inputMode="numeric"
+                  value={form.maxAudioMB}
+                  onChange={(e) => setForm({ ...form, maxAudioMB: e.target.value })}
+                  placeholder="inherit"
+                />
+                {form.maxAudioMB.trim().length === 0 && (
+                  <span className="muted effectiveHint">
+                    {effectiveMaxAudioMb !== undefined
+                      ? `effective ${effectiveMaxAudioMb} MB`
+                      : fmtEffective(effective.maxAudioMB)}
+                  </span>
+                )}
+              </div>
+
+              <div className="formRow">
+                <span className="formLabel">
+                  splitOverlapSeconds
+                  <Tooltip
+                    text="Overlap seconds between chunks when splitting."
+                    effective={form.splitOverlapSeconds.trim().length === 0 ? `${fmtEffective(effective.splitOverlapSeconds)} (${fmtSource(sources.splitOverlapSeconds)})` : undefined}
+                  />
+                </span>
+                <input
+                  className="inputSm"
+                  inputMode="numeric"
+                  value={form.splitOverlapSeconds}
+                  onChange={(e) => setForm({ ...form, splitOverlapSeconds: e.target.value })}
+                  placeholder="inherit"
+                />
+                {form.splitOverlapSeconds.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.splitOverlapSeconds)}</span>}
               </div>
 
               <div className="formRow">

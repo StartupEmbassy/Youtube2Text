@@ -1,5 +1,5 @@
 import type { AppConfig } from "../config/schema.js";
-import { configSchema } from "../config/schema.js";
+import { configSchemaBase } from "../config/schema.js";
 
 export function sanitizeConfigOverrides(
   overrides: Partial<AppConfig> | undefined
@@ -7,7 +7,8 @@ export function sanitizeConfigOverrides(
   if (!overrides) return {};
   const copy: Record<string, unknown> = { ...overrides };
   delete copy.assemblyAiApiKey;
-  const parsed = configSchema.partial().safeParse(copy);
+  delete copy.openaiApiKey;
+  const parsed = configSchemaBase.partial().safeParse(copy);
   return parsed.success ? parsed.data : {};
 }
 

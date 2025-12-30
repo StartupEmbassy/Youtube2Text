@@ -40,6 +40,7 @@ import {
   normalizeConfigOverrides,
 } from "./validation.js";
 import { normalizeAssemblyAiLanguageCode } from "../youtube/language.js";
+import { listProviderCapabilities } from "../transcription/index.js";
 
 type ServerOptions = {
   port: number;
@@ -432,6 +433,11 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         res.statusCode = 200;
         res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
         res.end(`${lines.join("\n")}\n`);
+        return;
+      }
+
+      if (req.method === "GET" && seg.length === 1 && seg[0] === "providers") {
+        json(res, 200, { providers: listProviderCapabilities() });
         return;
       }
 

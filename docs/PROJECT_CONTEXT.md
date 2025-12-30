@@ -7,7 +7,7 @@ Build a modular local-first pipeline to turn YouTube channel audio into speaker-
 1. Provide a CLI that accepts a public YouTube channel, playlist, or video URL with optional filters (date, max videos).
 2. Enumerate videos reliably without requiring YouTube API keys.
 3. Download audio-only tracks per video using `yt-dlp`.
-4. Transcribe audio via AssemblyAI with speaker diarization enabled.
+4. Transcribe audio via AssemblyAI (diarization) or OpenAI Whisper API.
 5. Persist results as `.json` (canonical) plus clean, speaker-labeled `.txt` and `.md` (timestamps + wrapping), plus `.jsonl` (one utterance per line), with optional `.csv` export.
 6. Ensure idempotency and robust fault handling (skip already processed videos, retry transient failures).
 
@@ -23,7 +23,7 @@ The system is designed as a set of reusable stages coordinated by a CLI orchestr
 Stages:
 - **InputResolver**: resolves a channel/playlist URL to a list of video IDs and metadata.
 - **AudioExtractor**: downloads and caches audio locally (mp3/wav).
-- **TranscriptionProvider**: interface for ASR backends; initial implementation uses AssemblyAI.
+- **TranscriptionProvider**: interface for ASR backends; AssemblyAI + OpenAI Whisper implementations.
 - **Formatter**: converts diarized transcript JSON to readable `.txt` and optional `.csv`.
 - **Storage**: persists outputs under a stable on-disk layout and performs idempotency checks.
 - **Orchestrator (CLI)**: applies filters, concurrency limits, retries/backoff, and logging.
@@ -39,7 +39,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 |-----------|---------|-------|-------|
 | InputResolver | Channel/playlist -> video list | TBD | Uses `yt-dlp --flat-playlist`. |
 | AudioExtractor | Video -> local audio file | TBD | Wraps `yt-dlp` for audio-only download. |
-| TranscriptionProvider | Audio -> diarized transcript | TBD | AssemblyAI v1 implementation first. |
+| TranscriptionProvider | Audio -> transcript | TBD | AssemblyAI (diarized) + OpenAI Whisper API. |
 | Formatter | Transcript -> txt/csv | TBD | Speaker-labeled output. |
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
@@ -50,7 +50,7 @@ MVP CLI is functional. The core is being hardened so it can be embedded as a ser
 Completed:
 - CLI supports channel/playlist/single-video URLs
 - Audio download via `yt-dlp`, cached locally
-- AssemblyAI diarized transcription
+- AssemblyAI diarized transcription + OpenAI Whisper API
 - Outputs: `.json`, readable `.txt` and `.md`, `.jsonl`, optional `.csv`
 - Optional comments dump via `yt-dlp` into `.comments.json` (non-fatal)
 - Per-video `.meta.json` and per-channel `_channel.json` sidecars for browsing/indexing
@@ -97,4 +97,5 @@ Future input (not implemented yet):
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/
+- OpenAI Whisper API: https://platform.openai.com/docs/guides/speech-to-text
 - yt-dlp Docs: https://github.com/yt-dlp/yt-dlp

@@ -3,7 +3,7 @@
 Local-first, modular CLI service that:
 1. Enumerates videos from a public YouTube channel, playlist, or a single video URL.
 2. Downloads audio-only tracks using `yt-dlp`.
-3. Transcribes audio with AssemblyAI using speaker diarization.
+3. Transcribes audio with AssemblyAI (diarization) or OpenAI Whisper API.
 4. Stores structured results on disk for later analysis or UI browsing.
 
 The goal is to keep each stage separable and replaceable (e.g., swapping AssemblyAI for another ASR provider, adding semantic post-processing, or attaching a web dashboard).
@@ -18,12 +18,13 @@ Quick links:
 
 - Channel/playlist enumeration via `yt-dlp --flat-playlist` (no YouTube API key required).
 - Audio-only download in `mp3` or `wav`.
-- AssemblyAI upload + diarized transcription (`speaker_labels: true`).
+- AssemblyAI upload + diarized transcription (`speaker_labels: true`) or OpenAI Whisper API (no diarization).
 - Idempotent processing: skips videos already processed unless forced.
 - Output formats: `.json` (canonical), readable `.txt` + `.md` (timestamps + wrapping), `.jsonl` (LLM-friendly, one utterance per line), optional `.csv`.
 - Optional per-video comments dump via `yt-dlp` into `.comments.json`.
 - Optional per-video metadata sidecar `.meta.json` for browsing/indexing.
 - Fault handling with retries/backoff and per-video error logs.
+- Automatic audio splitting when provider size limits are exceeded (overlap trimmed).
 - Library UX: channel avatars are best-effort from yt-dlp metadata (stored in `output/<channelDir>/_channel.json`). If a channel folder was created before avatars existed (or before v0.9.2), rerun that channel (or any video from it) once to populate the thumbnail URL.
 
 ## Architecture (High Level)
@@ -32,7 +33,7 @@ Pipeline stages with explicit module boundaries:
 
 - **InputResolver**: resolves a channel/playlist URL to a list of video IDs and metadata.
 - **AudioExtractor**: downloads and caches audio tracks locally.
-- **TranscriptionProvider**: interface for ASR backends. First implementation: AssemblyAI.
+- **TranscriptionProvider**: interface for ASR backends (AssemblyAI + OpenAI Whisper).
 - **Formatter**: converts diarized transcript JSON into `.txt`, `.md`, `.jsonl` and optional `.csv` formats.
 - **Storage**: writes outputs and handles idempotency checks.
 - **Orchestrator (CLI)**: coordinates stages with concurrency, filtering, retries, and logging.
@@ -43,7 +44,8 @@ Later extensions read from `output/` only (e.g., React dashboard), keeping the p
 
 - Node.js 18+
 - `yt-dlp` installed and available on PATH (system dependency)
-- AssemblyAI API key
+- AssemblyAI API key (required when `sttProvider=assemblyai`)
+- OpenAI API key (required when `sttProvider=openai_whisper`)
 - Windows/macOS/Linux
 
 ### Production Note
@@ -70,6 +72,11 @@ You can also pass an explicit path via CLI or `runs.yaml`:
 npm run dev -- --ytDlpPath "C:\Users\cdela\AppData\Local\Microsoft\WinGet\Links\yt-dlp.exe"
 ```
 
+### OpenAI Whisper API
+
+If you set `sttProvider=openai_whisper`, provide `OPENAI_API_KEY` (or `Y2T_OPENAI_API_KEY`).
+Whisper API does not provide speaker diarization.
+
 ### yt-dlp extractor warnings (public videos)
 
 If you see warnings about a missing JavaScript runtime (EJS), upgrade `yt-dlp` and install a supported JS runtime as documented by yt-dlp (this project does not expose arbitrary yt-dlp flags via Settings/UI/API for security reasons).
@@ -90,9 +97,14 @@ Example environment variables:
 
 ```
 ASSEMBLYAI_API_KEY=your_key_here
+OPENAI_API_KEY=your_openai_key_here
+Y2T_OPENAI_API_KEY=
 Y2T_OUTPUT_DIR=output
 Y2T_AUDIO_DIR=audio
 Y2T_STT_PROVIDER=assemblyai
+Y2T_OPENAI_WHISPER_MODEL=whisper-1
+Y2T_MAX_AUDIO_MB=
+Y2T_SPLIT_OVERLAP_SECONDS=2
 Y2T_FILENAME_STYLE=title_id   # id | id_title | title_id
 Y2T_AUDIO_FORMAT=mp3
 Y2T_LANGUAGE_CODE=en_us
@@ -111,8 +123,12 @@ Y2T_CATALOG_MAX_AGE_HOURS=168
 Notes:
 - Boolean env vars like `Y2T_CSV_ENABLED` / `Y2T_COMMENTS_ENABLED` only override config when set; accepted truthy values: `true`, `1`, `yes`.
 - For consistency, prefer `Y2T_*` env vars. Legacy unprefixed names (e.g. `OUTPUT_DIR`, `CONCURRENCY`, `COMMENTS_ENABLED`, `YT_DLP_PATH`) are still supported.
-- `Y2T_STT_PROVIDER` selects the speech-to-text backend (currently only `assemblyai` is implemented).
-- API/settings inputs are normalized server-side: numeric fields are clamped to safe bounds, `afterDate` must be YYYY-MM-DD, and manual `languageCode` must be a supported AssemblyAI code (invalid inputs return 400).
+- `Y2T_STT_PROVIDER` selects the speech-to-text backend (`assemblyai` or `openai_whisper`).
+- `Y2T_OPENAI_WHISPER_MODEL` sets the OpenAI Whisper model (default `whisper-1`).
+- `OPENAI_API_KEY` / `Y2T_OPENAI_API_KEY` provide OpenAI credentials.
+- `Y2T_MAX_AUDIO_MB` sets a per-file audio size cap before splitting (provider limit applies if lower).
+- `Y2T_SPLIT_OVERLAP_SECONDS` sets overlap between chunks (default 2s).
+- API/settings inputs are normalized server-side: numeric fields are clamped to safe bounds, `afterDate` must be YYYY-MM-DD, and manual `languageCode` must be a supported AssemblyAI code (OpenAI Whisper accepts primary codes).
 
 Example files:
 
@@ -136,13 +152,16 @@ Options:
 | `--outDir` | path | `output` | Output root directory. |
 | `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
 | `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
-| `--sttProvider` | `assemblyai` | `assemblyai` | Speech-to-text provider. |
-| `--language` | string | `en_us` | Passed to AssemblyAI. |
-| `--languageDetection` | `auto|manual` | `auto` | Detect language per video via yt-dlp metadata/captions; if undetected, fall back to AssemblyAI automatic language detection. |
+| `--sttProvider` | `assemblyai|openai_whisper` | `assemblyai` | Speech-to-text provider. |
+| `--openaiWhisperModel` | string | `whisper-1` | OpenAI Whisper model (only for `sttProvider=openai_whisper`). |
+| `--maxAudioMB` | number | unset | Max audio size before splitting (provider limit applies if lower). |
+| `--splitOverlapSeconds` | number | `2` | Overlap seconds between chunks when splitting. |
+| `--language` | string | `en_us` | Language code used when manual. |
+| `--languageDetection` | `auto|manual` | `auto` | Detect language per video via yt-dlp metadata/captions; if undetected, fall back to provider automatic language detection. |
 | `--concurrency` | number | `2` | Parallel videos processed. |
 | `--force` | boolean | false | Reprocess even if outputs exist. |
 | `--csv` | boolean | false | Emit `.csv` alongside `.json`/`.txt`. |
-| `--assemblyAiCreditsCheck` | `warn|abort|none` | `warn` | Preflight AssemblyAI credits check mode. |
+| `--assemblyAiCreditsCheck` | `warn|abort|none` | `warn` | Preflight AssemblyAI credits check mode (only for `sttProvider=assemblyai`). |
 | `--assemblyAiMinBalanceMinutes` | number | `60` | Warn/abort if remaining credits below N minutes. |
 | `--comments` | boolean | false | Fetch comments via yt-dlp and save `.comments.json`. |
 | `--commentsMax` | number | unset | Limit comments per video when fetching. |
@@ -276,9 +295,11 @@ Webhooks (optional):
   - `X-Y2T-Signature` (`sha256=<hex>`), where HMAC-SHA256 is computed over `${timestamp}.${body}`
 
 STT provider selection:
-- `Y2T_STT_PROVIDER` selects the speech-to-text provider.
-- Current implementation supports `assemblyai` only (default).
+- `Y2T_STT_PROVIDER` selects the speech-to-text provider (`assemblyai` or `openai_whisper`).
+- OpenAI Whisper uses `OPENAI_API_KEY`/`Y2T_OPENAI_API_KEY` and `Y2T_OPENAI_WHISPER_MODEL` (default `whisper-1`).
 - `Y2T_ASSEMBLYAI_CREDITS_CHECK` only applies when `sttProvider=assemblyai`.
+- `Y2T_MAX_AUDIO_MB` sets a per-file audio size cap before splitting (provider limit applies if lower).
+- `Y2T_SPLIT_OVERLAP_SECONDS` sets overlap between chunks (default 2s).
 
 Run limiting:
 - `maxNewVideos` has the same semantics as the CLI: the limit is applied after skipping already-processed videos (incremental backfills). With `force=true`, it becomes "reprocess up to N videos".
@@ -286,6 +307,7 @@ Run limiting:
 Endpoints:
 - `GET /health`
 - `GET /health?deep=true` (best-effort deps + disk + persistence checks)
+- `GET /providers` (provider capabilities: max upload size, diarization support)
 - `GET /metrics` (Prometheus text format)
 - `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)
 - `GET /settings`, `PATCH /settings` (persist non-secret defaults to `output/_settings.json`)
@@ -468,6 +490,9 @@ output/<channel_id>/_errors.jsonl
 - A video is considered processed if the expected JSON file exists under the current `filenameStyle`.
 - Reprocessing requires `--force`.
 - Download and transcription retries are handled independently with exponential backoff.
+
+Audio splitting:
+- If the audio exceeds the effective limit (provider limit, optionally lowered by `Y2T_MAX_AUDIO_MB`), the pipeline splits the audio, transcribes chunks, and merges timestamps while trimming the overlap.
 
 Polling and retry configuration (optional):
 - `Y2T_POLL_INTERVAL_MS` (default `5000`) - Polling interval for AssemblyAI transcription status.

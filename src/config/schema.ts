@@ -1,8 +1,12 @@
 import { z } from "zod";
 
-export const configSchema = z.object({
-  sttProvider: z.enum(["assemblyai"]).default("assemblyai"),
-  assemblyAiApiKey: z.string().min(1),
+const configObjectSchema = z.object({
+  sttProvider: z.enum(["assemblyai", "openai_whisper"]).default("assemblyai"),
+  assemblyAiApiKey: z.string().min(1).optional(),
+  openaiApiKey: z.string().min(1).optional(),
+  openaiWhisperModel: z.string().min(1).default("whisper-1"),
+  maxAudioMB: z.number().int().positive().optional(),
+  splitOverlapSeconds: z.number().int().nonnegative().default(2),
   outputDir: z.string().default("output"),
   audioDir: z.string().default("audio"),
   filenameStyle: z.enum(["id", "id_title", "title_id"]).default("title_id"),
@@ -28,5 +32,24 @@ export const configSchema = z.object({
   catalogMaxAgeHours: z.number().int().default(168),
   ytDlpPath: z.string().optional(),
 });
+
+export const configSchema = configObjectSchema.superRefine((cfg, ctx) => {
+  if (cfg.sttProvider === "assemblyai" && !cfg.assemblyAiApiKey) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "assemblyAiApiKey is required when sttProvider=assemblyai",
+      path: ["assemblyAiApiKey"],
+    });
+  }
+  if (cfg.sttProvider === "openai_whisper" && !cfg.openaiApiKey) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "openaiApiKey is required when sttProvider=openai_whisper",
+      path: ["openaiApiKey"],
+    });
+  }
+});
+
+export const configSchemaBase = configObjectSchema;
 
 export type AppConfig = z.infer<typeof configSchema>;

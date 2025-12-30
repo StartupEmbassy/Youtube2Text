@@ -33,7 +33,11 @@ function loadEnvConfig(): PartialConfig {
   };
   return {
     assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
+    openaiApiKey: getEnv("Y2T_OPENAI_API_KEY", "OPENAI_API_KEY"),
     sttProvider: getEnv("Y2T_STT_PROVIDER", "STT_PROVIDER"),
+    openaiWhisperModel: getEnv("Y2T_OPENAI_WHISPER_MODEL", "OPENAI_WHISPER_MODEL"),
+    maxAudioMB: parseOptionalNumber(getEnv("Y2T_MAX_AUDIO_MB", "MAX_AUDIO_MB")),
+    splitOverlapSeconds: parseOptionalNumber(getEnv("Y2T_SPLIT_OVERLAP_SECONDS", "SPLIT_OVERLAP_SECONDS")),
     outputDir: getEnv("Y2T_OUTPUT_DIR", "OUTPUT_DIR"),
     audioDir: getEnv("Y2T_AUDIO_DIR", "AUDIO_DIR"),
     filenameStyle: getEnv("Y2T_FILENAME_STYLE", "FILENAME_STYLE"),

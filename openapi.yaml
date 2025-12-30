@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.26.0
+  version: 0.28.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -28,6 +28,24 @@ paths:
             text/plain:
               schema:
                 type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /providers:
+    get:
+      operationId: listProviders
+      summary: List transcription provider capabilities
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvidersListResponse"
         "401":
           description: Unauthorized
           content:
@@ -774,6 +792,27 @@ components:
                 keptFiles: { type: integer }
                 errors: { type: integer }
 
+    ProviderCapability:
+      type: object
+      required: [id, maxAudioBytes, supportsDiarization]
+      properties:
+        id:
+          type: string
+          enum: [assemblyai, openai_whisper]
+        maxAudioBytes:
+          type: integer
+        supportsDiarization:
+          type: boolean
+
+    ProvidersListResponse:
+      type: object
+      required: [providers]
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderCapability"
+
     NonSecretSettings:
       type: object
       description: |
@@ -787,7 +826,13 @@ components:
           enum: [mp3, wav]
         sttProvider:
           type: string
-          enum: [assemblyai]
+          enum: [assemblyai, openai_whisper]
+        openaiWhisperModel:
+          type: string
+        maxAudioMB:
+          type: integer
+        splitOverlapSeconds:
+          type: integer
         languageDetection:
           type: string
           enum: [auto, manual]
@@ -823,6 +868,9 @@ components:
             filenameStyle: { $ref: "#/components/schemas/NonSecretSettingSource" }
             audioFormat: { $ref: "#/components/schemas/NonSecretSettingSource" }
             sttProvider: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            openaiWhisperModel: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            maxAudioMB: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            splitOverlapSeconds: { $ref: "#/components/schemas/NonSecretSettingSource" }
             languageDetection: { $ref: "#/components/schemas/NonSecretSettingSource" }
             languageCode: { $ref: "#/components/schemas/NonSecretSettingSource" }
             concurrency: { $ref: "#/components/schemas/NonSecretSettingSource" }
@@ -853,7 +901,10 @@ components:
           properties:
             filenameStyle: { type: [string, "null"], enum: [id, id_title, title_id, null] }
             audioFormat: { type: [string, "null"], enum: [mp3, wav, null] }
-            sttProvider: { type: [string, "null"], enum: [assemblyai, null] }
+            sttProvider: { type: [string, "null"], enum: [assemblyai, openai_whisper, null] }
+            openaiWhisperModel: { type: [string, "null"] }
+            maxAudioMB: { type: [integer, "null"] }
+            splitOverlapSeconds: { type: [integer, "null"] }
             languageDetection: { type: [string, "null"], enum: [auto, manual, null] }
             languageCode: { type: [string, "null"] }
             concurrency: { type: [integer, "null"] }

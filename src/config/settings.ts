@@ -16,6 +16,9 @@ export type NonSecretSettings = Pick<
   | "filenameStyle"
   | "audioFormat"
   | "sttProvider"
+  | "openaiWhisperModel"
+  | "maxAudioMB"
+  | "splitOverlapSeconds"
   | "languageDetection"
   | "languageCode"
   | "concurrency"
@@ -90,6 +93,9 @@ export function sanitizeNonSecretSettings(input: unknown): Partial<NonSecretSett
   allow("filenameStyle", obj.filenameStyle);
   allow("audioFormat", obj.audioFormat);
   allow("sttProvider", obj.sttProvider);
+  allow("openaiWhisperModel", obj.openaiWhisperModel);
+  allow("maxAudioMB", obj.maxAudioMB);
+  allow("splitOverlapSeconds", obj.splitOverlapSeconds);
   allow("languageDetection", obj.languageDetection);
   allow("languageCode", obj.languageCode);
   allow("concurrency", obj.concurrency);
@@ -121,6 +127,9 @@ export function pickNonSecretSettings(config: AppConfig): NonSecretSettings {
     filenameStyle: config.filenameStyle,
     audioFormat: config.audioFormat,
     sttProvider: config.sttProvider,
+    openaiWhisperModel: config.openaiWhisperModel,
+    maxAudioMB: config.maxAudioMB,
+    splitOverlapSeconds: config.splitOverlapSeconds,
     languageDetection: config.languageDetection,
     languageCode: config.languageCode,
     concurrency: config.concurrency,

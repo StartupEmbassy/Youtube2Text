@@ -1,9 +1,10 @@
 import { appendLine } from "../utils/fs.js";
+import type { PipelineStage } from "../pipeline/events.js";
 
 export type ErrorRecord = {
   videoId: string;
   videoUrl: string;
-  stage: "enumerate" | "download" | "transcribe" | "comments" | "save" | "format";
+  stage: PipelineStage;
   message: string;
   timestamp: string;
 };

@@ -90,6 +90,9 @@ function computeNonSecretSettingSources(
     "filenameStyle",
     "audioFormat",
     "sttProvider",
+    "openaiWhisperModel",
+    "maxAudioMB",
+    "splitOverlapSeconds",
     "languageDetection",
     "languageCode",
     "concurrency",
@@ -118,6 +121,12 @@ function envVarsForSetting(key: keyof NonSecretSettings): string[] {
       return ["Y2T_AUDIO_FORMAT", "AUDIO_FORMAT"];
     case "sttProvider":
       return ["Y2T_STT_PROVIDER", "STT_PROVIDER"];
+    case "openaiWhisperModel":
+      return ["Y2T_OPENAI_WHISPER_MODEL", "OPENAI_WHISPER_MODEL"];
+    case "maxAudioMB":
+      return ["Y2T_MAX_AUDIO_MB", "MAX_AUDIO_MB"];
+    case "splitOverlapSeconds":
+      return ["Y2T_SPLIT_OVERLAP_SECONDS", "SPLIT_OVERLAP_SECONDS"];
     case "languageDetection":
       return ["Y2T_LANGUAGE_DETECTION", "LANGUAGE_DETECTION"];
     case "languageCode":

@@ -12,12 +12,14 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 ## Prerequisites
 
 - Docker + Docker Compose on the server
-- An AssemblyAI API key
+- An AssemblyAI API key (when `sttProvider=assemblyai`)
+- An OpenAI API key (when `sttProvider=openai_whisper`)
 - A domain name + TLS termination (recommended)
 
 ## Required environment
 
-- `ASSEMBLYAI_API_KEY` (required for transcription)
+- `ASSEMBLYAI_API_KEY` (required when `sttProvider=assemblyai`)
+- `OPENAI_API_KEY` or `Y2T_OPENAI_API_KEY` (required when `sttProvider=openai_whisper`)
 
 ## Strongly recommended (servers)
 
@@ -46,6 +48,8 @@ If you expose the API port publicly in that state, anyone can call it.
 - `Y2T_API_PERSIST_DIR` (default: `output/_runs/`)
 - `Y2T_RETENTION_RUNS_DAYS` (default: 30; `-1` disables)
 - `Y2T_RETENTION_AUDIO_DAYS` (default: 7; `-1` disables)
+- `Y2T_MAX_AUDIO_MB` (cap audio size before splitting; provider limit applies if lower)
+- `Y2T_SPLIT_OVERLAP_SECONDS` (overlap seconds between split chunks; default 2)
 
 Retention never deletes transcripts under `output/<channelDir>/*`.
 It only deletes operational run persistence (`output/_runs/*`) and old audio cache files (`audio/*`).

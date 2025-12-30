@@ -4,6 +4,9 @@
 outputDir: output
 audioDir: audio
 sttProvider: assemblyai
+openaiWhisperModel: whisper-1   # only used when sttProvider=openai_whisper
+maxAudioMB:
+splitOverlapSeconds: 2
 filenameStyle: title_id   # id | id_title | title_id
 audioFormat: mp3
 languageDetection: auto   # auto | manual
