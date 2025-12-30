@@ -43,11 +43,11 @@ async function findFreePort() {
   });
 }
 
-async function fetchWithTimeout(url, timeoutMs) {
+async function fetchWithTimeout(url, timeoutMs, init) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { signal: controller.signal });
+    return await fetch(url, { signal: controller.signal, ...init });
   } finally {
     clearTimeout(timer);
   }
@@ -118,6 +118,7 @@ const imageTag = process.env.Y2T_DOCKER_IMAGE_TAG || "youtube2text-api:smoke";
 const containerName = process.env.Y2T_DOCKER_CONTAINER_NAME || "y2t-api-smoke";
 const hostPort = Number.parseInt(process.env.Y2T_DOCKER_PORT || "", 10) || (await findFreePort());
 const baseUrl = `http://127.0.0.1:${hostPort}`;
+const apiKey = process.env.Y2T_API_KEY || "smoke";
 
 let started = false;
 
@@ -141,6 +142,8 @@ try {
     `${hostPort}:8787`,
     "-e",
     "ASSEMBLYAI_API_KEY=smoke",
+    "-e",
+    `Y2T_API_KEY=${apiKey}`,
     imageTag,
   ]);
   started = true;
@@ -149,14 +152,18 @@ try {
   await waitForHealthy(baseUrl, 20_000);
 
   console.log(`\n[smoke] Checking /runs ...`);
-  const runsRes = await fetchWithTimeout(`${baseUrl}/runs`, 1500);
+  const runsRes = await fetchWithTimeout(`${baseUrl}/runs`, 1500, {
+    headers: { "X-API-Key": apiKey },
+  });
   if (!runsRes.ok) throw new Error(`/runs returned ${runsRes.status}`);
   const runsBody = await runsRes.json();
   const runs = Array.isArray(runsBody) ? runsBody : runsBody?.runs;
   if (!Array.isArray(runs)) throw new Error(`/runs did not return an array (or {runs: []})`);
 
   console.log(`\n[smoke] Checking /settings ...`);
-  const settingsRes = await fetchWithTimeout(`${baseUrl}/settings`, 1500);
+  const settingsRes = await fetchWithTimeout(`${baseUrl}/settings`, 1500, {
+    headers: { "X-API-Key": apiKey },
+  });
   if (!settingsRes.ok) throw new Error(`/settings returned ${settingsRes.status}`);
   const settingsBody = await settingsRes.json();
   if (!settingsBody || typeof settingsBody !== "object") throw new Error(`/settings returned invalid JSON`);

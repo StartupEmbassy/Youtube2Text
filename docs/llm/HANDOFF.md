@@ -191,6 +191,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - `npm --prefix web run build`
 - `npm run api:contract:check`
 - `npm run test:docker-smoke` (may take >5 min locally; timed out twice during image build)
+  - Smoke test injects `Y2T_API_KEY=smoke` and uses `X-API-Key` for protected endpoints.
 
 ## Operator Notes
 - `.env` must include `ASSEMBLYAI_API_KEY` when `sttProvider=assemblyai`.

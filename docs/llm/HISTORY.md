@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-30 - GPT-5.2 - Fix docker smoke test to include API key and auth headers for protected endpoints - Files: [scripts/dockerSmokeTest.mjs, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-30 - GPT-5.2 - Fix error record stage typing to include split stage and refresh HANDOFF test/build status - Files: [src/storage/errors.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-29 - GPT-5.2 - Add provider capabilities + audio splitting (overlap trimmed), expose maxAudioMB/splitOverlapSeconds, and bump version to 0.28.0 - Files: [src/config/schema.ts, src/config/loader.ts, src/config/runs.ts, src/config/settings.ts, src/api/schemas.ts, src/api/validation.ts, src/api/settings.ts, src/api/server.ts, src/api/sanitize.ts, src/transcription/openai/index.ts, src/transcription/capabilities.ts, src/transcription/merge.ts, src/transcription/factory.ts, src/transcription/index.ts, src/pipeline/run.ts, src/pipeline/events.ts, src/utils/audio.ts, src/utils/deps.ts, src/cli/index.ts, web/app/api/providers/route.ts, web/app/settings/SettingsForm.tsx, web/lib/apiTypes.gen.ts, tests/sttProvider.test.ts, tests/mergeChunks.test.ts, tests/apiProviders.test.ts, tests/all.test.ts, .env.example, config.yaml.example, runs.yaml.example, README.md, openapi.yaml, docs/STRUCTURE.md, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json] - Version impact: yes (0.27.0 -> 0.28.0)
