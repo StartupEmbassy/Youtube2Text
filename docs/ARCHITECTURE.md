@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.2.3
-> Last Updated: 2025-12-29
+> Version: 1.2.4
+> Last Updated: 2025-12-30
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
@@ -233,6 +233,12 @@ Phase 2.8 - Security hardening for hosted use (DONE):
    - Unit tests for auth-required mode, clamp behavior, and rate limiting.
    - Update README + OpenAPI error responses for 401/429 where relevant.
 
+Phase 2.9 - STT provider capability refactor (DONE in v0.28.1):
+1) Move provider capabilities onto `TranscriptionProvider.getCapabilities()`.
+2) Remove static capabilities registry; list providers from provider modules.
+3) Pipeline reads max upload size from the active provider instance.
+4) `/providers` endpoint returns provider-sourced capabilities.
+
 ### Phase 3+ - Cloud multi-tenant platform (optional)
 
 Add:
@@ -248,3 +254,4 @@ Future input mode (not implemented yet):
 ## Tech Debt Backlog (post-Phase 2.8)
 - Phase 2.8 backlog items completed in v0.23.x.
 - Remaining security backlog: see `docs/llm/HANDOFF.md` (Security Audit Phase 2 MEDIUM).
+- Provider capabilities now live on the provider interface (DONE v0.28.1).

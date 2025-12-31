@@ -10,10 +10,7 @@ import {
   fetchChannelMetadata,
 } from "../youtube/index.js";
 import { getListingWithCatalogCache } from "../youtube/catalogCache.js";
-import {
-  createTranscriptionProvider,
-  getProviderCapabilities,
-} from "../transcription/index.js";
+import { createTranscriptionProvider } from "../transcription/index.js";
 import { formatTxt, formatCsv, formatMd, formatJsonl } from "../formatters/index.js";
 import {
   getOutputPaths,
@@ -289,8 +286,8 @@ export async function runPipeline(
 
   const provider = createTranscriptionProvider(config);
   const limit = pLimit(config.concurrency);
-  const providerCaps = getProviderCapabilities(config.sttProvider);
-  const providerMaxBytes = providerCaps?.maxAudioBytes;
+  const providerCaps = provider.getCapabilities();
+  const providerMaxBytes = providerCaps.maxAudioBytes;
   const userMaxBytes =
     typeof config.maxAudioMB === "number" ? config.maxAudioMB * 1024 * 1024 : undefined;
   const effectiveMaxBytes =

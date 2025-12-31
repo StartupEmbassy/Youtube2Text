@@ -1,7 +1,18 @@
 import { promises as fs } from "node:fs";
 import { basename } from "node:path";
-import { TranscriptionProvider } from "../provider.js";
+import { TranscriptionProvider, type ProviderCapabilities } from "../provider.js";
 import { TranscriptJson, TranscriptionOptions } from "../types.js";
+
+const DEFAULT_MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+
+export function getOpenAiWhisperCapabilities(
+  maxAudioBytesOverride?: number
+): ProviderCapabilities {
+  return {
+    maxAudioBytes: maxAudioBytesOverride ?? DEFAULT_MAX_AUDIO_BYTES,
+    supportsDiarization: false,
+  };
+}
 
 type OpenAiSegment = {
   start?: number;
@@ -34,11 +45,19 @@ function segmentsToUtterances(segments: OpenAiSegment[] | undefined) {
 
 export class OpenAiWhisperProvider implements TranscriptionProvider {
   name = "openai_whisper";
+  private maxAudioBytesOverride?: number;
 
   constructor(
     private apiKey: string,
-    private model: string
-  ) {}
+    private model: string,
+    maxAudioBytesOverride?: number
+  ) {
+    this.maxAudioBytesOverride = maxAudioBytesOverride;
+  }
+
+  getCapabilities(): ProviderCapabilities {
+    return getOpenAiWhisperCapabilities(this.maxAudioBytesOverride);
+  }
 
   async transcribe(audioPath: string, opts: TranscriptionOptions): Promise<TranscriptJson> {
     const buffer = await fs.readFile(audioPath);

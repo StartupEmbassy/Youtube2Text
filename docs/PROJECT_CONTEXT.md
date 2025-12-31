@@ -44,7 +44,7 @@ This separation keeps the pipeline local-first and makes later extensions straig
 | Storage | Persist outputs + idempotency | TBD | Layout: `output/<channel_title_slug>__<channel_id>/<basename>.*`. |
 | Orchestrator (CLI) | Pipeline coordination | TBD | Concurrency, retries, filters. |
 
-## Current Status (2025-12-29)
+## Current Status (2025-12-30)
 MVP CLI is functional. The core is being hardened so it can be embedded as a service later without breaking CLI usage.
 
 Completed:
@@ -74,6 +74,7 @@ Done recently:
 - Phase 2.6: run configuration UX (maxNewVideos + plan preview) to support incremental backfills.
 - Phase 2.7: exact planning performance - channel catalog cache + processed index (output-backed) to speed `POST /runs/plan` for large channels.
 - Phase 2.7: Settings UI + non-secret defaults persisted to `output/_settings.json` (API `GET/PATCH /settings`).
+- Phase 2.9: STT provider capability refactor (provider-owned caps + `/providers` lists provider-sourced limits).
 
 ## Roadmap / Milestones (Do in order)
 1. Phase 0: yt-dlp reliability hardening (public videos only) - DONE
@@ -90,6 +91,7 @@ Done recently:
    - Phase 2.3 Scheduler/watchlist (cron): followed channels list + global/per-channel interval, uses `POST /runs/plan` to decide
    - Phase 2.4 Control: cancel run (DONE), rate limiting (DONE), optional worker/queue
    - Phase 2.5: watchlist web UI + Prometheus metrics endpoint (DONE)
+   - Phase 2.9: STT provider capability refactor (DONE)
 7. Phase 3+: optional multi-tenant cloud platform
 
 Future input (not implemented yet):

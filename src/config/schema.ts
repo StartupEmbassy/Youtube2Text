@@ -52,4 +52,5 @@ export const configSchema = configObjectSchema.superRefine((cfg, ctx) => {
 
 export const configSchemaBase = configObjectSchema;
 
+export type SttProviderId = z.infer<typeof configObjectSchema.shape.sttProvider>;
 export type AppConfig = z.infer<typeof configSchema>;

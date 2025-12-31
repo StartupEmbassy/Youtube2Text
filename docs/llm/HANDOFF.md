@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.28.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.28.1 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -21,7 +21,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (GPT v0.28.0)
+## Review Notes (GPT v0.28.1)
 - Docs/code alignment: 100% (Claude audit 2025-12-29).
 - Tests: `npm test` 101/101 pass.
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`).
@@ -30,6 +30,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - New: OpenAI Whisper provider (`openai_whisper`) alongside AssemblyAI (config + settings + CLI).
 - New: Audio size policy + auto-splitting (provider caps + `maxAudioMB`, `splitOverlapSeconds`).
 - New: `GET /providers` endpoint for provider capabilities (max upload size, diarization).
+- New: Provider capabilities now live on `TranscriptionProvider.getCapabilities()` (no static registry).
 
 ## Code Review (Claude 2025-12-27)
 
@@ -63,6 +64,10 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Ops hardening (DONE)
 - Add run timeout safety net for long-running runs.
 - Add Docker healthcheck to `/health`.
+
+## Phase 2.9 (DONE): STT provider capability refactor
+- `TranscriptionProvider` exposes `getCapabilities()`; pipeline uses provider-owned caps.
+- `/providers` now lists capabilities sourced from provider modules.
 
 ## Tech Debt Backlog (do in order)
 1) Normalize null/undefined handling across API/settings inputs (DONE).
