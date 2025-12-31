@@ -45,9 +45,11 @@ Run:
 
 ## Scope Of The Current Spec
 
-Start by covering what exists today (Phase 1):
+Cover what exists today (current API):
 - Health:
   - `GET /health`
+- Providers:
+  - `GET /providers`
 - Events:
   - `GET /events` (SSE global run updates)
 - Runs:
@@ -58,11 +60,29 @@ Start by covering what exists today (Phase 1):
   - `GET /runs/:id/logs` (JSON tail of recent events)
   - `GET /runs/:id/artifacts`
   - `GET /runs/:id/events` (SSE) (document as `text/event-stream`)
+  - `POST /runs/plan`
 - Library:
   - `GET /library/channels`
   - `GET /library/channels/:channelDirName`
   - `GET /library/channels/:channelDirName/videos`
   - `GET /library/channels/:channelDirName/videos/:basename/:kind`
+- Settings:
+  - `GET /settings`
+  - `PATCH /settings`
+- Scheduler:
+  - `GET /scheduler/status`
+  - `POST /scheduler/start`
+  - `POST /scheduler/stop`
+  - `POST /scheduler/trigger`
+- Watchlist:
+  - `GET /watchlist`
+  - `POST /watchlist`
+  - `PATCH /watchlist/:id`
+  - `DELETE /watchlist/:id`
+- Maintenance:
+  - `POST /maintenance/cleanup`
+- Metrics:
+  - `GET /metrics`
 
 Future endpoints we likely want (admin-local):
  - `POST /runs/:id/retry`

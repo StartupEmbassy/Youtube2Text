@@ -1,6 +1,6 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.2.4
+> Version: 1.2.5
 > Last Updated: 2025-12-30
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
@@ -79,7 +79,7 @@ Core emits structured events via a `PipelineEventEmitter` port. Example event ty
 
 - `run:start`, `run:done`
 - `video:start`, `video:skip`, `video:error`, `video:done`
-- `video:stage` (download|upload|transcribe|format|comments|save)
+- `video:stage` (download|split|transcribe|format|comments|save)
 
 Runners decide how to consume events:
 - CLI default: human logs to stdout.

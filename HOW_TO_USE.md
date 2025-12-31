@@ -72,8 +72,9 @@ docker compose up --build
 
 ## Auth (important)
 
-- If `Y2T_API_KEY` is unset, the API is unauthenticated (local/dev friendly).
-- If `Y2T_API_KEY` is set, you must send `X-API-Key` to the API (except `GET /health`).
+- The API refuses to start unless `Y2T_API_KEY` is set.
+- For local development only, set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to run without auth.
+- When `Y2T_API_KEY` is set, clients must send `X-API-Key` to the API (except `GET /health`).
 
 The web UI does not expose the key to the browser; it proxies API calls via `/api/*`.
 
@@ -86,8 +87,8 @@ When the API process receives `SIGTERM`/`SIGINT` (Docker restart, deploy, Ctrl+C
 
 ## CORS (server deployments)
 
-- By default the API sends `Access-Control-Allow-Origin: *`.
-- To restrict browser access, set `Y2T_CORS_ORIGINS` to a comma-separated allowlist of origins (exact match), e.g.:
+- By default the API sends no CORS headers (browser access blocked).
+- To allow browser access, set `Y2T_CORS_ORIGINS` to a comma-separated allowlist of origins (exact match), e.g.:
   - `Y2T_CORS_ORIGINS=https://your-admin.example.com,http://localhost:3000`
 
 ## Retention / cleanup (server deployments)

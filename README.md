@@ -482,7 +482,7 @@ audio/<channel_title_slug>__<channel_id>/<title_slug>__<video_id>.<ext>  # defau
 Failures are recorded per channel in:
 
 ```
-output/<channel_id>/_errors.jsonl
+output/<channel_title_slug>__<channel_id>/_errors.jsonl
 ```
 
 ## Idempotency & Retries
