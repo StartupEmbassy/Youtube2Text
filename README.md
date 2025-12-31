@@ -200,7 +200,7 @@ Persistence (default enabled):
 - Disable with `Y2T_API_PERSIST_RUNS=false`.
 - Override directory with `Y2T_API_PERSIST_DIR=...`.
 
-Auth (optional, recommended for server/Docker):
+Auth (required for server/Docker):
 - `Y2T_API_KEY` is required to run the HTTP API server (clients must send `X-API-Key: ...`, except `GET /health`).
   - For local development only, you can set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to start the API server without auth.
 - Example:
@@ -248,7 +248,7 @@ Auth failure rate limiting (brute-force protection):
 
 SSE connection limit:
 - `Y2T_SSE_MAX_CLIENTS` (default 1000, set `0` to disable) caps concurrent SSE clients to avoid FD exhaustion.
-- `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (default `1000`) - Maximum events buffered per run for SSE replay.
+- `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (default `5000`) - Maximum events buffered per run for SSE replay.
 
 Request timeout:
 - `Y2T_REQUEST_TIMEOUT_MS` (default 30000, set `0` to disable) bounds non-SSE request lifetime.

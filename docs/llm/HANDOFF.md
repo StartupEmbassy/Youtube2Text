@@ -22,7 +22,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
 ## Review Notes (GPT v0.28.1)
-- Docs/code alignment: ~92% (Claude audit 2025-12-31; see "Documentation Audit" section below).
+- Docs/code alignment: improved; Claude v2 issues addressed (see "Documentation Audit v2" section below).
 - Tests: `npm test` 102/102 pass.
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`).
 - Docker: healthy.
@@ -69,75 +69,90 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - `TranscriptionProvider` exposes `getCapabilities()`; pipeline uses provider-owned caps.
 - `/providers` now lists capabilities sourced from provider modules.
 
-## Documentation Audit (Claude 2025-12-31)
+## Documentation Audit v2 (Claude 2025-12-31, fresh re-analysis)
 
 ### Summary
 - Tests: 102/102 pass
 - Version: 0.28.1 (synced package.json + openapi.yaml)
 - `as any` remaining: 4 (in settings.ts, low impact)
-- Overall alignment: ~92% correct
+- Overall alignment: ~88% (more issues found in fresh audit)
 
-### HIGH PRIORITY - Inconsistencies
+### CRITICAL - Code bugs / Doc errors
 
-1. **Missing error response docs in INTEGRATION.md**
-   - No documentation of error codes (400, 401, 404, 408, 413, 429, 500)
-   - Fix: Add error response table with status/code/message
+1. **Y2T_CATALOG_MAX_AGE_HOURS legacy fallback broken**
+   - File: src/config/loader.ts:61
+   - Bug: `getEnv("Y2T_CATALOG_MAX_AGE_HOURS", "Y2T_CATALOG_MAX_AGE_HOURS")` - same param twice
+   - Should be: `getEnv("Y2T_CATALOG_MAX_AGE_HOURS", "CATALOG_MAX_AGE_HOURS")`
 
-2. **Missing webhook headers in INTEGRATION.md:157-162**
-   - `X-Y2T-Event` and `Content-Type` headers sent but not documented
-   - Fix: Add to webhook headers section
+2. **Y2T_MAX_BUFFERED_EVENTS_PER_RUN default mismatch**
+   - README.md line 251: says default 1000
+   - DEPLOY_PLAYBOOK.md line 41: says default 1000
+   - Actual code (src/api/index.ts:12): default is 5000
+   - Fix: Update docs to say 5000
 
-3. **7 env vars used but not in DEPLOY_PLAYBOOK.md**
-   - `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (default: 5000)
-   - `Y2T_API_PERSIST_DIR`
-   - `Y2T_SHUTDOWN_TIMEOUT_SECONDS` (default: 60)
-   - `Y2T_WATCHLIST_ALLOW_ANY_URL`
-   - `Y2T_WEBHOOK_SECRET`
-   - `Y2T_WEBHOOK_RETRIES` (default: 3)
-   - `Y2T_WEBHOOK_TIMEOUT_MS` (default: 5000)
+3. **README.md auth contradiction**
+   - Line 203: "Auth (optional, recommended...)"
+   - Line 204: "Y2T_API_KEY is required"
+   - These contradict each other. API key IS required (or Y2T_ALLOW_INSECURE_NO_API_KEY=true)
 
-### MEDIUM PRIORITY - Inconsistencies
+4. **INTEGRATION.md error code names wrong**
+   - Line 94: says `timeout` but code uses `request_timeout` (server.ts:292)
+   - Line 97: says `server_error` but code uses `internal_error` (server.ts:995)
 
-4. **openapi.yaml missing 429 for /health?deep=true** (lines 356-379)
-   - Deep health can return 429 but not documented
-   - Fix: Add `"429": $ref: "#/components/responses/RateLimited"`
+### HIGH PRIORITY - OpenAPI spec gaps
 
-5. **CLI flag --audioDir not in README.md:146-168**
-   - Flag exists at src/cli/index.ts:30 but missing from docs
-   - Fix: Add `| --audioDir | path | audio | Audio cache directory. |`
+5. **9 endpoints missing 401 response in openapi.yaml**
+   - /maintenance/cleanup (lines 65-79)
+   - /watchlist/{id} GET/PATCH/DELETE (lines 181-253)
+   - /library/channels/* (lines 621-689)
+   - /runs POST (lines 400-426)
+   - /runs/plan (lines 428-455)
+   - /runs/{runId}/cancel (lines 528-551)
+   - /runs/{runId}/artifacts (lines 553-571)
+   - All require auth via requireApiKey() at server.ts:303
 
-6. **Rate limit defaults not specified in DEPLOY_PLAYBOOK.md:35-37**
-   - 8 variables documented without default values
-   - Defaults: WRITE_MAX=60, READ_MAX=300, HEALTH_MAX=30, all windows=60000ms
+6. **Pipeline stage order wrong in ARCHITECTURE.md:82**
+   - Docs: download|split|transcribe|format|comments|save
+   - Actual order in run.ts: download -> split -> transcribe -> comments -> save -> format(csv only)
 
-7. **Pipeline stage `enumerate` defined but never emitted**
-   - src/pipeline/events.ts:1-8 defines it
-   - docs/ARCHITECTURE.md:82 mentions it
-   - But no `emitStage("enumerate")` call exists in pipeline
+7. **Missing event types in ARCHITECTURE.md:80-82**
+   - `run:cancelled` and `run:error` not documented but exist in events.ts
 
-8. **STRUCTURE.md outdated - missing Phase 2+ features**
-   - No mention of: scheduler, watchlist, retention, rate limiting, validation
-   - src/api/ has 18 files but docs only mention generic "HTTP API runner"
+8. **16+ env vars not in docker-compose.yml template**
+   - Y2T_TRUST_PROXY, Y2T_MAX_BODY_BYTES, Y2T_AUTH_FAIL_*, Y2T_RATE_LIMIT_*
+   - Y2T_SSE_MAX_CLIENTS, Y2T_REQUEST_TIMEOUT_MS, Y2T_API_KEY_MAX_BYTES
+   - Y2T_WEBHOOK_* (5 vars), Y2T_RUN_TIMEOUT_MINUTES
+
+### MEDIUM PRIORITY - Doc inconsistencies
+
+9. **Webhook headers case mismatch in INTEGRATION.md:172-177**
+   - Docs: PascalCase (X-Y2T-Timestamp)
+   - Code: lowercase (x-y2t-timestamp) in webhooks.ts:119-130
+   - HTTP headers are case-insensitive but docs should match implementation
+
+10. **Content-Type header always sent, not conditional**
+    - INTEGRATION.md implies Content-Type only with secret
+    - Actual: always sent (webhooks.ts:119)
+    - Also: no `; charset=utf-8` in actual header
+
+11. **CLI flag --audioDir not in README.md:146-168**
+    - Exists at src/cli/index.ts:30
+
+12. **openapi.yaml missing 429 for /health?deep=true**
+    - Deep health CAN return 429 (server.ts:328) but not in spec
 
 ### LOW PRIORITY - Minor gaps
 
-9. **Legacy env vars work but not documented**
-   - Code supports OPENAI_API_KEY, STT_PROVIDER, etc. (src/config/loader.ts:19-62)
-   - Only Y2T_* prefix documented
+13. **Legacy env vars undocumented** (loader.ts:19-62 supports unprefixed names)
 
-10. **Metrics content-type missing charset**
-    - INTEGRATION.md:196 says `text/plain; version=0.0.4`
-    - Actual: `text/plain; version=0.0.4; charset=utf-8` (server.ts:434)
+14. **docker-compose.yml NEXT_PUBLIC_Y2T_API_BASE_URL=localhost** won't work in prod
 
-11. **docker-compose.yml web container URL issue**
-    - `NEXT_PUBLIC_Y2T_API_BASE_URL=http://localhost:8787` won't work in production
-    - Needs to be configurable for deployment
+15. **Submodules not detailed in STRUCTURE.md** (config/ storage/ youtube/ transcription/)
 
-12. **Submodules not detailed in STRUCTURE.md**
-    - config/ has 5 files (schema, loader, settings, runs, index)
-    - storage/ has 6 files (adapter, fsAdapter, naming, processedIndex, errors, index)
-    - youtube/ has 12 files (catalogCache, language, ytDlpErrors, etc.)
-    - transcription/ has merge.ts, registry.ts not mentioned
+### RESOLVED since last audit
+
+- Pipeline stage `enumerate` - REMOVED from events.ts (was item 7)
+- STRUCTURE.md Phase 2+ features - NOW DOCUMENTED on line 42 (was item 8)
 
 ### OO Design Evaluation
 
@@ -167,7 +182,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 | CORS | Default no headers, configurable |
 | Settings | Zod + clamping work |
 | Output formats | All documented exist |
-| Pipeline stages | enumerate in types but unused |
+| Pipeline stages | FIXED (enumerate removed) |
 | OO/Interfaces | 3 interfaces well implemented |
 | Strong typing | Only 4 as any remain |
 

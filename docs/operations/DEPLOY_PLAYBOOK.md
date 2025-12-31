@@ -38,7 +38,7 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_SSE_MAX_CLIENTS` (cap concurrent SSE connections; default 1000, `0` disables)
 - `Y2T_REQUEST_TIMEOUT_MS` (global request timeout for non-SSE requests)
 - `Y2T_RUN_TIMEOUT_MINUTES` (safety net for stuck runs)
-- `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (SSE replay buffer size; default 1000)
+- `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (SSE replay buffer size; default 5000)
 - `Y2T_API_PERSIST_DIR` (override persisted runs dir; default `output/_runs/`)
 - `Y2T_SHUTDOWN_TIMEOUT_SECONDS` (graceful shutdown wait; default 60)
 - `Y2T_WATCHLIST_ALLOW_ANY_URL` (allow non-channel/playlist watchlist URLs; default false)

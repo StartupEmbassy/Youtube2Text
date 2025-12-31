@@ -91,10 +91,10 @@ Most endpoints can return these errors (JSON):
 | 400 | `bad_request` | Validation failed (invalid inputs, header too long, bad date, etc.) |
 | 401 | `unauthorized` | Missing or invalid `X-API-Key` |
 | 404 | `not_found` | Resource not found |
-| 408 | `timeout` | Request timed out (`Y2T_REQUEST_TIMEOUT_MS`) |
+| 408 | `request_timeout` | Request timed out (`Y2T_REQUEST_TIMEOUT_MS`) |
 | 413 | `payload_too_large` | JSON body exceeds `Y2T_MAX_BODY_BYTES` |
 | 429 | `rate_limited` | Rate limit exceeded (see Retry-After) |
-| 500 | `server_error` | Internal error (sanitized message) |
+| 500 | `internal_error` | Internal error (sanitized message) |
 
 ### 3b) Cancel a run
 
@@ -168,11 +168,12 @@ Payload:
 ```
 
 Signature (optional):
-- If `Y2T_WEBHOOK_SECRET` is set, the API includes:
-  - `X-Y2T-Timestamp` (ISO)
-  - `X-Y2T-Event` (event name, e.g. `run:done`)
-  - `Content-Type: application/json; charset=utf-8`
-  - `X-Y2T-Signature` (`sha256=<hex>`) where HMAC-SHA256 is computed over:
+- The API always includes:
+  - `content-type: application/json; charset=utf-8`
+  - `x-y2t-event: run:done` (example event name)
+  - `x-y2t-timestamp: 2025-12-15T00:00:00.000Z`
+- If `Y2T_WEBHOOK_SECRET` is set, the API also includes:
+  - `x-y2t-signature: sha256=<hex>` where HMAC-SHA256 is computed over:
     - `${timestamp}.${body}`
   - If `Y2T_WEBHOOK_MAX_AGE_SECONDS` is set, the API also includes `X-Y2T-Max-Age`.
     Use it (or your own fixed window) to reject old/replayed requests.
