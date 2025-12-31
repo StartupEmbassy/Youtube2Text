@@ -22,7 +22,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
 ## Review Notes (GPT v0.28.1)
-- Docs/code alignment: improved; Claude v2 issues addressed (see "Documentation Audit v2" section below).
+- Docs/code alignment: high; Documentation Audit v2 issues resolved.
 - Tests: `npm test` 102/102 pass.
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`).
 - Docker: healthy.
@@ -75,9 +75,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Tests: 102/102 pass
 - Version: 0.28.1 (synced package.json + openapi.yaml)
 - `as any` remaining: 4 (in settings.ts, low impact)
-- Overall alignment: ~88% (more issues found in fresh audit)
+- Overall alignment: high (issues resolved)
 
-### CRITICAL - Code bugs / Doc errors
+### CRITICAL - Code bugs / Doc errors (RESOLVED)
 
 1. **Y2T_CATALOG_MAX_AGE_HOURS legacy fallback broken**
    - File: src/config/loader.ts:61
@@ -99,7 +99,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - Line 94: says `timeout` but code uses `request_timeout` (server.ts:292)
    - Line 97: says `server_error` but code uses `internal_error` (server.ts:995)
 
-### HIGH PRIORITY - OpenAPI spec gaps
+### HIGH PRIORITY - OpenAPI spec gaps (RESOLVED)
 
 5. **9 endpoints missing 401 response in openapi.yaml**
    - /maintenance/cleanup (lines 65-79)
@@ -123,7 +123,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
    - Y2T_SSE_MAX_CLIENTS, Y2T_REQUEST_TIMEOUT_MS, Y2T_API_KEY_MAX_BYTES
    - Y2T_WEBHOOK_* (5 vars), Y2T_RUN_TIMEOUT_MINUTES
 
-### MEDIUM PRIORITY - Doc inconsistencies
+### MEDIUM PRIORITY - Doc inconsistencies (RESOLVED)
 
 9. **Webhook headers case mismatch in INTEGRATION.md:172-177**
    - Docs: PascalCase (X-Y2T-Timestamp)
@@ -141,7 +141,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 12. **openapi.yaml missing 429 for /health?deep=true**
     - Deep health CAN return 429 (server.ts:328) but not in spec
 
-### LOW PRIORITY - Minor gaps
+### LOW PRIORITY - Minor gaps (RESOLVED)
 
 13. **Legacy env vars undocumented** (loader.ts:19-62 supports unprefixed names)
 
