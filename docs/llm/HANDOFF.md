@@ -22,7 +22,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
 ## Review Notes (GPT v0.28.1)
-- Docs/code alignment: 100% (Claude audit 2025-12-29).
+- Docs/code alignment: ~92% (Claude audit 2025-12-31; see "Documentation Audit" section below).
 - Tests: `npm test` 102/102 pass.
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`).
 - Docker: healthy.
@@ -68,6 +68,108 @@ All content should be ASCII-only to avoid Windows encoding issues.
 ## Phase 2.9 (DONE): STT provider capability refactor
 - `TranscriptionProvider` exposes `getCapabilities()`; pipeline uses provider-owned caps.
 - `/providers` now lists capabilities sourced from provider modules.
+
+## Documentation Audit (Claude 2025-12-31)
+
+### Summary
+- Tests: 102/102 pass
+- Version: 0.28.1 (synced package.json + openapi.yaml)
+- `as any` remaining: 4 (in settings.ts, low impact)
+- Overall alignment: ~92% correct
+
+### HIGH PRIORITY - Inconsistencies
+
+1. **Missing error response docs in INTEGRATION.md**
+   - No documentation of error codes (400, 401, 404, 408, 413, 429, 500)
+   - Fix: Add error response table with status/code/message
+
+2. **Missing webhook headers in INTEGRATION.md:157-162**
+   - `X-Y2T-Event` and `Content-Type` headers sent but not documented
+   - Fix: Add to webhook headers section
+
+3. **7 env vars used but not in DEPLOY_PLAYBOOK.md**
+   - `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (default: 5000)
+   - `Y2T_API_PERSIST_DIR`
+   - `Y2T_SHUTDOWN_TIMEOUT_SECONDS` (default: 60)
+   - `Y2T_WATCHLIST_ALLOW_ANY_URL`
+   - `Y2T_WEBHOOK_SECRET`
+   - `Y2T_WEBHOOK_RETRIES` (default: 3)
+   - `Y2T_WEBHOOK_TIMEOUT_MS` (default: 5000)
+
+### MEDIUM PRIORITY - Inconsistencies
+
+4. **openapi.yaml missing 429 for /health?deep=true** (lines 356-379)
+   - Deep health can return 429 but not documented
+   - Fix: Add `"429": $ref: "#/components/responses/RateLimited"`
+
+5. **CLI flag --audioDir not in README.md:146-168**
+   - Flag exists at src/cli/index.ts:30 but missing from docs
+   - Fix: Add `| --audioDir | path | audio | Audio cache directory. |`
+
+6. **Rate limit defaults not specified in DEPLOY_PLAYBOOK.md:35-37**
+   - 8 variables documented without default values
+   - Defaults: WRITE_MAX=60, READ_MAX=300, HEALTH_MAX=30, all windows=60000ms
+
+7. **Pipeline stage `enumerate` defined but never emitted**
+   - src/pipeline/events.ts:1-8 defines it
+   - docs/ARCHITECTURE.md:82 mentions it
+   - But no `emitStage("enumerate")` call exists in pipeline
+
+8. **STRUCTURE.md outdated - missing Phase 2+ features**
+   - No mention of: scheduler, watchlist, retention, rate limiting, validation
+   - src/api/ has 18 files but docs only mention generic "HTTP API runner"
+
+### LOW PRIORITY - Minor gaps
+
+9. **Legacy env vars work but not documented**
+   - Code supports OPENAI_API_KEY, STT_PROVIDER, etc. (src/config/loader.ts:19-62)
+   - Only Y2T_* prefix documented
+
+10. **Metrics content-type missing charset**
+    - INTEGRATION.md:196 says `text/plain; version=0.0.4`
+    - Actual: `text/plain; version=0.0.4; charset=utf-8` (server.ts:434)
+
+11. **docker-compose.yml web container URL issue**
+    - `NEXT_PUBLIC_Y2T_API_BASE_URL=http://localhost:8787` won't work in production
+    - Needs to be configurable for deployment
+
+12. **Submodules not detailed in STRUCTURE.md**
+    - config/ has 5 files (schema, loader, settings, runs, index)
+    - storage/ has 6 files (adapter, fsAdapter, naming, processedIndex, errors, index)
+    - youtube/ has 12 files (catalogCache, language, ytDlpErrors, etc.)
+    - transcription/ has merge.ts, registry.ts not mentioned
+
+### OO Design Evaluation
+
+**Interfaces (well-defined):**
+- `TranscriptionProvider` (src/transcription/provider.ts:9)
+- `StorageAdapter` (src/storage/adapter.ts:21)
+- `PipelineEventEmitter` (src/pipeline/events.ts:97)
+
+**Implementations:**
+- `AssemblyAiProvider implements TranscriptionProvider`
+- `OpenAiWhisperProvider implements TranscriptionProvider`
+- `FileSystemStorageAdapter implements StorageAdapter`
+- `JsonLinesEventEmitter implements PipelineEventEmitter`
+
+**Factory pattern:** `createTranscriptionProvider()` in src/transcription/factory.ts
+
+**TypeScript:** strict: true + noUncheckedIndexedAccess: true
+
+**Zod validation:** Robust schemas in src/api/schemas.ts
+
+### Alignment Confirmation
+
+| Aspect | Status |
+|--------|--------|
+| API endpoints (23) | MATCH openapi.yaml <-> server.ts |
+| Auth (X-API-Key) | CORRECT, /health exempt |
+| CORS | Default no headers, configurable |
+| Settings | Zod + clamping work |
+| Output formats | All documented exist |
+| Pipeline stages | enumerate in types but unused |
+| OO/Interfaces | 3 interfaces well implemented |
+| Strong typing | Only 4 as any remain |
 
 ## Tech Debt Backlog (do in order)
 1) Normalize null/undefined handling across API/settings inputs (DONE).
@@ -195,7 +297,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - `npm run build`
 - `npm --prefix web run build`
 - `npm run api:contract:check`
-- `npm run test:docker-smoke` (now passes; injects `Y2T_API_KEY=smoke` and uses `X-API-Key`)
+- `npm run test:docker-smoke` (may take >5 min locally; injects `Y2T_API_KEY=smoke`)
 
 ## Operator Notes
 - `.env` must include `ASSEMBLYAI_API_KEY` when `sttProvider=assemblyai`.

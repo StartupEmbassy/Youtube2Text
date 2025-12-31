@@ -82,6 +82,20 @@ Notes:
 - For single-video URLs, `POST /runs` is cache-first: if artifacts already exist and `force=false`, it returns a `done` run immediately (no download/transcribe).
 - For channel/playlist runs, idempotency is handled by per-video skip checks.
 
+## Error responses (common)
+
+Most endpoints can return these errors (JSON):
+
+| Status | error | Meaning |
+|--------|-------|---------|
+| 400 | `bad_request` | Validation failed (invalid inputs, header too long, bad date, etc.) |
+| 401 | `unauthorized` | Missing or invalid `X-API-Key` |
+| 404 | `not_found` | Resource not found |
+| 408 | `timeout` | Request timed out (`Y2T_REQUEST_TIMEOUT_MS`) |
+| 413 | `payload_too_large` | JSON body exceeds `Y2T_MAX_BODY_BYTES` |
+| 429 | `rate_limited` | Rate limit exceeded (see Retry-After) |
+| 500 | `server_error` | Internal error (sanitized message) |
+
 ### 3b) Cancel a run
 
 Cancellation is cooperative. In-flight work may finish, but the run will stop as soon as practical and end with `status: cancelled`.
@@ -156,6 +170,8 @@ Payload:
 Signature (optional):
 - If `Y2T_WEBHOOK_SECRET` is set, the API includes:
   - `X-Y2T-Timestamp` (ISO)
+  - `X-Y2T-Event` (event name, e.g. `run:done`)
+  - `Content-Type: application/json; charset=utf-8`
   - `X-Y2T-Signature` (`sha256=<hex>`) where HMAC-SHA256 is computed over:
     - `${timestamp}.${body}`
   - If `Y2T_WEBHOOK_MAX_AGE_SECONDS` is set, the API also includes `X-Y2T-Max-Age`.
@@ -193,7 +209,7 @@ Goal: run -> wait -> fetch artifacts -> send to next system.
 
 The API exposes a Prometheus-compatible metrics endpoint:
 
-- `GET /metrics` (text/plain; version=0.0.4)
+- `GET /metrics` (text/plain; version=0.0.4; charset=utf-8)
 
 If `Y2T_API_KEY` is set, include `X-API-Key: ...`.
 

@@ -32,12 +32,20 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_AUTH_FAIL_MAX` + `Y2T_AUTH_FAIL_WINDOW_MS` (rate limit auth failures)
 - `Y2T_TRUST_PROXY=true` (if running behind a trusted reverse proxy; uses `X-Forwarded-For`/`X-Real-IP`)
 - `Y2T_API_KEY_MAX_BYTES` (cap `X-API-Key` header length; default 256)
-- `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints)
-- `Y2T_RATE_LIMIT_READ_MAX` + `Y2T_RATE_LIMIT_READ_WINDOW_MS` (rate limit read endpoints)
-- `Y2T_RATE_LIMIT_HEALTH_MAX` + `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (throttle deep health checks)
+- `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints; defaults 60 / 60000ms)
+- `Y2T_RATE_LIMIT_READ_MAX` + `Y2T_RATE_LIMIT_READ_WINDOW_MS` (rate limit read endpoints; defaults 300 / 60000ms)
+- `Y2T_RATE_LIMIT_HEALTH_MAX` + `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (throttle deep health checks; defaults 30 / 60000ms)
 - `Y2T_SSE_MAX_CLIENTS` (cap concurrent SSE connections; default 1000, `0` disables)
 - `Y2T_REQUEST_TIMEOUT_MS` (global request timeout for non-SSE requests)
 - `Y2T_RUN_TIMEOUT_MINUTES` (safety net for stuck runs)
+- `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (SSE replay buffer size; default 1000)
+- `Y2T_API_PERSIST_DIR` (override persisted runs dir; default `output/_runs/`)
+- `Y2T_SHUTDOWN_TIMEOUT_SECONDS` (graceful shutdown wait; default 60)
+- `Y2T_WATCHLIST_ALLOW_ANY_URL` (allow non-channel/playlist watchlist URLs; default false)
+- `Y2T_WEBHOOK_SECRET` (HMAC signature for webhooks; optional)
+- `Y2T_WEBHOOK_RETRIES` (webhook retries; default 3)
+- `Y2T_WEBHOOK_TIMEOUT_MS` (per-attempt webhook timeout; default 5000)
+- `NEXT_PUBLIC_Y2T_API_BASE_URL` (web browser API base URL; must be publicly reachable)
 
 If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
 If you expose the API port publicly in that state, anyone can call it.

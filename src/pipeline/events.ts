@@ -1,5 +1,4 @@
 export type PipelineStage =
-  | "enumerate"
   | "download"
   | "split"
   | "transcribe"

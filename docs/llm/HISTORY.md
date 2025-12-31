@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-31 - GPT-5.2 - Close doc gaps from audit: add error responses + webhook headers in INTEGRATION, add missing env vars/defaults in deploy playbook, update metrics content-type, document --audioDir, add 429 to health, drop unused enumerate stage, and refresh STRUCTURE + docker-compose env note - Files: [INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, docs/STRUCTURE.md, README.md, openapi.yaml, src/pipeline/events.ts, docker-compose.yml, web/lib/apiTypes.gen.ts, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-30 - GPT-5.2 - Tighten TranscriptionProvider typing, add provider name test, and clarify INTEGRATION auth note - Files: [src/transcription/provider.ts, src/transcription/assemblyai/index.ts, src/transcription/openai/index.ts, tests/sttProvider.test.ts, INTEGRATION.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-30 - GPT-5.2 - Fix doc drift (auth/CORS defaults, error log path, API contract scope, stage naming, smoke test note) - Files: [HOW_TO_USE.md, README.md, docs/operations/API_CONTRACT.md, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

@@ -150,6 +150,7 @@ Options:
 | `--maxNewVideos` | number | unset | Process at most N NEW (unprocessed) videos (limit is applied after skipping already-processed videos). |
 | `--after` | date | unset | Only process videos after YYYY-MM-DD. |
 | `--outDir` | path | `output` | Output root directory. |
+| `--audioDir` | path | `audio` | Audio cache directory. |
 | `--filenameStyle` | `id|id_title|title_id` | `title_id` | Output/audio filename style. |
 | `--audioFormat` | `mp3|wav` | `mp3` | Audio download format. |
 | `--sttProvider` | `assemblyai|openai_whisper` | `assemblyai` | Speech-to-text provider. |

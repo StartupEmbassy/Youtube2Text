@@ -39,13 +39,13 @@ This document describes the current repository layout for Youtube2Text.
 ## `src/` Modules (current)
 
 - `src/cli/` - CLI entrypoints and orchestration.
-- `src/api/` - HTTP API runner (SSE, runs persistence, auth, webhooks).
+- `src/api/` - HTTP API runner (SSE, runs persistence, auth, webhooks, scheduler, watchlist, retention, rate limiting, metrics).
 - `src/config/` - configuration loading from `.env`, optional `config.yaml`/`runs.yaml`, and non-secret defaults from `output/_settings.json`.
 - `src/youtube/` - enumeration/metadata/download wrappers around `yt-dlp`.
 - `src/transcription/` - provider interface plus AssemblyAI and OpenAI Whisper implementations.
 - `src/formatters/` - derived artifacts (`.txt`, `.md`, `.jsonl`, optional `.csv`).
-- `src/storage/` - output layout, idempotency checks, and persistence helpers.
-- `src/pipeline/` - the orchestrated pipeline (events, planning, run execution).
+- `src/storage/` - output layout, idempotency checks, processed-index scan, and persistence helpers.
+- `src/pipeline/` - the orchestrated pipeline (events, planning, run execution, JSONL event emitter).
 - `src/utils/` - filesystem/exec/logging helpers (incl. audio splitting).
 
 ## Naming Conventions

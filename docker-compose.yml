@@ -32,4 +32,4 @@ services:
     environment:
       Y2T_API_BASE_URL: http://youtube2text-api:8787
       Y2T_API_KEY: ${Y2T_API_KEY}
-      NEXT_PUBLIC_Y2T_API_BASE_URL: http://localhost:8787
+      NEXT_PUBLIC_Y2T_API_BASE_URL: ${NEXT_PUBLIC_Y2T_API_BASE_URL:-http://localhost:8787}
