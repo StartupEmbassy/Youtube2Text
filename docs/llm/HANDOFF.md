@@ -23,7 +23,7 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Review Notes (GPT v0.28.1)
 - Docs/code alignment: 100% (Claude audit 2025-12-29).
-- Tests: `npm test` 101/101 pass.
+- Tests: `npm test` 102/102 pass.
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`).
 - Docker: healthy.
 - Security audit: Phase 1 + Phase 2 complete.

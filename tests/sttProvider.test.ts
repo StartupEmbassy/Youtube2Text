@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { configSchema } from "../src/config/schema.js";
+import { createTranscriptionProvider } from "../src/transcription/factory.js";
 
 test("sttProvider=openai_whisper requires OpenAI key", () => {
   assert.throws(() => {
@@ -17,4 +18,20 @@ test("sttProvider=openai_whisper accepts OpenAI key", () => {
   });
   assert.equal(config.sttProvider, "openai_whisper");
   assert.equal(config.openaiWhisperModel, "whisper-1");
+});
+
+test("provider name matches configured sttProvider", () => {
+  const assemblyCfg = configSchema.parse({
+    sttProvider: "assemblyai",
+    assemblyAiApiKey: "test",
+  });
+  const assemblyProvider = createTranscriptionProvider(assemblyCfg);
+  assert.equal(assemblyProvider.name, "assemblyai");
+
+  const whisperCfg = configSchema.parse({
+    sttProvider: "openai_whisper",
+    openaiApiKey: "test",
+  });
+  const whisperProvider = createTranscriptionProvider(whisperCfg);
+  assert.equal(whisperProvider.name, "openai_whisper");
 });

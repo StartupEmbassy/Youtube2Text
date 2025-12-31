@@ -8,7 +8,8 @@ It does not replace the CLI.
 Default local API:
 - `http://127.0.0.1:8787`
 
-If the server sets `Y2T_API_KEY`, all endpoints require `X-API-Key` (except `GET /health`).
+The server refuses to start unless `Y2T_API_KEY` is set (use `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
+When `Y2T_API_KEY` is set, all endpoints require `X-API-Key` (except `GET /health`).
 If the API sits behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` so rate limiting uses `X-Forwarded-For` / `X-Real-IP`.
 `Y2T_API_KEY_MAX_BYTES` caps the `X-API-Key` header size (default 256).
 

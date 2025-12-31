@@ -6,6 +6,8 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2025-12-30 - GPT-5.2 - Tighten TranscriptionProvider typing, add provider name test, and clarify INTEGRATION auth note - Files: [src/transcription/provider.ts, src/transcription/assemblyai/index.ts, src/transcription/openai/index.ts, tests/sttProvider.test.ts, INTEGRATION.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+
 2025-12-30 - GPT-5.2 - Fix doc drift (auth/CORS defaults, error log path, API contract scope, stage naming, smoke test note) - Files: [HOW_TO_USE.md, README.md, docs/operations/API_CONTRACT.md, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 
 2025-12-30 - GPT-5.2 - Refactor STT provider capabilities onto TranscriptionProvider, update pipeline and /providers list, and bump version to 0.28.1 - Files: [src/config/schema.ts, src/transcription/provider.ts, src/transcription/assemblyai/index.ts, src/transcription/openai/index.ts, src/transcription/registry.ts, src/transcription/index.ts, src/pipeline/run.ts, src/api/server.ts, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, package.json, openapi.yaml] - Version impact: yes (0.28.0 -> 0.28.1)

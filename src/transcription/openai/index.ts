@@ -44,7 +44,7 @@ function segmentsToUtterances(segments: OpenAiSegment[] | undefined) {
 }
 
 export class OpenAiWhisperProvider implements TranscriptionProvider {
-  name = "openai_whisper";
+  name: "openai_whisper" = "openai_whisper";
   private maxAudioBytesOverride?: number;
 
   constructor(

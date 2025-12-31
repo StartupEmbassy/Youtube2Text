@@ -14,7 +14,7 @@ export function getAssemblyAiCapabilities(
 }
 
 export class AssemblyAiProvider implements TranscriptionProvider {
-  name = "assemblyai";
+  name: "assemblyai" = "assemblyai";
   private client: AssemblyAiClient;
   private maxAudioBytesOverride?: number;
 

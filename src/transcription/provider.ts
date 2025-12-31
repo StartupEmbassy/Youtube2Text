@@ -1,3 +1,4 @@
+import type { SttProviderId } from "../config/schema.js";
 import { TranscriptJson, TranscriptionOptions } from "./types.js";
 
 export type ProviderCapabilities = {
@@ -6,7 +7,7 @@ export type ProviderCapabilities = {
 };
 
 export interface TranscriptionProvider {
-  name: string;
+  name: SttProviderId;
   transcribe(audioPath: string, opts: TranscriptionOptions): Promise<TranscriptJson>;
   getCapabilities(): ProviderCapabilities;
   getAccount?: () => Promise<Record<string, unknown>>;
