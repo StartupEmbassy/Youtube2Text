@@ -47,6 +47,7 @@ Terminal 1:
 
 ```powershell
 $env:ASSEMBLYAI_API_KEY="your_key_here"
+$env:Y2T_API_KEY="dev_key"
 npm run dev:api
 ```
 

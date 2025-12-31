@@ -68,6 +68,7 @@ Local-first artifacts on disk. Current layout:
 - `output/<channel_title_slug>__<channel_id>/<basename>.comments.json` (optional, non-fatal)
 - `output/<channel_title_slug>__<channel_id>/<basename>.meta.json` (sidecar for indexing/browsing)
 - `output/<channel_title_slug>__<channel_id>/_channel.json` (per-channel metadata)
+- `output/<channel_title_slug>__<channel_id>/_errors.jsonl` (per-channel error log)
 - `audio/<channel_title_slug>__<channel_id>/<basename>.<ext>`
 
 Future multi-tenancy (Phase 2+) can wrap the same structure under a `user_id` prefix:
@@ -77,9 +78,10 @@ Future multi-tenancy (Phase 2+) can wrap the same structure under a `user_id` pr
 
 Core emits structured events via a `PipelineEventEmitter` port. Example event types:
 
-- `run:start`, `run:done`
+- `run:start`, `run:done`, `run:cancelled`, `run:error`
 - `video:start`, `video:skip`, `video:error`, `video:done`
-- `video:stage` (download|split|transcribe|format|comments|save)
+- `video:stage` (download|transcribe|split|comments|save|format)
+  Note: `split` is conditional (only when audio exceeds provider limit).
 
 Runners decide how to consume events:
 - CLI default: human logs to stdout.

@@ -95,6 +95,7 @@ Most endpoints can return these errors (JSON):
 | 413 | `payload_too_large` | JSON body exceeds `Y2T_MAX_BODY_BYTES` |
 | 429 | `rate_limited` | Rate limit exceeded (see Retry-After) |
 | 500 | `internal_error` | Internal error (sanitized message) |
+| 500 | `server_misconfigured` | Server missing required env (e.g., `Y2T_API_KEY`) |
 
 ### 3b) Cancel a run
 
@@ -141,7 +142,9 @@ Download artifacts (direct):
 - `GET /library/channels/{channelDirName}/videos/{basename}/md`
 - `GET /library/channels/{channelDirName}/videos/{basename}/jsonl`
 - `GET /library/channels/{channelDirName}/videos/{basename}/json`
+- `GET /library/channels/{channelDirName}/videos/{basename}/meta`
 - `GET /library/channels/{channelDirName}/videos/{basename}/comments`
+- `GET /library/channels/{channelDirName}/videos/{basename}/csv`
 - `GET /library/channels/{channelDirName}/videos/{basename}/audio`
 
 Example:
@@ -169,7 +172,7 @@ Payload:
 
 Signature (optional):
 - The API always includes:
-  - `content-type: application/json; charset=utf-8`
+  - `content-type: application/json`
   - `x-y2t-event: run:done` (example event name)
   - `x-y2t-timestamp: 2025-12-15T00:00:00.000Z`
 - If `Y2T_WEBHOOK_SECRET` is set, the API also includes:
