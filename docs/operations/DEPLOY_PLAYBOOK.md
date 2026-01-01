@@ -49,6 +49,9 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_WEBHOOK_RETRIES` (webhook retries; default 3)
 - `Y2T_WEBHOOK_TIMEOUT_MS` (per-attempt webhook timeout; default 5000)
 - `NEXT_PUBLIC_Y2T_API_BASE_URL` (web browser API base URL; must be publicly reachable)
+ 
+docker-compose defaults:
+- The compose file now uses `${VAR:-default}` for all optional env vars to match code defaults.
 
 If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
 If you expose the API port publicly in that state, anyone can call it.
