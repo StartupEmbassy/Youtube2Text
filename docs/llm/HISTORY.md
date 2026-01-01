@@ -7,6 +7,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 ## Log
 
 2025-12-31 - GPT-5.2 - Resolve Documentation Audit v3 items (how-to quickstart auth, artifacts list, webhook headers, deploy defaults, docker-compose envs, events/storage docs) - Files: [HOW_TO_USE.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, docker-compose.yml, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
+2025-12-31 - GPT-5.2 - Align .env.example defaults for buffered events and shutdown timeout; update HANDOFF note - Files: [.env.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-31 - GPT-5.2 - Mark Documentation Audit v2 as resolved in HANDOFF - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-31 - GPT-5.2 - Fix catalog TTL legacy env fallback, align auth/defaults in docs, correct error codes + webhook headers, add missing 401s in OpenAPI, and refresh compose/env notes; regenerate types - Files: [src/config/loader.ts, README.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, openapi.yaml, docker-compose.yml, web/lib/apiTypes.gen.ts, docs/llm/HISTORY.md] - Version impact: no
 
