@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.2.5
-> Last Updated: 2025-12-30
+> Version: 1.2.6
+> Last Updated: 2026-01-01
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
@@ -135,9 +135,8 @@ Completed:
    - Image bundles Node + yt-dlp + ffmpeg
    - Volumes for `output/` and `audio/`
 
-Remaining (do in order):
-9. Future reminder: scheduled sync/cron
-   - periodically enumerate followed channels and enqueue newly published videos
+Remaining:
+- None (scheduler/watchlist implemented in Phase 2.3).
 
 Exit criteria: core still runs as CLI exactly like today and can be embedded in a service with structured events.
 
@@ -175,24 +174,24 @@ Phase 2.1 - Integration MVP (API-first; do in order):
 4) Cache-first for single-video URLs (return cached artifacts unless `force`) - DONE (v0.8.0)
 5) Integration docs (`INTEGRATION.md`) with curl + n8n examples - DONE
 
-Phase 2.2 - Ops hardening:
+Phase 2.2 - Ops hardening (DONE):
 - extended healthcheck (deps + disk)
 - configurable CORS allowlist
 - retention/cleanup policy for runs + audio
 
-Phase 2.3 - Scheduler/watchlist (cron):
+Phase 2.3 - Scheduler/watchlist (cron) (DONE):
 - maintain a followed-channels list (global interval, optional per-channel override)
 - scheduler runs every N minutes:
   - call `POST /runs/plan` for each followed channel
   - only create a run if there are new videos to process
 
-Phase 2.4 - Control + robustness:
-- cancel run endpoint (DONE)
+Phase 2.4 - Control + robustness (DONE):
+- cancel run endpoint
 - rate limiting (per API key/IP)
 - optional worker/queue if synchronous execution becomes limiting
 - tighten input validation (watchlist URLs should be channel/playlist only; avoid accepting arbitrary URLs)
 
-Phase 2.4.x (polish/stabilize, do in order):
+Phase 2.4.x (polish/stabilize) (DONE):
 - 2.4.1 OpenAPI polish: add `license` + `operationId` (cleaner client generation, fewer lint warnings)
 - 2.4.2 Watchlist safety: validate watchlist URLs (channel/playlist only) + document override if needed
 - 2.4.3 Regression tests: cache-first channel thumbnail backfill
@@ -201,7 +200,7 @@ Phase 2.4.x (polish/stabilize, do in order):
 - 2.4.6 Graceful shutdown: handle SIGTERM/SIGINT without losing as much work
 - 2.4.7 Debug endpoint: `GET /runs/:id/logs` for non-SSE environments
 
-Phase 2.5 - Admin UX + monitoring:
+Phase 2.5 - Admin UX + monitoring (DONE):
 - Watchlist UI page (`/watchlist`) for managing recurring sources and basic scheduler controls.
 - Prometheus metrics endpoint (`GET /metrics`) for production monitoring.
 
@@ -255,5 +254,4 @@ Future input mode (not implemented yet):
 
 ## Tech Debt Backlog (post-Phase 2.8)
 - Phase 2.8 backlog items completed in v0.23.x.
-- Remaining security backlog: see `docs/llm/HANDOFF.md` (Security Audit Phase 2 MEDIUM).
 - Provider capabilities now live on the provider interface (DONE v0.28.1).
