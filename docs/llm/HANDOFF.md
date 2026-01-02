@@ -50,9 +50,9 @@ Verified not an issue (current code):
 1) Hash API keys in rate limiter buckets (avoid raw key in memory). (DONE)
 2) Protect /health?deep=true (require API key or new opt-in env). (DONE)
 3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs). (DONE)
-4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs.
-5) Tighten trust proxy guidance (do not enable without a real proxy).
-6) CORS guidance: avoid "*" in production.
+4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs. (DONE)
+5) Tighten trust proxy guidance (do not enable without a real proxy). (DONE)
+6) CORS guidance: avoid "*" in production. (DONE)
 7) Add deployment security checklist (API key, allowlist, deep health).
 8) Add tests for deep health auth + webhook DNS rebinding.
 

@@ -26,13 +26,16 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_API_KEY` (required; enforces `X-API-Key` on all API endpoints except `GET /health`)
 - `Y2T_CORS_ORIGINS` (comma-separated exact origin allowlist)
   - Example: `https://y2t.example.com`
+  - Avoid `*` in production.
 - `Y2T_WEBHOOK_ALLOWED_DOMAINS` (comma-separated allowlist for `callbackUrl`)
 - `Y2T_WEBHOOK_MAX_AGE_SECONDS` (adds `X-Y2T-Max-Age` for replay protection)
 - Webhook hosts are resolved and blocked if they resolve to private/loopback IPs (DNS rebinding protection)
+  - Production guidance: always set `Y2T_WEBHOOK_ALLOWED_DOMAINS` to an explicit allowlist.
 - `Y2T_MAX_BODY_BYTES` (request body limit, default 1,000,000)
 - `Y2T_AUTH_FAIL_MAX` + `Y2T_AUTH_FAIL_WINDOW_MS` (rate limit auth failures)
 - Defaults: `Y2T_AUTH_FAIL_MAX=30`, `Y2T_AUTH_FAIL_WINDOW_MS=60000`
 - `Y2T_TRUST_PROXY=true` (if running behind a trusted reverse proxy; uses `X-Forwarded-For`/`X-Real-IP`)
+  - Do not enable unless traffic actually comes through a trusted proxy/load balancer.
 - `Y2T_API_KEY_MAX_BYTES` (cap `X-API-Key` header length; default 256)
 - `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints; defaults 60 / 60000ms)
 - `Y2T_RATE_LIMIT_READ_MAX` + `Y2T_RATE_LIMIT_READ_WINDOW_MS` (rate limit read endpoints; defaults 300 / 60000ms)

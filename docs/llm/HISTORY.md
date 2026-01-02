@@ -6,6 +6,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2026-01-01 - GPT-5.2 - Security S2.4/S3 docs: require webhook allowlist, trust proxy guidance, and CORS note; mark S2/S3 DONE - Files: [README.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2026-01-01 - GPT-5.2 - Security S2: block webhook DNS rebinding (resolve host -> block private IPs), add tests, update docs/specs, bump to 0.30.0 - Files: [src/api/webhooks.ts, tests/apiWebhooks.test.ts, README.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, openapi.yaml, web/lib/apiTypes.gen.ts, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json] - Version impact: yes (0.29.0 -> 0.30.0)
 2026-01-01 - GPT-5.2 - Security S1: hash rate limiter keys, require auth for deep health (env override), update docs/tests/specs, bump to 0.29.0 - Files: [src/api/auth.ts, src/api/server.ts, tests/apiAuth.test.ts, tests/apiHealth.test.ts, tests/apiRateLimit.test.ts, .env.example, README.md, HOW_TO_USE.md, docs/operations/DEPLOY_PLAYBOOK.md, openapi.yaml, web/lib/apiTypes.gen.ts, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md, docs/VERSIONING_RULES.md, package.json] - Version impact: yes (0.28.1 -> 0.29.0)
 2026-01-01 - GPT-5.2 - Clarify consolidated security snapshot (validate SSE limiter, chain risk, conditional PS note) - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

@@ -11,6 +11,7 @@ Default local API:
 The server refuses to start unless `Y2T_API_KEY` is set (use `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
 When `Y2T_API_KEY` is set, all endpoints require `X-API-Key` (except `GET /health`; deep health requires a key unless `Y2T_HEALTH_DEEP_PUBLIC=true`).
 If the API sits behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` so rate limiting uses `X-Forwarded-For` / `X-Real-IP`.
+Never enable `Y2T_TRUST_PROXY` unless requests are actually coming through a trusted proxy or load balancer.
 `Y2T_API_KEY_MAX_BYTES` caps the `X-API-Key` header size (default 256).
 
 Example (PowerShell):
@@ -188,6 +189,7 @@ Retry policy:
   - `Y2T_WEBHOOK_TIMEOUT_MS` (default `5000`)
 - Redirects are not followed (to prevent SSRF).
 - Hostnames are resolved and blocked if they resolve to private/loopback IPs (DNS rebinding protection).
+- Production guidance: set `Y2T_WEBHOOK_ALLOWED_DOMAINS` to an explicit allowlist and avoid wildcard CORS.
 
 Recommended replay protection (receiver):
 - Parse `X-Y2T-Timestamp` and reject if older than `X-Y2T-Max-Age` seconds.

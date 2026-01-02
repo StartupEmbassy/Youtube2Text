@@ -280,13 +280,14 @@ Monitoring:
 - `GET /metrics` exposes Prometheus text metrics (requires `X-API-Key`).
   - Includes catalog cache counters: `y2t_catalog_cache_hit_total`, `y2t_catalog_cache_miss_total`, `y2t_catalog_cache_expired_total`, `y2t_catalog_full_refresh_total`, `y2t_catalog_incremental_refresh_total`, `y2t_catalog_incremental_added_videos_total`.
 
-Webhooks (optional):
+Webhooks (optional, production guidance):
 - `POST /runs` supports `callbackUrl`. The API sends a POST webhook when the run ends:
   - `run:done` when status becomes `done`
   - `run:error` when status becomes `error`
   - `run:cancelled` when status becomes `cancelled`
 - `callbackUrl` must be http(s) and is blocked for localhost/private IPs by default.
 - Hostnames are resolved and blocked if they resolve to private/loopback IPs (DNS rebinding protection).
+- Strongly recommended in production: set `Y2T_WEBHOOK_ALLOWED_DOMAINS` to an explicit allowlist.
 - Webhooks do not follow redirects (redirects return an error to prevent SSRF).
 - Optional domain allowlist: `Y2T_WEBHOOK_ALLOWED_DOMAINS=example.com,sub.example.com`
 - Optional replay window: `Y2T_WEBHOOK_MAX_AGE_SECONDS` adds `X-Y2T-Max-Age` to headers.
