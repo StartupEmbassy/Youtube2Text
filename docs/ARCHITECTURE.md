@@ -255,3 +255,20 @@ Future input mode (not implemented yet):
 ## Tech Debt Backlog (post-Phase 2.8)
 - Phase 2.8 backlog items completed in v0.23.x.
 - Provider capabilities now live on the provider interface (DONE v0.28.1).
+
+## Security Roadmap v7 (planned, do in order)
+Phase S1 - Real-risk fixes (high priority)
+1) Hash API keys in rate limiter buckets (avoid raw key in memory).
+2) Protect /health?deep=true (require API key or new opt-in env).
+
+Phase S2 - Webhook hardening
+3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs).
+4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs.
+
+Phase S3 - Operational hardening (config guidance)
+5) Tighten trust proxy guidance (do not enable without a real proxy).
+6) CORS guidance: avoid "*" in production.
+
+Phase S4 - Verification
+7) Add security checklist for deployments (API key, allowlist, deep health).
+8) Add tests for deep health auth + webhook DNS rebinding.

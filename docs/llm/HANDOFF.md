@@ -21,13 +21,71 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (Claude v6 FULL audit 2026-01-01)
-- Docs/code alignment: ~98%; 2 minor issues found (see below)
-- Tests: `npm test` 102/102 pass (44 test files, 25s)
+## Review Notes (Claude v7 FULL audit 2026-01-02)
+- Docs/code alignment: 100%; no issues found
+- Tests: `npm test` 102/102 pass (44 test files, 26s)
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`)
 - Docker: healthy
-- Security audit: Phase 1 + Phase 2 complete
+- Security audit: Phase 3 complete (see below)
 - STT Providers: OpenAI Whisper + AssemblyAI both fully documented and implemented
+- npm audit: 0 vulnerabilities
+
+## Security Audit Phase 3 (Claude 2026-01-02)
+
+### CRITICAL ISSUES
+
+1. **PowerShell Command Injection** - health.ts:48-50
+   - `outputDir` path injected into PowerShell command string
+   - Attack: `Y2T_OUTPUT_DIR="C:\x'; Get-Process #"` executes arbitrary code
+   - Fix: Escape drive letter or use PowerShell parameter binding
+
+2. **API Key Stored in Rate Limiter Memory** - server.ts:242-246
+   - Full API key used as rate limit bucket key: `key:${apiKey}`
+   - Risk: Memory dumps/debugging exposes API keys
+   - Fix: Use hash of API key instead: `key:${sha256(apiKey).slice(0,16)}`
+
+### HIGH ISSUES
+
+3. **SSE Endpoints Bypass Rate Limiting** - server.ts:283-286
+   - `/events` and `/runs/{id}/events` skip rate limiters entirely
+   - Risk: Unlimited SSE connections per client
+   - Fix: Apply rate limits before SSE detection
+
+4. **IP Spoofing Bypasses Rate Limits** - ip.ts:30-45
+   - When `Y2T_TRUST_PROXY=true`, `X-Forwarded-For` fully trusted
+   - Risk: Attacker spoofs IP to bypass all rate limits
+   - Fix: Validate forwarded IP against trusted proxy whitelist
+
+5. **Rate Limiter Memory Leak Under Attack** - rateLimit.ts:56-64
+   - IP spoofing + sustained attack = unbounded bucket map growth
+   - Risk: OOM DoS attack
+   - Fix: Use LRU cache or more aggressive cleanup
+
+6. **Auth Brute Force Limiter Bypassed** - auth.ts:172
+   - Uses `getClientIp()` which is vulnerable to IP spoofing
+   - Risk: Unlimited auth attempts with IP rotation
+   - Fix: Rate limit by API key hash, not just IP
+
+### MEDIUM ISSUES
+
+7. **Health Endpoint Leaks System Details** - health.ts:33,39,81
+   - Error messages include file paths, command output
+   - Risk: Information disclosure
+   - Fix: Return generic error messages
+
+8. **OPTIONS Requests Bypass Auth** - server.ts:276-279
+   - Standard CORS behavior but allows endpoint discovery
+   - Risk: Low (no data access)
+
+### VERIFIED SECURE
+
+- **Command Injection**: exec.ts uses `spawn()` with `shell:false` - SECURE
+- **Path Traversal**: `isSafeBaseName()` + symlink detection - SECURE
+- **SSRF Webhooks**: Blocks private IPs, localhost, supports allowlist - SECURE
+- **Timing Attacks**: Uses `timingSafeEqual` for API key comparison - SECURE
+- **Secrets in Persistence**: API keys excluded from _settings.json - SECURE
+- **Body Size Limits**: 1MB default, enforced in http.ts - SECURE
+- **Dependencies**: `npm audit` shows 0 vulnerabilities - SECURE
 
 ## Code Review (Claude 2025-12-27)
 
@@ -66,42 +124,30 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - `TranscriptionProvider` exposes `getCapabilities()`; pipeline uses provider-owned caps.
 - `/providers` now lists capabilities sourced from provider modules.
 
-## Documentation Audit v6 (Claude 2026-01-01, FRESH COMPLETE AUDIT)
+## Documentation Audit v7 (Claude 2026-01-02, FRESH COMPLETE AUDIT)
 
 ### Summary
-- Tests: 102/102 pass (44 test files, ~25s execution)
+- Tests: 102/102 pass (44 test files, ~26s execution)
 - Version: 0.28.1 (synced package.json + openapi.yaml)
 - `as any` remaining: 4 (in settings.ts, low impact)
-- Overall alignment: ~98%
+- Overall alignment: 100%
 
 ---
 
-### NEW ISSUES FOUND (RESOLVED)
+### NO ISSUES FOUND
 
-#### 1. HOW_TO_USE.md:70 - Y2T_API_KEY described incorrectly
-- Fixed: wording now says required unless Y2T_ALLOW_INSECURE_NO_API_KEY=true.
-
-#### 2. .env.example:27 - Y2T_WEBHOOK_MAX_AGE_SECONDS wrong default
-- Fixed: example now uses 0 to match default (disabled).
-
----
-
-### PREVIOUSLY FIXED (v5)
-
-- .env.example Y2T_MAX_BUFFERED_EVENTS_PER_RUN: 5000 (was 1000) - FIXED
-- .env.example Y2T_SHUTDOWN_TIMEOUT_SECONDS: 60 (was 30) - FIXED
-- docker-compose.yml Y2T_API_PERSIST_RUNS: added - FIXED
-- docker-compose.yml default syntax: standardized to ${VAR:-default} - FIXED
+All documentation matches code implementation exactly.
 
 ---
 
 ### VERIFIED CORRECT (100% Match)
 
+- **README/HOW_TO_USE**: All CLI options, env vars, defaults, quickstart examples correct
 - **API/OpenAPI**: 28 endpoints, 8 error codes, security, artifacts, webhooks - ALL MATCH
-- **CLI/Config**: 20+ CLI options, all env var defaults - ALL MATCH
+- **INTEGRATION.md**: Error codes, auth flow, webhook format - ALL MATCH
 - **ARCHITECTURE/STRUCTURE**: directories, pipeline stages, storage layout, interfaces - ALL MATCH
 - **STT Providers**: AssemblyAI (5GB, diarization), OpenAI (25MB, no diarization) - ALL MATCH
-- **Deploy/Ops**: rate limits, auth, timeouts, retention defaults - ALL MATCH
+- **Deploy/Ops**: rate limits, auth, timeouts, retention, docker-compose, .env.example - ALL MATCH
 
 ---
 
@@ -156,6 +202,51 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Secrets never in persisted outputs
 - Error responses sanitized
 - Rate limiting for write operations
+
+## Security Audit v7 (Combined: Claude list + GPT review, 2026-01-01)
+
+### Claude findings (as reported)
+
+CRITICAL
+1) PowerShell command injection in health.ts (Y2T_OUTPUT_DIR used in PS command).
+2) API key stored in rate limiter bucket keys (server.ts).
+
+HIGH
+3) SSE bypasses rate limiting (server.ts).
+4) IP spoofing bypasses rate limits (ip.ts when trust proxy).
+5) Rate limiter memory leak (rateLimit.ts).
+6) Auth brute force bypass (auth.ts).
+
+MEDIUM
+7) /health deep leaks details (health.ts).
+8) OPTIONS bypass auth (server.ts).
+
+### GPT review of those items
+
+Validated
+- API key in rate limiter bucket keys: real risk (memory dump could expose keys). Severity likely HIGH/Medium.
+- /health?deep=true leaks details: real; decision whether to require auth for deep health.
+- IP spoofing is a config risk if Y2T_TRUST_PROXY=true without a trusted proxy.
+
+Not validated (likely false positives)
+- PowerShell injection: health.ts uses drive root derived from path root, not user-controlled script input.
+- SSE bypasses rate limiting: read rate limiter applies to all GET requests (except /health).
+- Rate limiter memory leak: cleanup timer evicts old buckets (2x window).
+- Auth brute force bypass: auth failures are rate-limited by IP.
+- OPTIONS bypass: expected CORS preflight, no privileged action.
+
+### GPT additional note
+- Webhook DNS rebinding remains a medium risk if callbackUrl allowlist is not enforced.
+
+## Security Roadmap v7 (planned, do in order)
+1) Hash API keys in rate limiter buckets (avoid raw key in memory).
+2) Protect /health?deep=true (require API key or new opt-in env).
+3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs).
+4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs.
+5) Tighten trust proxy guidance (do not enable without a real proxy).
+6) CORS guidance: avoid "*" in production.
+7) Add deployment security checklist (API key, allowlist, deep health).
+8) Add tests for deep health auth + webhook DNS rebinding.
 
 ## Security Audit Phase 2 (Claude 2025-12-28) - Additional Risks
 
