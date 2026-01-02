@@ -6,6 +6,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2026-01-01 - GPT-5.2 - Consolidate HANDOFF security sections into a single snapshot and keep full audits in archive - Files: [docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2026-01-01 - GPT-5.2 - Add Security Roadmap v7 to architecture + handoff (deep health auth, rate limiter key hashing, webhook DNS rebinding, ops guidance, tests) - Files: [docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2026-01-01 - GPT-5.2 - Fix HOW_TO_USE API key wording and align webhook max-age example default - Files: [HOW_TO_USE.md, .env.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2026-01-01 - GPT-5.2 - Mark Phase 2.2-2.5 and 2.4.x as DONE in architecture roadmap and remove obsolete backlog note - Files: [docs/ARCHITECTURE.md, docs/llm/HISTORY.md] - Version impact: no
