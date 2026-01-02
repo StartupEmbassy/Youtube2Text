@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import type { RunRecord } from "./runManager.js";
 
@@ -62,6 +63,20 @@ function isBlockedHostname(hostname: string): boolean {
   return false;
 }
 
+function isPrivateIp(address: string): boolean {
+  const ip = isIP(address);
+  if (ip === 4) return isPrivateIpv4(address);
+  if (ip === 6) {
+    const normalized = address.toLowerCase();
+    if (normalized.startsWith("::ffff:")) {
+      const v4 = normalized.slice("::ffff:".length);
+      return isPrivateIpv4(v4);
+    }
+    return isPrivateIpv6(address);
+  }
+  return false;
+}
+
 function matchesAllowedDomain(hostname: string, allowed: string): boolean {
   const host = hostname.toLowerCase().replace(/\.$/, "");
   const base = allowed.toLowerCase().replace(/\.$/, "");
@@ -69,7 +84,18 @@ function matchesAllowedDomain(hostname: string, allowed: string): boolean {
   return host.endsWith(`.${base}`);
 }
 
-function isAllowedWebhookUrl(urlString: string): { ok: boolean; error?: string } {
+type ResolveHostFn = (hostname: string) => Promise<string[]>;
+
+async function defaultResolveHost(hostname: string): Promise<string[]> {
+  if (isIP(hostname)) return [hostname];
+  const records = await lookup(hostname, { all: true, verbatim: true });
+  return records.map((r) => r.address);
+}
+
+async function isAllowedWebhookUrl(
+  urlString: string,
+  resolveHost: ResolveHostFn
+): Promise<{ ok: boolean; error?: string }> {
   if (!isHttpUrl(urlString)) {
     return { ok: false, error: "Invalid callbackUrl (must be http/https)" };
   }
@@ -82,6 +108,17 @@ function isAllowedWebhookUrl(urlString: string): { ok: boolean; error?: string }
   if (allowlist.length > 0) {
     const ok = allowlist.some((allowed) => matchesAllowedDomain(hostname, allowed));
     if (!ok) return { ok: false, error: "callbackUrl host not in allowlist" };
+  }
+  try {
+    const resolved = await resolveHost(hostname);
+    if (resolved.some((addr) => isPrivateIp(addr))) {
+      return { ok: false, error: "callbackUrl resolves to a blocked IP" };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      error: `callbackUrl host resolution failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
   return { ok: true };
 }
@@ -182,10 +219,11 @@ export function verifyWebhookSignature(params: {
 export async function deliverWebhook(
   callbackUrl: string,
   event: RunWebhookEvent,
-  deps?: { fetch?: typeof fetch }
+  deps?: { fetch?: typeof fetch; resolveHost?: ResolveHostFn }
 ): Promise<WebhookDeliveryResult> {
   const f = deps?.fetch ?? fetch;
-  const allowed = isAllowedWebhookUrl(callbackUrl);
+  const resolveHost = deps?.resolveHost ?? defaultResolveHost;
+  const allowed = await isAllowedWebhookUrl(callbackUrl, resolveHost);
   if (!allowed.ok) {
     return {
       ok: false,

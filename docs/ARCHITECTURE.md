@@ -261,8 +261,8 @@ Phase S1 - Real-risk fixes (high priority) (DONE)
 1) Hash API keys in rate limiter buckets (avoid raw key in memory).
 2) Protect /health?deep=true (require API key or new opt-in env).
 
-Phase S2 - Webhook hardening
-3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs).
+Phase S2 - Webhook hardening (partial)
+3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs). (DONE)
 4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs.
 
 Phase S3 - Operational hardening (config guidance)

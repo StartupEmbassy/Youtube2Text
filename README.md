@@ -286,6 +286,7 @@ Webhooks (optional):
   - `run:error` when status becomes `error`
   - `run:cancelled` when status becomes `cancelled`
 - `callbackUrl` must be http(s) and is blocked for localhost/private IPs by default.
+- Hostnames are resolved and blocked if they resolve to private/loopback IPs (DNS rebinding protection).
 - Webhooks do not follow redirects (redirects return an error to prevent SSRF).
 - Optional domain allowlist: `Y2T_WEBHOOK_ALLOWED_DOMAINS=example.com,sub.example.com`
 - Optional replay window: `Y2T_WEBHOOK_MAX_AGE_SECONDS` adds `X-Y2T-Max-Age` to headers.

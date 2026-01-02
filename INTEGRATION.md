@@ -9,7 +9,7 @@ Default local API:
 - `http://127.0.0.1:8787`
 
 The server refuses to start unless `Y2T_API_KEY` is set (use `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
-When `Y2T_API_KEY` is set, all endpoints require `X-API-Key` (except `GET /health`).
+When `Y2T_API_KEY` is set, all endpoints require `X-API-Key` (except `GET /health`; deep health requires a key unless `Y2T_HEALTH_DEEP_PUBLIC=true`).
 If the API sits behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` so rate limiting uses `X-Forwarded-For` / `X-Real-IP`.
 `Y2T_API_KEY_MAX_BYTES` caps the `X-API-Key` header size (default 256).
 
@@ -187,6 +187,7 @@ Retry policy:
   - `Y2T_WEBHOOK_RETRIES` (default `3`)
   - `Y2T_WEBHOOK_TIMEOUT_MS` (default `5000`)
 - Redirects are not followed (to prevent SSRF).
+- Hostnames are resolved and blocked if they resolve to private/loopback IPs (DNS rebinding protection).
 
 Recommended replay protection (receiver):
 - Parse `X-Y2T-Timestamp` and reject if older than `X-Y2T-Max-Age` seconds.

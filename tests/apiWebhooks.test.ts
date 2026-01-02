@@ -14,6 +14,8 @@ function withEnv(name: string, value: string | undefined, fn: () => Promise<void
     });
 }
 
+const resolvePublic = async () => ["93.184.216.34"];
+
 test("buildWebhookHeaders includes signature when secret is set", () => {
   const headers = buildWebhookHeaders({
     secret: "secret",
@@ -70,7 +72,7 @@ test("deliverWebhook retries on 500 and succeeds", async () => {
         createdAt: new Date().toISOString(),
       } as any,
     },
-    { fetch: fakeFetch as any }
+    { fetch: fakeFetch as any, resolveHost: resolvePublic }
   );
   assert.equal(res.ok, true);
   assert.equal(calls, 2);
@@ -97,7 +99,7 @@ test("deliverWebhook retries on 429 and succeeds", async () => {
         createdAt: new Date().toISOString(),
       } as any,
     },
-    { fetch: fakeFetch as any }
+    { fetch: fakeFetch as any, resolveHost: resolvePublic }
   );
   assert.equal(res.ok, true);
   assert.equal(calls, 2);
@@ -125,7 +127,7 @@ test("deliverWebhook does not retry on 400", async () => {
         error: "x",
       } as any,
     },
-    { fetch: fakeFetch as any }
+    { fetch: fakeFetch as any, resolveHost: resolvePublic }
   );
   assert.equal(res.ok, false);
   assert.equal(res.status, 400);
@@ -146,10 +148,80 @@ test("deliverWebhook blocks localhost/private IP callbackUrl", async () => {
         createdAt: new Date().toISOString(),
       } as any,
     },
-    { fetch: (async () => ({ ok: true, status: 200 })) as any }
+    { fetch: (async () => ({ ok: true, status: 200 })) as any, resolveHost: resolvePublic }
   );
   assert.equal(res.ok, false);
   assert.match(res.error, /not allowed/i);
+});
+
+test("deliverWebhook blocks callbackUrl that resolves to private IP", async () => {
+  const res = await deliverWebhook(
+    "https://example.com/hook",
+    {
+      type: "run:done",
+      timestamp: new Date().toISOString(),
+      run: {
+        runId: "r1",
+        status: "done",
+        inputUrl: "u",
+        force: false,
+        createdAt: new Date().toISOString(),
+      } as any,
+    },
+    {
+      fetch: (async () => ({ ok: true, status: 200 })) as any,
+      resolveHost: async () => ["127.0.0.1"],
+    }
+  );
+  assert.equal(res.ok, false);
+  assert.match(res.error, /blocked ip/i);
+});
+
+test("deliverWebhook allows callbackUrl when resolution is public", async () => {
+  const res = await deliverWebhook(
+    "https://example.com/hook",
+    {
+      type: "run:done",
+      timestamp: new Date().toISOString(),
+      run: {
+        runId: "r1",
+        status: "done",
+        inputUrl: "u",
+        force: false,
+        createdAt: new Date().toISOString(),
+      } as any,
+    },
+    {
+      fetch: (async () => ({ ok: true, status: 200 })) as any,
+      resolveHost: resolvePublic,
+    }
+  );
+  assert.equal(res.ok, true);
+});
+
+test("deliverWebhook blocks callbackUrl when DNS resolution fails", async () => {
+  const res = await deliverWebhook(
+    "https://example.com/hook",
+    {
+      type: "run:done",
+      timestamp: new Date().toISOString(),
+      run: {
+        runId: "r1",
+        status: "done",
+        inputUrl: "u",
+        force: false,
+        createdAt: new Date().toISOString(),
+      } as any,
+    },
+    {
+      fetch: (async () => ({ ok: true, status: 200 })) as any,
+      resolveHost: async () => {
+        throw new Error("dns failed");
+      },
+    }
+  );
+  assert.equal(res.ok, false);
+  assert.match(res.error ?? "", /resolution failed/i);
 });
 
 test("deliverWebhook enforces allowed domain list when configured", async () => {
@@ -167,7 +239,7 @@ test("deliverWebhook enforces allowed domain list when configured", async () => 
           createdAt: new Date().toISOString(),
         } as any,
       },
-      { fetch: (async () => ({ ok: true, status: 200 })) as any }
+      { fetch: (async () => ({ ok: true, status: 200 })) as any, resolveHost: resolvePublic }
     );
     assert.equal(ok.ok, true);
 
@@ -184,7 +256,7 @@ test("deliverWebhook enforces allowed domain list when configured", async () => 
           createdAt: new Date().toISOString(),
         } as any,
       },
-      { fetch: (async () => ({ ok: true, status: 200 })) as any }
+      { fetch: (async () => ({ ok: true, status: 200 })) as any, resolveHost: resolvePublic }
     );
     assert.equal(blocked.ok, false);
     assert.match(blocked.error, /allowlist/i);
