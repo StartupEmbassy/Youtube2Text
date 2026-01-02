@@ -36,11 +36,13 @@ Current validated risks:
 - API key appears in rate limiter bucket keys (memory disclosure risk if dumped).
 - /health?deep=true reveals system/deps details; consider auth gating.
 - Webhook DNS rebinding risk if callbackUrl allowlist is not enforced.
-- IP spoofing risk if Y2T_TRUST_PROXY=true without a real proxy.
+- IP spoofing risk if Y2T_TRUST_PROXY=true without a real proxy (enables auth brute-force bypass by IP spoof).
 
-Conditional risks to re-check when changing control flow:
-- SSE vs rate limiting ordering (verify limiter runs before SSE handlers).
+Conditional risk (environment-dependent):
 - PowerShell drive query is safe today (root-only), but becomes risky if outputDir is ever user-controlled.
+
+Verified not an issue (current code):
+- SSE bypass rate limiting: read limiter runs for all GET requests; SSE only skips request timeout.
 
 ## Security Roadmap v7 (planned, do in order)
 1) Hash API keys in rate limiter buckets (avoid raw key in memory).
