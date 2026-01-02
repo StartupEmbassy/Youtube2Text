@@ -6,6 +6,7 @@ YYYY-MM-DD - <LLM_NAME> - <Brief summary> - Files: [list of touched files] - Ver
 
 ## Log
 
+2026-01-01 - GPT-5.2 - Fix HOW_TO_USE API key wording and align webhook max-age example default - Files: [HOW_TO_USE.md, .env.example, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2026-01-01 - GPT-5.2 - Mark Phase 2.2-2.5 and 2.4.x as DONE in architecture roadmap and remove obsolete backlog note - Files: [docs/ARCHITECTURE.md, docs/llm/HISTORY.md] - Version impact: no
 2026-01-01 - GPT-5.2 - Standardize docker-compose env defaults and document compose default behavior - Files: [docker-compose.yml, docs/operations/DEPLOY_PLAYBOOK.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no
 2025-12-31 - GPT-5.2 - Resolve Documentation Audit v3 items (how-to quickstart auth, artifacts list, webhook headers, deploy defaults, docker-compose envs, events/storage docs) - Files: [HOW_TO_USE.md, INTEGRATION.md, docs/operations/DEPLOY_PLAYBOOK.md, docker-compose.yml, docs/ARCHITECTURE.md, docs/llm/HANDOFF.md, docs/llm/HISTORY.md] - Version impact: no

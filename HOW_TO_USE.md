@@ -67,7 +67,7 @@ Open:
 
 ```powershell
 $env:ASSEMBLYAI_API_KEY="your_key_here"
-$env:Y2T_API_KEY="your_admin_key_here"   # optional but recommended on servers
+$env:Y2T_API_KEY="your_admin_key_here"   # required unless Y2T_ALLOW_INSECURE_NO_API_KEY=true
 docker compose up --build
 ```
 

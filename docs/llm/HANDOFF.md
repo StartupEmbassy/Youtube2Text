@@ -21,9 +21,9 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Done: log persistence failures (no silent `.catch(() => {})`).
 - Done: request-body schema validation via Zod (remove unsafe casts).
 
-## Review Notes (Claude v5 FULL audit 2025-12-31)
-- Docs/code alignment: ~99%; env defaults fixed, only cosmetic issues remain.
-- Tests: `npm test` 102/102 pass (44 test files, 24s)
+## Review Notes (Claude v6 FULL audit 2026-01-01)
+- Docs/code alignment: ~98%; 2 minor issues found (see below)
+- Tests: `npm test` 102/102 pass (44 test files, 25s)
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`)
 - Docker: healthy
 - Security audit: Phase 1 + Phase 2 complete
@@ -66,74 +66,51 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - `TranscriptionProvider` exposes `getCapabilities()`; pipeline uses provider-owned caps.
 - `/providers` now lists capabilities sourced from provider modules.
 
-## Documentation Audit v5 (Claude 2025-12-31, FRESH COMPLETE AUDIT)
+## Documentation Audit v6 (Claude 2026-01-01, FRESH COMPLETE AUDIT)
 
 ### Summary
-- Tests: 102/102 pass (44 test files, ~24s execution)
+- Tests: 102/102 pass (44 test files, ~25s execution)
 - Version: 0.28.1 (synced package.json + openapi.yaml)
 - `as any` remaining: 4 (in settings.ts, low impact)
-- Overall alignment: ~99%
+- Overall alignment: ~98%
 
 ---
 
-### ISSUES FOUND AND RESOLVED
+### NEW ISSUES FOUND (RESOLVED)
 
-#### 1. .env.example had wrong defaults - FIXED
-- Y2T_MAX_BUFFERED_EVENTS_PER_RUN now 5000 (was 1000)
-- Y2T_SHUTDOWN_TIMEOUT_SECONDS now 60 (was 30)
+#### 1. HOW_TO_USE.md:70 - Y2T_API_KEY described incorrectly
+- Fixed: wording now says required unless Y2T_ALLOW_INSECURE_NO_API_KEY=true.
 
-#### 2. docker-compose.yml missing Y2T_API_PERSIST_RUNS - FIXED
-- Added at line 11
+#### 2. .env.example:27 - Y2T_WEBHOOK_MAX_AGE_SECONDS wrong default
+- Fixed: example now uses 0 to match default (disabled).
 
 ---
 
-### REMAINING (non-blocking)
+### PREVIOUSLY FIXED (v5)
 
-#### 3. docker-compose.yml inconsistent default syntax (RESOLVED)
-- Standardized compose env defaults to `${VAR:-default}` for all optional vars.
-
-#### 4. Unit test coverage gaps (ACCEPTED)
-- 28/75 src modules have direct unit tests
-- 47/75 covered indirectly via integration tests
-- Key gaps: cli/index.ts, youtube/metadata.ts, utils/exec.ts, utils/audio.ts
-- Not blocking; integration tests provide adequate coverage
+- .env.example Y2T_MAX_BUFFERED_EVENTS_PER_RUN: 5000 (was 1000) - FIXED
+- .env.example Y2T_SHUTDOWN_TIMEOUT_SECONDS: 60 (was 30) - FIXED
+- docker-compose.yml Y2T_API_PERSIST_RUNS: added - FIXED
+- docker-compose.yml default syntax: standardized to ${VAR:-default} - FIXED
 
 ---
 
 ### VERIFIED CORRECT (100% Match)
 
-#### API/OpenAPI (28 endpoints)
-- All endpoints in openapi.yaml exist in server.ts
-- All 8 error codes match actual responses
-- Security: /health no auth, all others require X-API-Key
-- All 8 artifact types (txt, md, json, jsonl, meta, comments, csv, audio)
-- Webhook payload/headers match webhooks.ts exactly
-- Zod schemas match OpenAPI request bodies
+- **API/OpenAPI**: 28 endpoints, 8 error codes, security, artifacts, webhooks - ALL MATCH
+- **CLI/Config**: 20+ CLI options, all env var defaults - ALL MATCH
+- **ARCHITECTURE/STRUCTURE**: directories, pipeline stages, storage layout, interfaces - ALL MATCH
+- **STT Providers**: AssemblyAI (5GB, diarization), OpenAI (25MB, no diarization) - ALL MATCH
+- **Deploy/Ops**: rate limits, auth, timeouts, retention defaults - ALL MATCH
 
-#### CLI/Config
-- All 20+ CLI options match src/cli/index.ts
-- All env var defaults match src/config/schema.ts
-- Legacy unprefixed names supported via loader.ts
-- API host:port defaults (127.0.0.1:8787) correct
+---
 
-#### Architecture/Structure
-- All directories exist (src/cli, api, config, youtube, transcription, etc.)
-- Pipeline stages: download|transcribe|split(conditional)|comments|save|format
-- Storage layout matches: output/<channel>/<basename>.{json,txt,md,jsonl,csv,meta.json}
-- All interfaces correct (TranscriptionProvider, StorageAdapter, PipelineEventEmitter)
+### ACCEPTED (non-blocking)
 
-#### Transcription Providers
-- AssemblyAI: maxAudioBytes=5GB, supportsDiarization=true, getAccount() available
-- OpenAI Whisper: maxAudioBytes=25MB, supportsDiarization=false
-- Factory pattern (createTranscriptionProvider) correct
-- /providers endpoint returns both with capabilities
-
-#### Deploy/Ops
-- All rate limit defaults correct (write=60, read=300, health=30 per 60s)
-- Auth defaults correct (fail_max=30, window=60000ms)
-- Timeout defaults correct (request=30000ms, run=240min, shutdown=60s)
-- Retention defaults correct (runs=30d, audio=7d)
-- Healthcheck deep mode rate-limited correctly
+#### Unit test coverage gaps
+- 28/75 src modules have direct unit tests
+- 47/75 covered indirectly via integration tests
+- Key gaps: cli/index.ts, youtube/metadata.ts, utils/exec.ts, utils/audio.ts
 
 ## Tech Debt Backlog (do in order)
 1) Normalize null/undefined handling across API/settings inputs (DONE).
