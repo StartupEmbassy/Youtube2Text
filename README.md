@@ -223,6 +223,7 @@ Rate limiting (read endpoints):
 
 Deep health throttle:
 - `Y2T_RATE_LIMIT_HEALTH_MAX` (default `30`) and `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (default `60000`).
+- `Y2T_HEALTH_DEEP_PUBLIC` (default `false`) to allow unauthenticated `GET /health?deep=true`.
 
 Run timeout safety net:
 - `Y2T_RUN_TIMEOUT_MINUTES` (default `240`, set `0` to disable) marks a run as `error` if it stays `running` too long.
@@ -307,7 +308,7 @@ Run limiting:
 
 Endpoints:
 - `GET /health`
-- `GET /health?deep=true` (best-effort deps + disk + persistence checks)
+- `GET /health?deep=true` (best-effort deps + disk + persistence checks; requires `X-API-Key` unless `Y2T_HEALTH_DEEP_PUBLIC=true`)
 - `GET /providers` (provider capabilities: max upload size, diarization support)
 - `GET /metrics` (Prometheus text format)
 - `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)

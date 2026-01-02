@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { timingSafeEqual } from "node:crypto";
+import { parse as parseUrl } from "node:url";
 import { getClientIp } from "./ip.js";
 
 type AuthLimitDecision = { allowed: boolean; retryAfterSeconds?: number };
@@ -25,9 +26,30 @@ export function isInsecureModeEnabled(): boolean {
   return typeof val === "string" && val.trim().toLowerCase() === "true";
 }
 
+function isDeepHealthRequest(url: string): boolean {
+  const parsed = parseUrl(url, true);
+  const pathname = parsed.pathname ?? "/";
+  if (pathname !== "/health") return false;
+  const deep = parsed.query?.deep;
+  return (
+    deep === "true" ||
+    deep === "1" ||
+    (Array.isArray(deep) && (deep.includes("true") || deep.includes("1")))
+  );
+}
+
+function isDeepHealthPublic(): boolean {
+  const raw = process.env.Y2T_HEALTH_DEEP_PUBLIC;
+  if (!raw) return false;
+  const val = raw.trim().toLowerCase();
+  return val === "true" || val === "1" || val === "yes";
+}
+
 export function isPublicPath(req: IncomingMessage): boolean {
   const url = req.url ?? "/";
-  return url === "/health" || url.startsWith("/health?");
+  if (!url.startsWith("/health")) return false;
+  if (isDeepHealthRequest(url)) return isDeepHealthPublic();
+  return true;
 }
 
 export function extractProvidedApiKey(req: IncomingMessage): string | undefined {

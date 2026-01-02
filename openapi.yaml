@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.28.1
+  version: 0.29.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -393,7 +393,7 @@ paths:
           in: query
           required: false
           schema: { type: boolean }
-          description: When true, returns a best-effort deep health check (deps + disk + persistence).
+          description: When true, returns a best-effort deep health check (deps + disk + persistence). Requires X-API-Key unless Y2T_HEALTH_DEEP_PUBLIC=true.
       responses:
         "200":
           description: OK

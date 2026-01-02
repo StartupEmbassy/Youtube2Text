@@ -36,6 +36,7 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints; defaults 60 / 60000ms)
 - `Y2T_RATE_LIMIT_READ_MAX` + `Y2T_RATE_LIMIT_READ_WINDOW_MS` (rate limit read endpoints; defaults 300 / 60000ms)
 - `Y2T_RATE_LIMIT_HEALTH_MAX` + `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (throttle deep health checks; defaults 30 / 60000ms)
+- `Y2T_HEALTH_DEEP_PUBLIC=false` (set true to allow unauthenticated deep health checks)
 - `Y2T_SSE_MAX_CLIENTS` (cap concurrent SSE connections; default 1000, `0` disables)
 - `Y2T_REQUEST_TIMEOUT_MS` (global request timeout for non-SSE requests)
 - Default: `Y2T_REQUEST_TIMEOUT_MS=30000`
@@ -87,7 +88,7 @@ Terminate TLS in a reverse proxy (Caddy/Nginx/Traefik) and forward:
 ## Health and ops
 
 - Basic health: `GET /health`
-- Deep health (deps + disk + persistence): `GET /health?deep=true`
+- Deep health (deps + disk + persistence): `GET /health?deep=true` (requires API key unless `Y2T_HEALTH_DEEP_PUBLIC=true`)
 - Manual retention cleanup: `POST /maintenance/cleanup`
 
 ## Periodic maintenance (cron example)

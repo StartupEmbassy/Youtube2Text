@@ -257,7 +257,7 @@ Future input mode (not implemented yet):
 - Provider capabilities now live on the provider interface (DONE v0.28.1).
 
 ## Security Roadmap v7 (planned, do in order)
-Phase S1 - Real-risk fixes (high priority)
+Phase S1 - Real-risk fixes (high priority) (DONE)
 1) Hash API keys in rate limiter buckets (avoid raw key in memory).
 2) Protect /health?deep=true (require API key or new opt-in env).
 

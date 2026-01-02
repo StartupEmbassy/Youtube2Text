@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.28.1 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.29.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -45,8 +45,8 @@ Verified not an issue (current code):
 - SSE bypass rate limiting: read limiter runs for all GET requests; SSE only skips request timeout.
 
 ## Security Roadmap v7 (planned, do in order)
-1) Hash API keys in rate limiter buckets (avoid raw key in memory).
-2) Protect /health?deep=true (require API key or new opt-in env).
+1) Hash API keys in rate limiter buckets (avoid raw key in memory). (DONE)
+2) Protect /health?deep=true (require API key or new opt-in env). (DONE)
 3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs).
 4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs.
 5) Tighten trust proxy guidance (do not enable without a real proxy).
@@ -66,6 +66,7 @@ Verified not an issue (current code):
 - `.env` must include `OPENAI_API_KEY` or `Y2T_OPENAI_API_KEY` when `sttProvider=openai_whisper`.
 - Optional: `Y2T_MAX_AUDIO_MB` (cap before splitting) + `Y2T_SPLIT_OVERLAP_SECONDS` (overlap between chunks).
 - `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
+- `GET /health?deep=true` requires `X-API-Key` unless `Y2T_HEALTH_DEEP_PUBLIC=true`.
 - If the API is behind a trusted proxy/load balancer, set `Y2T_TRUST_PROXY=true`.
 - `Y2T_SSE_MAX_CLIENTS` caps concurrent SSE connections (default 1000, `0` disables).
 - `Y2T_API_KEY_MAX_BYTES` caps `X-API-Key` size; read/health rate limits and request timeout are configurable (see README).

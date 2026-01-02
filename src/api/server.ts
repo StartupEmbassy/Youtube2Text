@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createReadStream, promises as fs } from "node:fs";
 import { basename as pathBasename } from "node:path";
+import { createHash } from "node:crypto";
 import { parse as parseUrl } from "node:url";
 import type { AppConfig } from "../config/schema.js";
 import { RunManager } from "./runManager.js";
@@ -239,9 +240,12 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const isWriteMethod = (method: string | undefined) =>
     method === "POST" || method === "PATCH" || method === "DELETE";
 
+  const hashApiKey = (apiKey: string): string =>
+    createHash("sha256").update(apiKey).digest("hex").slice(0, 24);
+
   const rateLimitKey = (req: IncomingMessage): string => {
     const apiKey = typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined;
-    if (apiKey && apiKey.trim().length > 0) return `key:${apiKey}`;
+    if (apiKey && apiKey.trim().length > 0) return `key:${hashApiKey(apiKey.trim())}`;
     return `ip:${getClientIp(req)}`;
   };
 

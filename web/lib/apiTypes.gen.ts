@@ -1366,7 +1366,7 @@ export interface operations {
     getHealth: {
         parameters: {
             query?: {
-                /** @description When true, returns a best-effort deep health check (deps + disk + persistence). */
+                /** @description When true, returns a best-effort deep health check (deps + disk + persistence). Requires X-API-Key unless Y2T_HEALTH_DEEP_PUBLIC=true. */
                 deep?: boolean;
             };
             header?: never;

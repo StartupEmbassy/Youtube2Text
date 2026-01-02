@@ -75,7 +75,7 @@ docker compose up --build
 
 - The API refuses to start unless `Y2T_API_KEY` is set.
 - For local development only, set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to run without auth.
-- When `Y2T_API_KEY` is set, clients must send `X-API-Key` to the API (except `GET /health`).
+- When `Y2T_API_KEY` is set, clients must send `X-API-Key` to the API (except `GET /health`; deep health requires a key unless `Y2T_HEALTH_DEEP_PUBLIC=true`).
 
 The web UI does not expose the key to the browser; it proxies API calls via `/api/*`.
 

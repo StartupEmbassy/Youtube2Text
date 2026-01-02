@@ -132,10 +132,14 @@ test("deep health rate limit returns 429 after exceeding max", async () => {
       const port = (server.address() as any).port as number;
 
       try {
-        const res1 = await fetch(`http://127.0.0.1:${port}/health?deep=true`);
+        const res1 = await fetch(`http://127.0.0.1:${port}/health?deep=true`, {
+          headers: { "x-api-key": "test" },
+        });
         assert.equal(res1.status, 200);
 
-        const res2 = await fetch(`http://127.0.0.1:${port}/health?deep=true`);
+        const res2 = await fetch(`http://127.0.0.1:${port}/health?deep=true`, {
+          headers: { "x-api-key": "test" },
+        });
         assert.equal(res2.status, 429);
       } finally {
         await new Promise<void>((resolve) => server.close(() => resolve()));

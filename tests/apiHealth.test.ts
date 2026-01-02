@@ -60,7 +60,9 @@ test("GET /health?deep=true returns deep health structure", async () => {
   const port = (server.address() as any).port as number;
 
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/health?deep=true`);
+    const res = await fetch(`http://127.0.0.1:${port}/health?deep=true`, {
+      headers: { "x-api-key": "test" },
+    });
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.service, "youtube2text-api");
@@ -75,4 +77,3 @@ test("GET /health?deep=true returns deep health structure", async () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
-

@@ -52,6 +52,37 @@ test("requireApiKey allows /health without key", () => {
   });
 });
 
+test("requireApiKey rejects /health?deep=true without key by default", () => {
+  withEnv("secret", () => {
+    const prevDeep = process.env.Y2T_HEALTH_DEEP_PUBLIC;
+    delete process.env.Y2T_HEALTH_DEEP_PUBLIC;
+    try {
+      const res = new FakeResponse();
+      const ok = requireApiKey({ url: "/health?deep=true", headers: {}, socket: { remoteAddress: "127.0.0.1" } } as any, res as any);
+      assert.equal(ok, false);
+      assert.equal(res.statusCode, 401);
+    } finally {
+      if (prevDeep === undefined) delete process.env.Y2T_HEALTH_DEEP_PUBLIC;
+      else process.env.Y2T_HEALTH_DEEP_PUBLIC = prevDeep;
+    }
+  });
+});
+
+test("requireApiKey allows /health?deep=true when public flag is enabled", () => {
+  withEnv("secret", () => {
+    const prevDeep = process.env.Y2T_HEALTH_DEEP_PUBLIC;
+    process.env.Y2T_HEALTH_DEEP_PUBLIC = "true";
+    try {
+      const res = new FakeResponse();
+      const ok = requireApiKey({ url: "/health?deep=true", headers: {} } as any, res as any);
+      assert.equal(ok, true);
+    } finally {
+      if (prevDeep === undefined) delete process.env.Y2T_HEALTH_DEEP_PUBLIC;
+      else process.env.Y2T_HEALTH_DEEP_PUBLIC = prevDeep;
+    }
+  });
+});
+
 test("requireApiKey rejects missing key", () => {
   withEnv("secret", () => {
     const res = new FakeResponse();
