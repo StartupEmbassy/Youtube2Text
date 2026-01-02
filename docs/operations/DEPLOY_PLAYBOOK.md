@@ -83,6 +83,16 @@ Non-secret defaults:
 - Keep the API private (no public exposure) when possible:
   - If you must expose it, enforce `Y2T_API_KEY` and restrict `Y2T_CORS_ORIGINS`.
 
+## Security checklist (before going public)
+
+1) `Y2T_API_KEY` set (and NOT using `Y2T_ALLOW_INSECURE_NO_API_KEY=true`).
+2) `Y2T_CORS_ORIGINS` set to specific origins (avoid `*`).
+3) `Y2T_WEBHOOK_ALLOWED_DOMAINS` set (explicit allowlist).
+4) `Y2T_WEBHOOK_SECRET` set (HMAC signatures enabled).
+5) `Y2T_HEALTH_DEEP_PUBLIC=false` (deep health requires auth).
+6) If using a proxy: `Y2T_TRUST_PROXY=true` only when behind a trusted proxy.
+7) API not exposed publicly if avoidable; otherwise ensure rate limits are enabled.
+
 ## Reverse proxy (recommended)
 
 Terminate TLS in a reverse proxy (Caddy/Nginx/Traefik) and forward:

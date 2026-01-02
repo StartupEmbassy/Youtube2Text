@@ -269,6 +269,6 @@ Phase S3 - Operational hardening (config guidance) (DONE)
 5) Tighten trust proxy guidance (do not enable without a real proxy).
 6) CORS guidance: avoid "*" in production.
 
-Phase S4 - Verification
-7) Add security checklist for deployments (API key, allowlist, deep health).
-8) Add tests for deep health auth + webhook DNS rebinding.
+Phase S4 - Verification (DONE)
+7) Add security checklist for deployments (API key, allowlist, deep health). (DONE)
+8) Add tests for deep health auth + webhook DNS rebinding. (DONE)

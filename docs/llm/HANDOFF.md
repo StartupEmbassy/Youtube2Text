@@ -53,8 +53,8 @@ Verified not an issue (current code):
 4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs. (DONE)
 5) Tighten trust proxy guidance (do not enable without a real proxy). (DONE)
 6) CORS guidance: avoid "*" in production. (DONE)
-7) Add deployment security checklist (API key, allowlist, deep health).
-8) Add tests for deep health auth + webhook DNS rebinding.
+7) Add deployment security checklist (API key, allowlist, deep health). (DONE)
+8) Add tests for deep health auth + webhook DNS rebinding. (DONE)
 
 ## Testing / Sanity Pass
 - `npm test`
