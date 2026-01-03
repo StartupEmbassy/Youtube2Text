@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { createWriteStream, promises as fs } from "node:fs";
-import { dirname } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 export function sanitizeFilename(
   input: string,
@@ -26,14 +27,43 @@ export async function ensureDir(path: string) {
   await fs.mkdir(path, { recursive: true });
 }
 
+function tmpPathFor(path: string) {
+  const dir = dirname(path);
+  const base = basename(path);
+  return join(dir, `.${base}.tmp-${randomUUID()}`);
+}
+
+async function replaceFileAtomic(tmpPath: string, finalPath: string) {
+  try {
+    await fs.rename(tmpPath, finalPath);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException)?.code;
+    if (code === "EEXIST" || code === "EPERM" || code === "EBUSY") {
+      await fs.rm(finalPath, { force: true });
+      await fs.rename(tmpPath, finalPath);
+      return;
+    }
+    try {
+      await fs.rm(tmpPath, { force: true });
+    } catch {
+      // ignore cleanup failures
+    }
+    throw error;
+  }
+}
+
 export async function writeJson(path: string, data: unknown) {
   await ensureDir(dirname(path));
-  await fs.writeFile(path, JSON.stringify(data, null, 2), "utf8");
+  const tmp = tmpPathFor(path);
+  await fs.writeFile(tmp, JSON.stringify(data, null, 2), "utf8");
+  await replaceFileAtomic(tmp, path);
 }
 
 export async function writeText(path: string, text: string) {
   await ensureDir(dirname(path));
-  await fs.writeFile(path, text, "utf8");
+  const tmp = tmpPathFor(path);
+  await fs.writeFile(tmp, text, "utf8");
+  await replaceFileAtomic(tmp, path);
 }
 
 export async function appendLine(path: string, line: string) {

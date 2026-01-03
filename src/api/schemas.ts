@@ -160,6 +160,7 @@ export const settingsPatchSchema = z.object({
       maxPollMinutes: optionalClampedIntOrNull(1, 240),
       downloadRetries: optionalClampedIntOrNull(0, 10),
       transcriptionRetries: optionalClampedIntOrNull(0, 10),
+      providerTimeoutMs: optionalClampedIntOrNull(1000, 600000),
       catalogMaxAgeHours: optionalClampedIntOrNull(-1, 8760),
     })
     .strict(),

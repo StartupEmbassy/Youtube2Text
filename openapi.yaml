@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.31.2
+  version: 0.32.0
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -973,6 +973,7 @@ components:
         maxPollMinutes: { type: integer }
         downloadRetries: { type: integer }
         transcriptionRetries: { type: integer }
+        providerTimeoutMs: { type: integer }
         catalogMaxAgeHours: { type: integer }
       additionalProperties: false
 
@@ -1009,6 +1010,7 @@ components:
             maxPollMinutes: { $ref: "#/components/schemas/NonSecretSettingSource" }
             downloadRetries: { $ref: "#/components/schemas/NonSecretSettingSource" }
             transcriptionRetries: { $ref: "#/components/schemas/NonSecretSettingSource" }
+            providerTimeoutMs: { $ref: "#/components/schemas/NonSecretSettingSource" }
             catalogMaxAgeHours: { $ref: "#/components/schemas/NonSecretSettingSource" }
 
     NonSecretSettingSource:
@@ -1043,6 +1045,7 @@ components:
             maxPollMinutes: { type: [integer, "null"] }
             downloadRetries: { type: [integer, "null"] }
             transcriptionRetries: { type: [integer, "null"] }
+            providerTimeoutMs: { type: [integer, "null"] }
             catalogMaxAgeHours: { type: [integer, "null"] }
       additionalProperties: false
 

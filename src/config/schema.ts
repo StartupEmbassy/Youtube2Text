@@ -34,6 +34,7 @@ const configObjectSchema = z.object({
   maxPollMinutes: z.number().int().positive().default(60),
   downloadRetries: z.number().int().nonnegative().default(2),
   transcriptionRetries: z.number().int().nonnegative().default(2),
+  providerTimeoutMs: z.number().int().positive().default(120000),
   // Channel catalog cache TTL for exact planning. When exceeded, we force a full refresh.
   // Set <= 0 to disable TTL (cache never expires).
   catalogMaxAgeHours: z.number().int().default(168),

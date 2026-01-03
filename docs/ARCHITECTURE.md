@@ -284,10 +284,10 @@ See `docs/llm/HANDOFF.md` for the full checklist and status.
 
 Goal: adopt the best reliability patterns from `ShellSpeechToText` without copying code, preserving Y2T interfaces and modularity.
 
-Phase A - Low-risk hardening:
-1) Atomic file writes (temp + rename) for persistence/settings writes.
+Phase A - Low-risk hardening (DONE):
+1) Atomic file writes (temp + rename) for persistence/settings writes. (DONE)
    - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\stats.service.ts`
-2) AbortController timeouts for external API calls (provider fetches).
+2) AbortController timeouts for external API calls (provider fetches). (DONE)
    - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\deepgram-billing.service.ts`
 
 Phase B - Provider resiliency:

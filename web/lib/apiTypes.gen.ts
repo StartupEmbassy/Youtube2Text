@@ -544,6 +544,7 @@ export interface components {
             maxPollMinutes?: number;
             downloadRetries?: number;
             transcriptionRetries?: number;
+            providerTimeoutMs?: number;
             catalogMaxAgeHours?: number;
         };
         SettingsGetResponse: {
@@ -571,6 +572,7 @@ export interface components {
                 maxPollMinutes?: components["schemas"]["NonSecretSettingSource"];
                 downloadRetries?: components["schemas"]["NonSecretSettingSource"];
                 transcriptionRetries?: components["schemas"]["NonSecretSettingSource"];
+                providerTimeoutMs?: components["schemas"]["NonSecretSettingSource"];
                 catalogMaxAgeHours?: components["schemas"]["NonSecretSettingSource"];
             };
         };
@@ -601,6 +603,7 @@ export interface components {
                 maxPollMinutes?: number | null;
                 downloadRetries?: number | null;
                 transcriptionRetries?: number | null;
+                providerTimeoutMs?: number | null;
                 catalogMaxAgeHours?: number | null;
             };
         };

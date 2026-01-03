@@ -7,18 +7,22 @@ import { buildCreateTranscriptRequestBody } from "./request.js";
 type CreateResponse = { id: string; status: string };
 
 export class AssemblyAiClient {
-  constructor(private apiKey: string) {}
+  constructor(
+    private apiKey: string,
+    private timeoutMs?: number
+  ) {}
 
   async getAccount(): Promise<Record<string, unknown>> {
     return await requestJson<Record<string, unknown>>(
       this.apiKey,
       "/account",
-      { method: "GET" }
+      { method: "GET" },
+      this.timeoutMs
     );
   }
 
-  async uploadAudio(audioPath: string): Promise<string> {
-    const data = await uploadFile(this.apiKey, audioPath);
+  async uploadAudio(audioPath: string, timeoutMs?: number): Promise<string> {
+    const data = await uploadFile(this.apiKey, audioPath, timeoutMs ?? this.timeoutMs);
     return data.upload_url;
   }
 
@@ -27,7 +31,8 @@ export class AssemblyAiClient {
     options: Pick<
       TranscriptionOptions,
       "languageCode" | "languageDetection" | "languageConfidenceThreshold"
-    >
+    >,
+    timeoutMs?: number
   ): Promise<CreateResponse> {
     return await requestJson<CreateResponse>(this.apiKey, "/transcript", {
       method: "POST",
@@ -39,16 +44,17 @@ export class AssemblyAiClient {
           languageConfidenceThreshold: options.languageConfidenceThreshold,
         }),
       }),
-    });
+    }, timeoutMs ?? this.timeoutMs);
   }
 
-  async getTranscript(id: string): Promise<TranscriptJson> {
+  async getTranscript(id: string, timeoutMs?: number): Promise<TranscriptJson> {
     return await requestJson<TranscriptJson>(
       this.apiKey,
       `/transcript/${id}`,
       {
       method: "GET",
-      }
+      },
+      timeoutMs ?? this.timeoutMs
     );
   }
 
@@ -56,22 +62,23 @@ export class AssemblyAiClient {
     audioPath: string,
     opts: TranscriptionOptions
   ): Promise<TranscriptJson> {
+    const timeoutMs = opts.providerTimeoutMs ?? this.timeoutMs;
     return await retry(
       async () => {
         logStep("upload", `Uploading to AssemblyAI: ${audioPath}`);
-        const uploadUrl = await this.uploadAudio(audioPath);
+        const uploadUrl = await this.uploadAudio(audioPath, timeoutMs);
         const created = await this.createTranscript(uploadUrl, {
           languageCode: opts.languageCode,
           languageDetection: opts.languageDetection,
           languageConfidenceThreshold: opts.languageConfidenceThreshold,
-        });
+        }, timeoutMs);
         const deadline =
           Date.now() + opts.maxPollMinutes * 60 * 1000;
 
         logStep("transcribe", `Transcription started: ${created.id}`);
 
         while (Date.now() < deadline) {
-          const current = await this.getTranscript(created.id);
+          const current = await this.getTranscript(created.id, timeoutMs);
           if (current.status === "completed") return current;
           if (current.status === "error") {
             throw new Error(

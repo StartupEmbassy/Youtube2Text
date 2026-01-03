@@ -18,16 +18,25 @@ function isInsufficientCredits(status: number, body: string): boolean {
 export async function requestJson<T>(
   apiKey: string,
   path: string,
-  init: RequestInit
+  init: RequestInit,
+  timeoutMs?: number
 ): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      Authorization: apiKey,
-      "Content-Type": "application/json",
-      ...(init.headers || {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        Authorization: apiKey,
+        "Content-Type": "application/json",
+        ...(init.headers || {}),
+      },
+    }, timeoutMs);
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new Error("AssemblyAI request timed out");
+    }
+    throw error;
+  }
   if (!response.ok) {
     const text = await response.text();
     if (isInsufficientCredits(response.status, text)) {
@@ -43,14 +52,23 @@ export async function requestJson<T>(
 
 export async function uploadFile(
   apiKey: string,
-  audioPath: string
+  audioPath: string,
+  timeoutMs?: number
 ): Promise<{ upload_url: string }> {
   const buffer = await readFile(audioPath);
-  const response = await fetch(`${API_BASE}/upload`, {
-    method: "POST",
-    headers: { Authorization: apiKey },
-    body: buffer,
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${API_BASE}/upload`, {
+      method: "POST",
+      headers: { Authorization: apiKey },
+      body: buffer,
+    }, timeoutMs);
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new Error("AssemblyAI upload timed out");
+    }
+    throw error;
+  }
   if (!response.ok) {
     const text = await response.text();
     if (isInsufficientCredits(response.status, text)) {
@@ -62,4 +80,25 @@ export async function uploadFile(
     throw new Error(`Upload failed ${response.status}: ${safe}`);
   }
   return (await response.json()) as { upload_url: string };
+}
+
+function isAbortError(error: unknown): boolean {
+  return !!error && typeof error === "object" && (error as Error).name === "AbortError";
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs?: number
+): Promise<Response> {
+  if (!timeoutMs || timeoutMs <= 0) {
+    return await fetch(url, init);
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
 }

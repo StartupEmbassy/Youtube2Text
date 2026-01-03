@@ -58,6 +58,7 @@ function loadEnvConfig(): PartialConfig {
     maxPollMinutes: parseOptionalNumber(getEnv("Y2T_MAX_POLL_MINUTES", "MAX_POLL_MINUTES")),
     downloadRetries: parseOptionalNumber(getEnv("Y2T_DOWNLOAD_RETRIES", "DOWNLOAD_RETRIES")),
     transcriptionRetries: parseOptionalNumber(getEnv("Y2T_TRANSCRIPTION_RETRIES", "TRANSCRIPTION_RETRIES")),
+    providerTimeoutMs: parseOptionalNumber(getEnv("Y2T_PROVIDER_TIMEOUT_MS", "PROVIDER_TIMEOUT_MS")),
     catalogMaxAgeHours: parseOptionalNumber(getEnv("Y2T_CATALOG_MAX_AGE_HOURS", "CATALOG_MAX_AGE_HOURS")),
     ytDlpPath: getEnv("Y2T_YT_DLP_PATH", "YT_DLP_PATH") || env.YTDLP_PATH,
   };

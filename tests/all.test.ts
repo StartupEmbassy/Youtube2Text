@@ -14,6 +14,7 @@ import "./urlNormalization.test.js";
 import "./processedIndex.test.js";
 import "./apiEventBuffer.test.js";
 import "./apiEventBufferRace.test.js";
+import "./atomicWrites.test.js";
 import "./mergeChunks.test.js";
 import "./apiPersistence.test.js";
 import "./apiGracefulShutdown.test.js";

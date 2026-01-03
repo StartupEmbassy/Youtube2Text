@@ -6,10 +6,15 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.31.2 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.32.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
+
+## Latest Checks (0.32.0)
+- Tests: `npm test` 112/112 pass
+- Build: `npm run build`, `npm --prefix web run build` OK
+- API contract: `npm run api:contract:check` OK
 
 ## Phase 2.8.2 (DONE): Server-side clamps/validation
 - Added server-side validation/clamping for settings, runs, and watchlist inputs.
@@ -261,7 +266,7 @@ Second pass auditing CLI, config, YouTube modules, pipeline, and formatters.
 23. *NEW:* Escape CSV formula characters
 24. *NEW:* Sanitize log output
 
-## Security Roadmap v8 Status (0.31.2)
+## Security Roadmap v8 Status (0.32.0)
 - All P0/P1/P2 items above are DONE.
 - Remaining non-roadmap audit items to consider later:
   - `fs.ts` symlink guard for recursive mkdir
@@ -438,27 +443,25 @@ Analyzed sibling project at `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToT
 2. Apply to `persistence.ts` and `settings.ts`
 3. Pattern: write temp file -> fs.rename() (atomic on same filesystem)
 
-**If implementing AbortController timeout:**
-1. Read `deepgram-billing.service.ts:62-63`
-2. Apply to `assemblyai/http.ts` fetch calls
-3. Pattern: `signal: AbortSignal.timeout(15000)`
+**AbortController timeout notes (DONE):**
+1. Pattern applied in `src/transcription/assemblyai/http.ts` and `src/transcription/openai/index.ts`.
+2. Config/Env: `providerTimeoutMs` / `Y2T_PROVIDER_TIMEOUT_MS` (default 120000).
 
 ## Roadmap: Feature Mining Adoption (proposed)
 
 Goal: adopt the strongest ideas from `ShellSpeechToText` without copying code, preserving Y2T interfaces and modularity.
 
-### Phase A - Low-risk hardening (do first)
-1) Atomic file writes (HIGH)
-   - Target: `src/api/persistence.ts`, `src/config/settings.ts`
+### Phase A - Low-risk hardening (DONE)
+1) Atomic file writes (HIGH) - DONE
+   - Target: `src/api/persistence.ts`, `src/config/settings.ts`, `src/utils/fs.ts`
    - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\stats.service.ts`
-   - Approach: write to temp file + rename (same filesystem) for run/events/settings writes.
-   - Tests: add unit test that writes twice and ensures file is valid JSON.
+   - Approach: write to temp file + rename (same filesystem) for JSON/text writes.
+   - Tests: `tests/atomicWrites.test.ts`
 
-2) AbortController timeouts for external API calls (MEDIUM)
-   - Target: `src/transcription/assemblyai/http.ts`, `src/transcription/openai/index.ts` (and any webhook fetch if needed)
+2) AbortController timeouts for external API calls (MEDIUM) - DONE
+   - Target: `src/transcription/assemblyai/http.ts`, `src/transcription/openai/index.ts`
    - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\deepgram-billing.service.ts`
-   - New env: `Y2T_PROVIDER_TIMEOUT_MS` (default 15000)
-   - Tests: ensure timeout returns a controlled error message.
+   - New env: `Y2T_PROVIDER_TIMEOUT_MS` (default 120000)
 
 ### Phase B - Provider resiliency (core value)
 3) Multi-key load balancer (HIGH)

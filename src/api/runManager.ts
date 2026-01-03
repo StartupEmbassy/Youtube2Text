@@ -16,8 +16,8 @@ import {
   loadPersistedRuns,
   RunPersistence,
   writeRunRecord,
-  ensureDir,
 } from "./persistence.js";
+import { ensureDir } from "../utils/fs.js";
 
 export type RunStatus = "queued" | "running" | "done" | "error" | "cancelled";
 

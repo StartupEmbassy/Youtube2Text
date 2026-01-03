@@ -47,13 +47,16 @@ function segmentsToUtterances(segments: OpenAiSegment[] | undefined) {
 export class OpenAiWhisperProvider implements TranscriptionProvider {
   name: "openai_whisper" = "openai_whisper";
   private maxAudioBytesOverride?: number;
+  private timeoutMs?: number;
 
   constructor(
     private apiKey: string,
     private model: string,
-    maxAudioBytesOverride?: number
+    maxAudioBytesOverride?: number,
+    timeoutMs?: number
   ) {
     this.maxAudioBytesOverride = maxAudioBytesOverride;
+    this.timeoutMs = timeoutMs;
   }
 
   getCapabilities(): ProviderCapabilities {
@@ -61,6 +64,7 @@ export class OpenAiWhisperProvider implements TranscriptionProvider {
   }
 
   async transcribe(audioPath: string, opts: TranscriptionOptions): Promise<TranscriptJson> {
+    const timeoutMs = opts.providerTimeoutMs ?? this.timeoutMs;
     const buffer = await fs.readFile(audioPath);
     const fileName = basename(audioPath);
     const file = new File([buffer], fileName);
@@ -77,13 +81,21 @@ export class OpenAiWhisperProvider implements TranscriptionProvider {
       }
     }
 
-    const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: form,
-    });
+    let res: Response;
+    try {
+      res = await fetchWithTimeout("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: form,
+      }, timeoutMs);
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw new Error("OpenAI Whisper request timed out");
+      }
+      throw error;
+    }
 
     if (!res.ok) {
       const text = await res.text();
@@ -107,5 +119,26 @@ export class OpenAiWhisperProvider implements TranscriptionProvider {
       language_code: data.language ?? normalizeOpenAiLanguage(opts.languageCode),
       provider: "openai_whisper",
     };
+  }
+}
+
+function isAbortError(error: unknown): boolean {
+  return !!error && typeof error === "object" && (error as Error).name === "AbortError";
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs?: number
+): Promise<Response> {
+  if (!timeoutMs || timeoutMs <= 0) {
+    return await fetch(url, init);
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
   }
 }

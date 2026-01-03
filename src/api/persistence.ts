@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import type { RunRecord } from "./runManager.js";
 import type { PipelineEvent } from "../pipeline/events.js";
+import { ensureDir, writeJson } from "../utils/fs.js";
 
 export type PersistedEventLine = {
   id: number;
@@ -36,14 +37,10 @@ export function createRunPersistence(rootDir: string): RunPersistence {
   };
 }
 
-export async function ensureDir(path: string) {
-  await fs.mkdir(path, { recursive: true });
-}
-
 export async function writeRunRecord(p: RunPersistence, record: RunRecord) {
   assertSafeRunId(record.runId);
   await ensureDir(p.runDir(record.runId));
-  await fs.writeFile(p.runJsonPath(record.runId), JSON.stringify(record, null, 2), "utf8");
+  await writeJson(p.runJsonPath(record.runId), record);
 }
 
 export async function appendEvent(p: RunPersistence, runId: string, line: PersistedEventLine) {

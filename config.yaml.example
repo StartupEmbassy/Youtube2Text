@@ -17,6 +17,7 @@ transcriptionRetries: 2
 catalogMaxAgeHours: 168          # TTL for output/_catalog/<channelId>.json; <= 0 disables expiry
 pollIntervalMs: 5000
 maxPollMinutes: 60
+providerTimeoutMs: 120000
 csvEnabled: false
 assemblyAiCreditsCheck: warn   # warn | abort | none
 assemblyAiMinBalanceMinutes: 60

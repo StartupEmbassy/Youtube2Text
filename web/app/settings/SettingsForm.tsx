@@ -123,6 +123,8 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
       downloadRetries: s.downloadRetries === undefined ? "" : String(s.downloadRetries),
       transcriptionRetries:
         s.transcriptionRetries === undefined ? "" : String(s.transcriptionRetries),
+      providerTimeoutMs:
+        s.providerTimeoutMs === undefined ? "" : String(s.providerTimeoutMs),
       catalogMaxAgeHours: s.catalogMaxAgeHours === undefined ? "" : String(s.catalogMaxAgeHours),
     };
   }, [data.settings]);
@@ -183,6 +185,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
       const maxPollMinutes = parseOptionalInt(form.maxPollMinutes);
       const downloadRetries = parseOptionalInt(form.downloadRetries);
       const transcriptionRetries = parseOptionalInt(form.transcriptionRetries);
+      const providerTimeoutMs = parseOptionalInt(form.providerTimeoutMs);
       const catalogMaxAgeHours = parseOptionalInt(form.catalogMaxAgeHours);
       const maxAudioMB = parseOptionalInt(form.maxAudioMB);
       const splitOverlapSeconds = parseOptionalInt(form.splitOverlapSeconds);
@@ -195,6 +198,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
         ["maxPollMinutes", maxPollMinutes],
         ["downloadRetries", downloadRetries],
         ["transcriptionRetries", transcriptionRetries],
+        ["providerTimeoutMs", providerTimeoutMs],
         ["catalogMaxAgeHours", catalogMaxAgeHours],
         ["maxAudioMB", maxAudioMB],
         ["splitOverlapSeconds", splitOverlapSeconds],
@@ -227,6 +231,7 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
           maxPollMinutes: maxPollMinutes === null ? null : maxPollMinutes,
           downloadRetries: downloadRetries === null ? null : downloadRetries,
           transcriptionRetries: transcriptionRetries === null ? null : transcriptionRetries,
+          providerTimeoutMs: providerTimeoutMs === null ? null : providerTimeoutMs,
           catalogMaxAgeHours: catalogMaxAgeHours === null ? null : catalogMaxAgeHours,
         },
       };
@@ -676,6 +681,23 @@ export function SettingsForm({ initial }: { initial: SettingsGetResponse }) {
                   placeholder="inherit"
                 />
                 {form.transcriptionRetries.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.transcriptionRetries)}</span>}
+              </div>
+              <div className="formRow">
+                <span className="formLabel">
+                  providerTimeoutMs
+                  <Tooltip
+                    text="Abort provider API calls after this many milliseconds."
+                    effective={form.providerTimeoutMs.trim().length === 0 ? `${fmtEffective(effective.providerTimeoutMs)} (${fmtSource(sources.providerTimeoutMs)})` : undefined}
+                  />
+                </span>
+                <input
+                  className="inputSm"
+                  inputMode="numeric"
+                  value={form.providerTimeoutMs}
+                  onChange={(e) => setForm({ ...form, providerTimeoutMs: e.target.value })}
+                  placeholder="inherit"
+                />
+                {form.providerTimeoutMs.trim().length === 0 && <span className="muted effectiveHint">{fmtEffective(effective.providerTimeoutMs)}</span>}
               </div>
             </div>
           </div>

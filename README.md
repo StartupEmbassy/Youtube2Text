@@ -536,6 +536,7 @@ Polling and retry configuration (optional):
 - `Y2T_MAX_POLL_MINUTES` (default `60`) - Maximum polling time before timeout.
 - `Y2T_DOWNLOAD_RETRIES` (default `2`) - Retry count for yt-dlp download failures.
 - `Y2T_TRANSCRIPTION_RETRIES` (default `2`) - Retry count for AssemblyAI transcription failures.
+- `Y2T_PROVIDER_TIMEOUT_MS` (default `120000`) - Abort provider API calls after this many milliseconds.
 
 ## Roadmap
 

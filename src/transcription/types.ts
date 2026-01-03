@@ -20,4 +20,5 @@ export type TranscriptionOptions = {
   pollIntervalMs: number;
   maxPollMinutes: number;
   retries: number;
+  providerTimeoutMs: number;
 };

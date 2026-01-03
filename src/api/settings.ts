@@ -105,6 +105,7 @@ function computeNonSecretSettingSources(
     "maxPollMinutes",
     "downloadRetries",
     "transcriptionRetries",
+    "providerTimeoutMs",
     "catalogMaxAgeHours",
   ];
 
@@ -151,6 +152,8 @@ function envVarsForSetting(key: keyof NonSecretSettings): string[] {
       return ["Y2T_DOWNLOAD_RETRIES", "DOWNLOAD_RETRIES"];
     case "transcriptionRetries":
       return ["Y2T_TRANSCRIPTION_RETRIES", "TRANSCRIPTION_RETRIES"];
+    case "providerTimeoutMs":
+      return ["Y2T_PROVIDER_TIMEOUT_MS", "PROVIDER_TIMEOUT_MS"];
     case "catalogMaxAgeHours":
       return ["Y2T_CATALOG_MAX_AGE_HOURS"];
     default:

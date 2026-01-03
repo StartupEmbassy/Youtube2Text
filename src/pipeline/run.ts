@@ -554,6 +554,7 @@ export async function runPipeline(
                     pollIntervalMs: config.pollIntervalMs,
                     maxPollMinutes: config.maxPollMinutes,
                     retries: config.transcriptionRetries,
+                    providerTimeoutMs: config.providerTimeoutMs,
                   });
                   chunkResults.push({
                     transcript: chunkTranscript,
@@ -572,6 +573,7 @@ export async function runPipeline(
                 pollIntervalMs: config.pollIntervalMs,
                 maxPollMinutes: config.maxPollMinutes,
                 retries: config.transcriptionRetries,
+                providerTimeoutMs: config.providerTimeoutMs,
               });
             }
 

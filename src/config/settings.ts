@@ -31,6 +31,7 @@ export type NonSecretSettings = Pick<
   | "maxPollMinutes"
   | "downloadRetries"
   | "transcriptionRetries"
+  | "providerTimeoutMs"
   | "catalogMaxAgeHours"
 >;
 
@@ -108,6 +109,7 @@ export function sanitizeNonSecretSettings(input: unknown): Partial<NonSecretSett
   allow("maxPollMinutes", obj.maxPollMinutes);
   allow("downloadRetries", obj.downloadRetries);
   allow("transcriptionRetries", obj.transcriptionRetries);
+  allow("providerTimeoutMs", obj.providerTimeoutMs);
   allow("catalogMaxAgeHours", obj.catalogMaxAgeHours);
 
   // Remove nulls (API may use null to mean "clear")
@@ -142,6 +144,7 @@ export function pickNonSecretSettings(config: AppConfig): NonSecretSettings {
     maxPollMinutes: config.maxPollMinutes,
     downloadRetries: config.downloadRetries,
     transcriptionRetries: config.transcriptionRetries,
+    providerTimeoutMs: config.providerTimeoutMs,
     catalogMaxAgeHours: config.catalogMaxAgeHours,
   };
 }

@@ -18,8 +18,8 @@ export class AssemblyAiProvider implements TranscriptionProvider {
   private client: AssemblyAiClient;
   private maxAudioBytesOverride?: number;
 
-  constructor(apiKey: string, maxAudioBytesOverride?: number) {
-    this.client = new AssemblyAiClient(apiKey);
+  constructor(apiKey: string, maxAudioBytesOverride?: number, timeoutMs?: number) {
+    this.client = new AssemblyAiClient(apiKey, timeoutMs);
     this.maxAudioBytesOverride = maxAudioBytesOverride;
   }
 
