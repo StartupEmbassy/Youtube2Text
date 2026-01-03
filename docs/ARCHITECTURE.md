@@ -1,7 +1,7 @@
 # Youtube2Text Architecture (Service First, Web Later)
 
-> Version: 1.2.6
-> Last Updated: 2026-01-01
+> Version: 1.2.7
+> Last Updated: 2026-01-02
 > Status: Design / Roadmap
 > Authors: Claude + GPT-5.2 (viewpoints preserved)
 
@@ -70,6 +70,8 @@ Local-first artifacts on disk. Current layout:
 - `output/<channel_title_slug>__<channel_id>/_channel.json` (per-channel metadata)
 - `output/<channel_title_slug>__<channel_id>/_errors.jsonl` (per-channel error log)
 - `audio/<channel_title_slug>__<channel_id>/<basename>.<ext>`
+- `output/_uploads/<audioId>.json` + `audio/_uploads/<audioId>.<ext>` (uploaded audio staging)
+- `output/uploads/<basename>.*` + `audio/uploads/<basename>.<ext>` (processed local audio runs)
 
 Future multi-tenancy (Phase 2+) can wrap the same structure under a `user_id` prefix:
 `output/<user_id>/...` and `audio/<user_id>/...`.
@@ -249,8 +251,8 @@ Add:
 - workers/queues for background processing
 - usage tracking + admin controls (foundation for future billing)
 
-Future input mode (not implemented yet):
-- Accept direct audio file input (skip yt-dlp) for automation use cases.
+Direct audio input:
+- Accept local audio files (skip yt-dlp) via CLI or API (`POST /audio` + `POST /runs` with `audioId`).
 
 ## Tech Debt Backlog (post-Phase 2.8)
 - Phase 2.8 backlog items completed in v0.23.x.
@@ -272,3 +274,36 @@ Phase S3 - Operational hardening (config guidance) (DONE)
 Phase S4 - Verification (DONE)
 7) Add security checklist for deployments (API key, allowlist, deep health). (DONE)
 8) Add tests for deep health auth + webhook DNS rebinding. (DONE)
+
+## Security Roadmap v8 (hardening, DONE)
+
+Security audit hardening (P0/P1/P2) completed in v0.31.1.
+See `docs/llm/HANDOFF.md` for the full checklist and status.
+
+## Phase 2.10+ - Feature Mining Adoption (planned, do in order)
+
+Goal: adopt the best reliability patterns from `ShellSpeechToText` without copying code, preserving Y2T interfaces and modularity.
+
+Phase A - Low-risk hardening:
+1) Atomic file writes (temp + rename) for persistence/settings writes.
+   - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\stats.service.ts`
+2) AbortController timeouts for external API calls (provider fetches).
+   - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\deepgram-billing.service.ts`
+
+Phase B - Provider resiliency:
+3) Multi-key load balancer for STT providers (round-robin + failover).
+   - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\deepgram-load-balancer.service.ts`
+
+Phase C - Provider expansion (optional):
+4) Deepgram provider (after load balancer is stable).
+   - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\deepgram.service.ts`
+
+Phase D - UX/observability:
+5) Error categorization + user-friendly messages.
+   - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\utils\errors.ts`
+6) ETA estimation + hybrid ETA (optional).
+   - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\stats.service.ts`
+
+Low priority:
+7) AI text cleaning post-process.
+8) Telegram bot monitoring (redundant with webhooks + SSE).

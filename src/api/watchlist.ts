@@ -59,7 +59,7 @@ export class WatchlistStore {
       entries: file.entries,
     };
     await fs.mkdir(this.outputDir, { recursive: true });
-    const tmp = `${this.path()}.${Date.now()}.tmp`;
+    const tmp = `${this.path()}.${randomUUID()}.tmp`;
     await fs.writeFile(tmp, JSON.stringify(out, null, 2), "utf8");
     await fs.rename(tmp, this.path());
   }
@@ -135,4 +135,3 @@ export class WatchlistStore {
     return removed;
   }
 }
-

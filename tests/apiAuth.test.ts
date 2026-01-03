@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { requireApiKey, resetAuthFailureLimiterForTests } from "../src/api/auth.js";
 
+const TEST_KEY = "test-api-key-aaaaaaaaaaaaaaaaaaaaaa";
+const BAD_KEY = "bad-api-key-aaaaaaaaaaaaaaaaaaaaaaa";
+
 class FakeResponse {
   statusCode = 200;
   headers: Record<string, string> = {};
@@ -45,7 +48,7 @@ test("requireApiKey returns 500 when Y2T_API_KEY is unset (server misconfigured)
 });
 
 test("requireApiKey allows /health without key", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const res = new FakeResponse();
     const ok = requireApiKey({ url: "/health", headers: {} } as any, res as any);
     assert.equal(ok, true);
@@ -53,7 +56,7 @@ test("requireApiKey allows /health without key", () => {
 });
 
 test("requireApiKey rejects /health?deep=true without key by default", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const prevDeep = process.env.Y2T_HEALTH_DEEP_PUBLIC;
     delete process.env.Y2T_HEALTH_DEEP_PUBLIC;
     try {
@@ -69,7 +72,7 @@ test("requireApiKey rejects /health?deep=true without key by default", () => {
 });
 
 test("requireApiKey allows /health?deep=true when public flag is enabled", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const prevDeep = process.env.Y2T_HEALTH_DEEP_PUBLIC;
     process.env.Y2T_HEALTH_DEEP_PUBLIC = "true";
     try {
@@ -84,7 +87,7 @@ test("requireApiKey allows /health?deep=true when public flag is enabled", () =>
 });
 
 test("requireApiKey rejects missing key", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const res = new FakeResponse();
     const ok = requireApiKey({ url: "/runs", headers: {}, socket: { remoteAddress: "127.0.0.1" } } as any, res as any);
     assert.equal(ok, false);
@@ -94,10 +97,10 @@ test("requireApiKey rejects missing key", () => {
 });
 
 test("requireApiKey rejects wrong key", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const res = new FakeResponse();
     const ok = requireApiKey(
-      { url: "/runs", headers: { "x-api-key": "nope" }, socket: { remoteAddress: "127.0.0.1" } } as any,
+      { url: "/runs", headers: { "x-api-key": BAD_KEY }, socket: { remoteAddress: "127.0.0.1" } } as any,
       res as any
     );
     assert.equal(ok, false);
@@ -106,10 +109,10 @@ test("requireApiKey rejects wrong key", () => {
 });
 
 test("requireApiKey accepts correct key", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const res = new FakeResponse();
     const ok = requireApiKey(
-      { url: "/runs", headers: { "x-api-key": "secret" } } as any,
+      { url: "/runs", headers: { "x-api-key": TEST_KEY } } as any,
       res as any
     );
     assert.equal(ok, true);
@@ -118,14 +121,14 @@ test("requireApiKey accepts correct key", () => {
 });
 
 test("requireApiKey rate limits repeated failures", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const prevMax = process.env.Y2T_AUTH_FAIL_MAX;
     const prevWindow = process.env.Y2T_AUTH_FAIL_WINDOW_MS;
     process.env.Y2T_AUTH_FAIL_MAX = "1";
     process.env.Y2T_AUTH_FAIL_WINDOW_MS = "60000";
     resetAuthFailureLimiterForTests();
     try {
-      const req = { url: "/runs", headers: { "x-api-key": "bad" }, socket: { remoteAddress: "1.2.3.4" } } as any;
+      const req = { url: "/runs", headers: { "x-api-key": BAD_KEY }, socket: { remoteAddress: "1.2.3.4" } } as any;
 
       const res1 = new FakeResponse();
       const ok1 = requireApiKey(req, res1 as any);
@@ -147,7 +150,7 @@ test("requireApiKey rate limits repeated failures", () => {
 });
 
 test("requireApiKey rejects overly long api keys", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const prevMax = process.env.Y2T_API_KEY_MAX_BYTES;
     process.env.Y2T_API_KEY_MAX_BYTES = "32";
     try {
@@ -168,23 +171,25 @@ test("requireApiKey rejects overly long api keys", () => {
 });
 
 test("requireApiKey rate limits by forwarded IP when trust proxy is enabled", () => {
-  withEnv("secret", () => {
+  withEnv(TEST_KEY, () => {
     const prevMax = process.env.Y2T_AUTH_FAIL_MAX;
     const prevWindow = process.env.Y2T_AUTH_FAIL_WINDOW_MS;
     const prevTrust = process.env.Y2T_TRUST_PROXY;
+    const prevTrustIps = process.env.Y2T_TRUST_PROXY_IPS;
     process.env.Y2T_AUTH_FAIL_MAX = "1";
     process.env.Y2T_AUTH_FAIL_WINDOW_MS = "60000";
     process.env.Y2T_TRUST_PROXY = "true";
+    process.env.Y2T_TRUST_PROXY_IPS = "1.2.3.4,5.6.7.8";
     resetAuthFailureLimiterForTests();
     try {
       const req1 = {
         url: "/runs",
-        headers: { "x-api-key": "bad", "x-forwarded-for": "9.9.9.9" },
+        headers: { "x-api-key": BAD_KEY, "x-forwarded-for": "9.9.9.9" },
         socket: { remoteAddress: "1.2.3.4" },
       } as any;
       const req2 = {
         url: "/runs",
-        headers: { "x-api-key": "bad", "x-forwarded-for": "9.9.9.9" },
+        headers: { "x-api-key": BAD_KEY, "x-forwarded-for": "9.9.9.9" },
         socket: { remoteAddress: "5.6.7.8" },
       } as any;
 
@@ -204,6 +209,8 @@ test("requireApiKey rate limits by forwarded IP when trust proxy is enabled", ()
       else process.env.Y2T_AUTH_FAIL_WINDOW_MS = prevWindow;
       if (prevTrust === undefined) delete process.env.Y2T_TRUST_PROXY;
       else process.env.Y2T_TRUST_PROXY = prevTrust;
+      if (prevTrustIps === undefined) delete process.env.Y2T_TRUST_PROXY_IPS;
+      else process.env.Y2T_TRUST_PROXY_IPS = prevTrustIps;
       resetAuthFailureLimiterForTests();
     }
   });

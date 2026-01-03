@@ -8,11 +8,11 @@ It does not replace the CLI.
 Default local API:
 - `http://127.0.0.1:8787`
 
-The server refuses to start unless `Y2T_API_KEY` is set (use `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
+The server refuses to start unless `Y2T_API_KEY` is set (use `Y2T_ALLOW_INSECURE_NO_API_KEY=true` **and** `Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND` for local development only).
 When `Y2T_API_KEY` is set, all endpoints require `X-API-Key` (except `GET /health`; deep health requires a key unless `Y2T_HEALTH_DEEP_PUBLIC=true`).
-If the API sits behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` so rate limiting uses `X-Forwarded-For` / `X-Real-IP`.
+If the API sits behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` and `Y2T_TRUST_PROXY_IPS=<proxy_ip[,proxy_ip]>` so rate limiting uses `X-Forwarded-For` / `X-Real-IP`.
 Never enable `Y2T_TRUST_PROXY` unless requests are actually coming through a trusted proxy or load balancer.
-`Y2T_API_KEY_MAX_BYTES` caps the `X-API-Key` header size (default 256).
+`Y2T_API_KEY_MAX_BYTES` caps the `X-API-Key` header size (default 256). `Y2T_API_KEY_MIN_BYTES` enforces a minimum API key length (default 32).
 
 Example (PowerShell):
 
@@ -82,6 +82,27 @@ curl -sS -X POST http://127.0.0.1:8787/runs \
 Notes:
 - For single-video URLs, `POST /runs` is cache-first: if artifacts already exist and `force=false`, it returns a `done` run immediately (no download/transcribe).
 - For channel/playlist runs, idempotency is handled by per-video skip checks.
+- By default, run URLs must be YouTube. Override (not recommended): `Y2T_RUN_ALLOW_ANY_URL=true`.
+
+### 3a) Upload a local audio file
+
+Upload the audio first:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8787/audio \
+  -H "X-API-Key: $Y2T_API_KEY" \
+  -F "file=@/path/to/local-audio.mp3" \
+  -F "title=Local audio sample"
+```
+
+Then start a run using the returned `audioId`:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8787/runs \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $Y2T_API_KEY" \
+  -d '{"audioId":"<AUDIO_ID>","callbackUrl":"https://example.com/webhook"}'
+```
 
 ## Error responses (common)
 
@@ -92,7 +113,7 @@ Most endpoints can return these errors (JSON):
 | 400 | `bad_request` | Validation failed (invalid inputs, header too long, bad date, etc.) |
 | 401 | `unauthorized` | Missing or invalid `X-API-Key` |
 | 404 | `not_found` | Resource not found |
-| 408 | `request_timeout` | Request timed out (`Y2T_REQUEST_TIMEOUT_MS`) |
+| 408 | `request_timeout` | Request timed out (`Y2T_REQUEST_TIMEOUT_MS` or `Y2T_UPLOAD_TIMEOUT_MS`) |
 | 413 | `payload_too_large` | JSON body exceeds `Y2T_MAX_BODY_BYTES` |
 | 429 | `rate_limited` | Rate limit exceeded (see Retry-After) |
 | 500 | `internal_error` | Internal error (sanitized message) |
@@ -114,6 +135,9 @@ SSE (run events):
 Global SSE (run list updates):
 - `GET /events`
 Use `Y2T_SSE_MAX_CLIENTS` to cap concurrent SSE connections (default 1000, `0` disables).
+Use `Y2T_SSE_MAX_CLIENTS_PER_IP` to cap SSE connections per IP (default 50).
+Use `Y2T_SSE_MAX_LIFETIME_SECONDS` to close long-lived streams (default 0 disables).
+Use `Y2T_MAX_EVENT_BYTES` to clamp oversized SSE payloads (default 65536).
 Use `Y2T_REQUEST_TIMEOUT_MS` to bound non-SSE request time (default 30000, `0` disables).
 
 Example (bash/curl):

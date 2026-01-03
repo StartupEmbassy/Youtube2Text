@@ -13,6 +13,7 @@ export type PipelineEvent =
       inputUrl: string;
       channelId: string;
       channelTitle?: string;
+      channelDirName?: string;
       totalVideos: number;
       alreadyProcessed: number;
       remaining: number;

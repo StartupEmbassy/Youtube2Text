@@ -23,7 +23,9 @@ export function getExpectedApiKey(): string | undefined {
 
 export function isInsecureModeEnabled(): boolean {
   const val = process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
-  return typeof val === "string" && val.trim().toLowerCase() === "true";
+  const confirm = process.env.Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM;
+  const enabled = typeof val === "string" && val.trim().toLowerCase() === "true";
+  return enabled && confirm === "I_UNDERSTAND";
 }
 
 function isDeepHealthRequest(url: string): boolean {
@@ -67,7 +69,12 @@ function safeEqual(expected: string, provided: string): boolean {
   a.copy(ap);
   b.copy(bp);
   const equal = timingSafeEqual(ap, bp);
-  return equal && a.length === b.length;
+  const lenA = Buffer.alloc(4);
+  const lenB = Buffer.alloc(4);
+  lenA.writeUInt32BE(a.length);
+  lenB.writeUInt32BE(b.length);
+  const lenEqual = timingSafeEqual(lenA, lenB);
+  return equal && lenEqual;
 }
 
 function parseEnvInt(raw: string | undefined, fallback: number): number {
@@ -80,6 +87,15 @@ function parseEnvInt(raw: string | undefined, fallback: number): number {
 function getApiKeyMaxBytes(): number {
   const raw = parseEnvInt(process.env.Y2T_API_KEY_MAX_BYTES, 256);
   const min = 32;
+  const max = 4096;
+  if (raw < min) return min;
+  if (raw > max) return max;
+  return raw;
+}
+
+function getApiKeyMinBytes(): number {
+  const raw = parseEnvInt(process.env.Y2T_API_KEY_MIN_BYTES, 32);
+  const min = 8;
   const max = 4096;
   if (raw < min) return min;
   if (raw > max) return max;
@@ -162,10 +178,26 @@ export function sendUnauthorized(res: ServerResponse): void {
 
 function validateApiKeyLength(provided: string): ApiKeyLengthDecision {
   const maxBytes = getApiKeyMaxBytes();
+  const minBytes = getApiKeyMinBytes();
   if (Buffer.byteLength(provided, "utf8") > maxBytes) {
     return { ok: false, reason: `X-API-Key too long (max ${maxBytes} bytes)` };
   }
+  if (Buffer.byteLength(provided, "utf8") < minBytes) {
+    return { ok: false, reason: `X-API-Key too short (min ${minBytes} bytes)` };
+  }
   return { ok: true };
+}
+
+export function validateExpectedApiKey(): { ok: true; key: string } | { ok: false; error: string } {
+  const expected = getExpectedApiKey();
+  if (!expected) {
+    return { ok: false, error: "Y2T_API_KEY is required" };
+  }
+  const minBytes = getApiKeyMinBytes();
+  if (Buffer.byteLength(expected, "utf8") < minBytes) {
+    return { ok: false, error: `Y2T_API_KEY is too short (min ${minBytes} bytes)` };
+  }
+  return { ok: true, key: expected };
 }
 
 export function requireApiKey(req: IncomingMessage, res: ServerResponse): boolean {

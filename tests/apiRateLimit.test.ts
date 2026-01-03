@@ -49,21 +49,21 @@ test("write rate limit returns 429 after exceeding max", async () => {
       try {
         const res1 = await fetch(`http://127.0.0.1:${port}/watchlist`, {
           method: "POST",
-          headers: { "content-type": "application/json", "x-api-key": "test" },
+          headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
           body: JSON.stringify(body1),
         });
         assert.equal(res1.status, 201);
 
         const res2 = await fetch(`http://127.0.0.1:${port}/watchlist`, {
           method: "POST",
-          headers: { "content-type": "application/json", "x-api-key": "test" },
+          headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
           body: JSON.stringify(body2),
         });
         assert.equal(res2.status, 201);
 
         const res3 = await fetch(`http://127.0.0.1:${port}/watchlist`, {
           method: "POST",
-          headers: { "content-type": "application/json", "x-api-key": "test" },
+          headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
           body: JSON.stringify(body3),
         });
         assert.equal(res3.status, 429);
@@ -96,12 +96,12 @@ test("read rate limit returns 429 after exceeding max", async () => {
 
         try {
           const res1 = await fetch(`http://127.0.0.1:${port}/runs`, {
-            headers: { "x-api-key": "test" },
+            headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
           });
           assert.equal(res1.status, 200);
 
           const res2 = await fetch(`http://127.0.0.1:${port}/runs`, {
-            headers: { "x-api-key": "test" },
+            headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
           });
           assert.equal(res2.status, 429);
         } finally {
@@ -133,12 +133,12 @@ test("deep health rate limit returns 429 after exceeding max", async () => {
 
       try {
         const res1 = await fetch(`http://127.0.0.1:${port}/health?deep=true`, {
-          headers: { "x-api-key": "test" },
+          headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
         });
         assert.equal(res1.status, 200);
 
         const res2 = await fetch(`http://127.0.0.1:${port}/health?deep=true`, {
-          headers: { "x-api-key": "test" },
+          headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
         });
         assert.equal(res2.status, 429);
       } finally {

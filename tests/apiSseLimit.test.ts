@@ -45,13 +45,13 @@ test("SSE limit rejects extra clients", async () => {
     let res1: Response | undefined;
     try {
       res1 = await fetch(`http://127.0.0.1:${port}/events`, {
-        headers: { accept: "text/event-stream", "x-api-key": "test" },
+        headers: { accept: "text/event-stream", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
         signal: controller.signal,
       });
       assert.equal(res1.status, 200);
 
       const res2 = await fetch(`http://127.0.0.1:${port}/events`, {
-        headers: { accept: "text/event-stream", "x-api-key": "test" },
+        headers: { accept: "text/event-stream", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
       });
       assert.equal(res2.status, 429);
     } finally {

@@ -95,6 +95,7 @@ export class FileSystemStorageAdapter implements StorageAdapter {
       const metaPath = join(channelDir, `${baseName}.meta.json`);
       const meta = await tryReadJson<VideoMeta>(metaPath);
       const videoId = meta?.videoId ?? parseVideoIdFromBaseName(baseName);
+      const audioExt = meta?.audioFormat ?? this.dirs.audioFormat;
 
       const paths: OutputPaths = {
         jsonPath: join(channelDir, `${baseName}.json`),
@@ -109,7 +110,7 @@ export class FileSystemStorageAdapter implements StorageAdapter {
         audioPath: join(
           this.dirs.audioDir,
           channelDirName,
-          `${baseName}.${this.dirs.audioFormat}`
+          `${baseName}.${audioExt}`
         ),
       };
 

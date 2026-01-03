@@ -111,6 +111,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload a local audio file
+         * @description Uploads a local audio file and returns an `audioId` to use with `POST /runs`.
+         *     The server stores uploads under `audio/_uploads` and metadata under `output/_uploads`.
+         */
+        post: operations["uploadAudio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/watchlist/{id}": {
         parameters: {
             query?: never;
@@ -691,7 +712,9 @@ export interface components {
             run: components["schemas"]["RunRecord"];
         };
         RunCreateRequest: {
-            url: string;
+            url?: string;
+            /** @description Audio ID returned by `POST /audio`. */
+            audioId?: string;
             force?: boolean | null;
             /**
              * @description Limit this run to at most N NEW (unprocessed) videos.
@@ -713,6 +736,32 @@ export interface components {
             config?: {
                 [key: string]: unknown;
             };
+        } & (unknown | unknown);
+        RunPlanRequest: {
+            url: string;
+            force?: boolean | null;
+            /**
+             * @description Limit this run to at most N NEW (unprocessed) videos.
+             *     Applied AFTER skipping already-processed videos so repeated runs can backfill incrementally.
+             */
+            maxNewVideos?: number | null;
+            /** @description Only include videos after YYYY-MM-DD (best-effort; based on yt-dlp upload_date). */
+            afterDate?: string | null;
+            config?: {
+                [key: string]: unknown;
+            };
+        };
+        AudioUploadMeta: {
+            audioId: string;
+            title: string;
+            originalFilename: string;
+            contentType?: string;
+            bytes: number;
+            ext: string;
+            createdAt: string;
+        };
+        AudioUploadResponse: {
+            audio: components["schemas"]["AudioUploadMeta"];
         };
         RunCreateLinks: {
             run: string;
@@ -787,16 +836,23 @@ export interface components {
         };
         VideoMeta: {
             videoId: string;
-            title?: string;
-            channelId?: string;
-            channelTitle?: string;
-            channelUrl?: string;
-            videoUrl?: string;
+            title: string;
+            url: string;
+            uploadDate?: string;
             description?: string;
-            publishedAt?: string;
+            channelId: string;
+            channelTitle?: string;
+            /** @enum {string} */
+            source?: "youtube" | "upload";
+            audioId?: string;
+            originalFilename?: string;
+            /** @enum {string} */
+            filenameStyle: "id" | "id_title" | "title_id";
+            audioFormat: string;
             languageCode?: string;
-            languageDetection?: string;
+            languageDetection?: boolean;
             languageConfidence?: number;
+            createdAt: string;
         };
         VideoInfo: {
             videoId: string;
@@ -1079,6 +1135,71 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    uploadAudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    /** @description Optional title for the audio run. */
+                    title?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudioUploadResponse"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request timed out */
+            408: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Payload too large */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1477,7 +1598,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RunCreateRequest"];
+                "application/json": components["schemas"]["RunPlanRequest"];
             };
         };
         responses: {

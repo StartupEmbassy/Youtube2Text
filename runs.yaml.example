@@ -39,3 +39,16 @@ runs:
     commentsMax: 200
     force: false
     ytDlpPath:
+
+  - audioPath: "C:\\path\\to\\local-audio.mp3"
+    audioTitle: "Local audio sample"
+    outDir: "output_custom"
+    audioDir: "audio_custom"
+    sttProvider: openai_whisper
+    openaiWhisperModel: whisper-1
+    maxAudioMB:
+    splitOverlapSeconds: 2
+    filenameStyle: title_id
+    languageDetection: auto
+    languageCode:
+    force: false

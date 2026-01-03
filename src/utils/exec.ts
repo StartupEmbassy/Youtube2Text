@@ -6,10 +6,26 @@ export type ExecResult = {
   exitCode: number;
 };
 
+function parseEnvInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.trunc(parsed);
+}
+
+function getDefaultMaxBufferBytes(): number {
+  const raw = parseEnvInt(process.env.Y2T_EXEC_MAX_BYTES, 50 * 1024 * 1024);
+  const min = 1024 * 1024;
+  const max = 512 * 1024 * 1024;
+  if (raw < min) return min;
+  if (raw > max) return max;
+  return raw;
+}
+
 export function execCommand(
   command: string,
   args: string[],
-  options: { cwd?: string } = {}
+  options: { cwd?: string; maxBufferBytes?: number } = {}
 ): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -20,14 +36,52 @@ export function execCommand(
 
     let stdout = "";
     let stderr = "";
+    let stdoutBytes = 0;
+    let stderrBytes = 0;
+    const maxBufferBytes = options.maxBufferBytes ?? getDefaultMaxBufferBytes();
+    let settled = false;
 
-    child.stdout.on("data", (chunk) => (stdout += chunk.toString()));
-    child.stderr.on("data", (chunk) => (stderr += chunk.toString()));
-
-    child.on("error", reject);
-    child.on("close", (exitCode) => {
+    const finish = (err?: Error, exitCode?: number) => {
+      if (settled) return;
+      settled = true;
+      if (err) {
+        reject(err);
+        return;
+      }
       resolve({ stdout, stderr, exitCode: exitCode ?? -1 });
+    };
+
+    const checkLimit = () => {
+      if (maxBufferBytes <= 0) return;
+      if (stdoutBytes + stderrBytes <= maxBufferBytes) return;
+      try {
+        child.kill();
+      } catch {
+        // ignore
+      }
+      finish(
+        new Error(
+          `Process output exceeded ${Math.ceil(maxBufferBytes / (1024 * 1024))}MB`
+        )
+      );
+    };
+
+    child.stdout.on("data", (chunk) => {
+      const text = chunk.toString();
+      stdout += text;
+      stdoutBytes += Buffer.byteLength(text);
+      checkLimit();
+    });
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString();
+      stderr += text;
+      stderrBytes += Buffer.byteLength(text);
+      checkLimit();
+    });
+
+    child.on("error", (err) => finish(err));
+    child.on("close", (exitCode) => {
+      finish(undefined, exitCode ?? -1);
     });
   });
 }
-

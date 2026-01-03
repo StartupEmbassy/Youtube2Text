@@ -92,10 +92,11 @@ Done recently:
    - Phase 2.4 Control: cancel run (DONE), rate limiting (DONE), optional worker/queue
    - Phase 2.5: watchlist web UI + Prometheus metrics endpoint (DONE)
    - Phase 2.9: STT provider capability refactor (DONE)
+   - Phase 2.10+: feature mining adoption (multi-key load balancing, atomic writes, provider expansion, timeout patterns)
 7. Phase 3+: optional multi-tenant cloud platform
 
 Future input (not implemented yet):
-- Accept direct audio file input (skip yt-dlp download stage) via API, intended for n8n/automation use cases.
+- Direct audio file input (skip yt-dlp download stage) via API + CLI (DONE).
 
 ## References
 - AssemblyAI API Docs: https://www.assemblyai.com/docs/

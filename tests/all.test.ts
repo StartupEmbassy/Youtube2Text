@@ -1,4 +1,4 @@
-process.env.Y2T_API_KEY = "test";
+process.env.Y2T_API_KEY = "test-api-key-aaaaaaaaaaaaaaaaaaaaaa";
 delete process.env.Y2T_ALLOW_INSECURE_NO_API_KEY;
 
 import "./naming.test.js";
@@ -44,3 +44,6 @@ import "./apiRunTimeout.test.js";
 import "./apiLibrarySecurity.test.js";
 import "./apiRunManagerRace.test.js";
 import "./apiSseLimit.test.js";
+import "./apiAudioUpload.test.js";
+import "./apiRunManagerAudio.test.js";
+import "./apiRunCreateSchema.test.js";

@@ -6,7 +6,7 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.30.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.31.2 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
@@ -23,38 +23,265 @@ All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Review Notes (Claude v7 FULL audit 2026-01-02)
 - Docs/code alignment: 100%; no issues found
-- Tests: `npm test` 107/107 pass (44 test files, ~31s)
+- Tests: `npm test` 110/110 pass
 - Build: OK (`npm run build`, `npm --prefix web run build`, `npm run api:contract:check`)
 - Docker: healthy
 - STT Providers: OpenAI Whisper + AssemblyAI both fully documented and implemented
 - npm audit: 0 vulnerabilities
 
-## Security (consolidated snapshot)
-- Historical audits and full details are in `docs/llm/HANDOFF_ARCHIVE.md`.
+## Security Audit v8 (Claude Opus 4.5, 2026-01-03) - FULL CODE REVIEW
 
-Current validated risks:
-- IP spoofing risk if Y2T_TRUST_PROXY=true without a real proxy (enables auth brute-force bypass by IP spoof).
+Audited all 73 source files in src/**/*.ts. Historical audits in `docs/llm/HANDOFF_ARCHIVE.md`.
 
-Recently mitigated:
-- Rate limiter keys are hashed (no raw API key in memory buckets).
-- /health?deep=true now requires auth unless Y2T_HEALTH_DEEP_PUBLIC=true.
-- Webhook DNS rebinding blocked by hostname resolution + private IP checks.
+### CRITICAL (8 issues - fix immediately)
 
-Conditional risk (environment-dependent):
-- PowerShell drive query is safe today (root-only), but becomes risky if outputDir is ever user-controlled.
+1. **PowerShell Command Injection** - `health.ts:49`
+   ```typescript
+   const script = `(Get-PSDrive -Name '${drive}').Free`;
+   ```
+   - Risk: If Y2T_OUTPUT_DIR contains special chars, executes arbitrary code
+   - Fix: Use array arguments instead of template string
 
-Verified not an issue (current code):
-- SSE bypass rate limiting: read limiter runs for all GET requests; SSE only skips request timeout.
+2. **Path Traversal in Persistence** - `persistence.ts:21-23`
+   ```typescript
+   runDir: (runId) => join(rootDir, runId)  // runId not validated
+   ```
+   - Risk: `runId = "../../../etc"` reads/writes outside directory
+   - Fix: Validate runId is UUID format, check for `..`
 
-## Security Roadmap v7 (planned, do in order)
-1) Hash API keys in rate limiter buckets (avoid raw key in memory). (DONE)
-2) Protect /health?deep=true (require API key or new opt-in env). (DONE)
-3) Mitigate DNS rebinding for callbackUrl (resolve host -> block private IPs). (DONE)
-4) Require or strongly recommend Y2T_WEBHOOK_ALLOWED_DOMAINS in production docs. (DONE)
-5) Tighten trust proxy guidance (do not enable without a real proxy). (DONE)
-6) CORS guidance: avoid "*" in production. (DONE)
-7) Add deployment security checklist (API key, allowlist, deep health). (DONE)
-8) Add tests for deep health auth + webhook DNS rebinding. (DONE)
+3. **Symlink Attack in Retention** - `retention.ts:36-52,139`
+   - `listFilesRecursive()` follows symlinks without checking
+   - `fs.rm()` deletes symlink targets outside audioDir
+   - Fix: Use `lstat()` instead of `stat()`, check `isSymbolicLink()`
+
+4. **IP Spoofing Bypasses All Rate Limits** - `ip.ts:30-45`
+   ```typescript
+   if (isTrustProxyEnabled()) {
+     const forwarded = getHeader(req, "x-forwarded-for");  // No proxy validation
+   ```
+   - Risk: With Y2T_TRUST_PROXY=true, anyone can spoof IP via header
+   - Fix: Require trusted proxy IP whitelist, or disable by default
+
+5. **SSE Unbounded Connections** - `server.ts:240-277`
+   - Global counter only, no per-IP limit
+   - Race condition: concurrent requests can exceed sseMaxClients
+   - Fix: Add per-IP connection tracking, use atomic increment
+
+6. **Timing Attack on API Key Length** - `auth.ts:70`
+   ```typescript
+   return equal && a.length === b.length;  // Length comparison leaks timing
+   ```
+   - Risk: Attacker can determine exact API key length
+   - Fix: Compare lengths using constant-time method
+
+7. **API Key Exposed in Error Messages** - `assemblyai/http.ts:38,60`
+   ```typescript
+   throw new Error(`AssemblyAI error ${response.status}: ${text}`);
+   ```
+   - Risk: If API returns key in error response, it gets logged
+   - Fix: Sanitize error text before including in exception
+
+8. **Insecure Mode Too Easy to Enable** - `auth.ts:24-26`
+   - Y2T_ALLOW_INSECURE_NO_API_KEY=true disables all auth
+   - Risk: Accidental production deployment without auth
+   - Fix: Add startup warning, require explicit confirmation
+
+### HIGH (12 issues)
+
+| # | File:Line | Issue | Fix |
+|---|-----------|-------|-----|
+| 1 | `auth.ts:192-200` | Brute force keyed on spoofable IP | Key on API key hash + IP tuple |
+| 2 | `auth.ts:96` | Auth limiter disabled if maxRequests=0 | Enforce minimum (e.g., 5) |
+| 3 | `health.ts:73-83` | TOCTOU race in health probe file | Use randomUUID for probe filename |
+| 4 | `fs.ts:25-26` | mkdir recursive follows symlinks | Check parent dir is not symlink |
+| 5 | `retention.ts:61-82` | fs.stat() dereferences symlinks | Use lstat() |
+| 6 | `eventBuffer.ts:16-23` | Unbounded memory per run (no event size limit) | Add max event size |
+| 7 | `runManager.ts:74-106` | No per-API-key concurrent run limit | Add Y2T_MAX_CONCURRENT_RUNS_PER_KEY |
+| 8 | `server.ts:299-312` | SSE connections bypass request timeout | Add max SSE lifetime |
+| 9 | `schemas.ts:153,164,173` | URL fields have no format validation | Add .url() to Zod schema |
+| 10 | `uploads.ts:71` | Content-Type check uses .includes() (bypassable) | Use .startsWith() |
+| 11 | `webhooks.ts:113-251` | DNS rebinding TOCTOU (resolve then fetch) | Re-resolve at fetch time |
+| 12 | `run.ts:717-720` | Error messages logged unsanitized | Sanitize before logging |
+
+### MEDIUM (15 issues)
+
+| File:Line | Issue |
+|-----------|-------|
+| `auth.ts:163-169` | No minimum API key length validation |
+| `auth.ts:15` | Header array joining can cause confusion |
+| `ip.ts:10-22` | Loose IP normalization accepts malformed IPs |
+| `schemas.ts:168,179` | z.record(z.unknown()) allows prototype pollution |
+| `schemas.ts:178` | callbackUrl has no URL format validation in schema |
+| `persistence.ts:41-58` | No symlink check when loading persisted runs |
+| `watchlist.ts:55-65` | Predictable temp filename (Date.now()) |
+| `fsAdapter.ts:50-80` | Inconsistent validation: listChannels vs listVideos |
+| `rateLimit.ts:68-90` | Float precision loss in token bucket refill |
+| `server.ts:261-277` | SSE counter race condition (check-then-increment) |
+| `server.ts:369-447` | Metrics endpoint has expensive I/O operations |
+| `uploads.ts:95-232` | No timeout on upload stream (slow-read attack) |
+| `health.ts:140` | Full directory paths exposed in deep health response |
+| `openai/index.ts:51` | API key in private field (debugger exposure risk) |
+| `assemblyai/client.ts:61` | Audio file path logged in plain text |
+
+### VERIFIED SECURE (no action needed)
+
+- Command execution: `exec.ts` uses spawn() with shell:false
+- Path traversal in server.ts: isSafeBaseName() validation exists
+- Webhook SSRF: Private IP blocking + domain allowlist
+- Timing-safe key comparison: timingSafeEqual() used (except length)
+- Secrets in persistence: API keys excluded from _settings.json
+- Body size limits: Y2T_MAX_BODY_BYTES enforced
+- Error responses to clients: Generic messages, no stack traces
+- Upload filenames: UUID-based, no path traversal possible
+- npm audit: 0 vulnerabilities
+
+### Security Roadmap v8 (do in priority order)
+
+**P0 - CRITICAL (do first):**
+1. Fix PowerShell injection in health.ts:49 (use array args)
+2. Validate runId in persistence.ts (UUID format, no ..)
+3. Fix symlink attacks in retention.ts (use lstat)
+4. Add per-IP SSE connection limits
+5. Fix timing attack in auth.ts:70 (constant-time length compare)
+
+**P1 - HIGH:**
+6. Disable Y2T_TRUST_PROXY by default or require proxy whitelist
+7. Sanitize API error messages before logging
+8. Add minimum API key length (32+ chars)
+9. Add per-API-key concurrent run limit
+10. Fix Content-Type validation in uploads.ts
+
+**P2 - MEDIUM:**
+11. Add URL format validation to Zod schemas
+12. Add upload stream timeout
+13. Remove directory paths from health response
+14. Use randomUUID for all temp filenames
+15. Add event size limits to EventBuffer
+
+## Security Audit v8 Merge (Claude + GPT)
+Goal: merge Claude v8 findings with GPT full-code audit. Status labels:
+- Confirmed: verified in code review
+- Conditional: real only if deployment is misconfigured or input is untrusted
+- Needs verification: likely, but not proven from code alone
+
+Confirmed:
+- IP spoofing risk when Y2T_TRUST_PROXY=true without a real proxy (auth/rate limit keyed on forwarded IP).
+- Arbitrary URL input in POST /runs (and watchlist if allow-any is enabled) allows non-YouTube fetches via yt-dlp; keep API private or add strict URL validation.
+- AssemblyAI/OpenAI error bodies are logged verbatim; can leak provider response content (sanitize).
+- No per-IP SSE limit (global cap only); DoS potential.
+
+Conditional:
+- PowerShell drive query in health.ts is safe today (outputDir is operator-controlled), but becomes code-injection risk if outputDir becomes user-controlled.
+- Insecure mode (Y2T_ALLOW_INSECURE_NO_API_KEY=true) disables auth; safe only for local dev.
+- Settings/config JSON (z.record) is permissive; safe if API is private, but should be tightened for public use.
+
+Needs verification / hardening recommended:
+- Retention symlink handling (use lstat + skip symlinks explicitly).
+- Persistence runId path traversal (runId is internal UUID today; add validation for defense in depth).
+- SSE request lifetime (consider max duration).
+- Upload stream timeout (slow-read attack).
+- EventBuffer max event size.
+
+Claude items likely over-severity (keep as low):
+- API key length timing leak: safeEqual pads buffers; length check is minor.
+- Auth failure limiter "disabled when maxRequests=0": intentional config; keep as policy.
+
+## Security Audit v8 - Round 2 (Additional Findings)
+
+Second pass auditing CLI, config, YouTube modules, pipeline, and formatters.
+
+### CRITICAL (3 additional issues)
+
+9. **ytDlpPath Command Execution** - `config/schema.ts:33`, `deps.ts:13-17`
+   ```typescript
+   ytDlpPath: z.string().optional(),  // No path validation
+   ```
+   - Risk: User-controlled path passed directly to spawn()
+   - Fix: Validate path exists and is executable, disallow path traversal
+
+10. **URL Passed to yt-dlp Without Validation** - `youtube/enumerate.ts:52-54`
+    ```typescript
+    const result = await exec(ytDlpPath, [...args, url]);  // url from user input
+    ```
+    - Risk: Arbitrary URL/file path passed to yt-dlp
+    - Fix: Validate URL is YouTube domain before passing to yt-dlp
+
+11. **CLI Path Traversal in --audio** - `cli/index.ts:24,86,136`
+    - `--audio` flag accepts any file path without validation
+    - Risk: Could read files outside intended directories
+    - Fix: Validate path is within allowed directories
+
+### HIGH (6 additional issues)
+
+| # | File:Line | Issue | Fix |
+|---|-----------|-------|-----|
+| 13 | `config/loader.ts:13` | YAML.parse() without safe options allows prototype pollution | Use `YAML.parse(raw, { schema: 'core' })` |
+| 14 | `config/runs.ts:56` | YAML parsing of runs.yaml has same issue | Add safe parse options |
+| 15 | `utils/exec.ts:21-25` | Unbounded stdout/stderr buffer accumulation | Add max buffer size limit |
+| 16 | `pipeline/run.ts:247-256` | TOCTOU race in processed video detection | Use atomic file operations |
+| 17 | `youtube/catalogCache.ts:136-155` | Cache poisoning via channelId from yt-dlp output | Validate channelId format before caching |
+| 18 | `cli/index.ts:32-33,89-90` | --outDir and --audioDir accept paths without validation | Validate paths, check for traversal |
+
+### MEDIUM (2 additional issues)
+
+| File:Line | Issue |
+|-----------|-------|
+| `formatters/csv.ts:3-18` | CSV formula injection - values starting with =,@,+,- not escaped |
+| `utils/logger.ts:41,45,49,60` | Log injection - user input logged without sanitization |
+
+### Updated Security Roadmap (with Round 2)
+
+**P0 - CRITICAL (do first):**
+1. Fix PowerShell injection in health.ts:49
+2. Validate runId in persistence.ts (UUID format)
+3. Fix symlink attacks in retention.ts (use lstat)
+4. Add per-IP SSE connection limits
+5. Fix timing attack in auth.ts:70
+6. *NEW:* Validate ytDlpPath in config/schema.ts
+7. *NEW:* Validate YouTube URL before passing to yt-dlp
+8. *NEW:* Validate --audio path in CLI
+
+**P1 - HIGH:**
+9. Disable Y2T_TRUST_PROXY by default
+10. Sanitize API error messages before logging
+11. Add minimum API key length (32+ chars)
+12. Add per-API-key concurrent run limit
+13. Fix Content-Type validation in uploads.ts
+14. *NEW:* Use safe YAML parsing options
+15. *NEW:* Add max buffer size to exec.ts
+16. *NEW:* Validate cache keys from yt-dlp output
+17. *NEW:* Validate CLI --outDir/--audioDir paths
+
+**P2 - MEDIUM:**
+18. Add URL format validation to Zod schemas
+19. Add upload stream timeout
+20. Remove directory paths from health response
+21. Use randomUUID for all temp filenames
+22. Add event size limits to EventBuffer
+23. *NEW:* Escape CSV formula characters
+24. *NEW:* Sanitize log output
+
+## Security Roadmap v8 Status (0.31.2)
+- All P0/P1/P2 items above are DONE.
+- Remaining non-roadmap audit items to consider later:
+  - `fs.ts` symlink guard for recursive mkdir
+  - Webhook DNS re-resolve before fetch (TOCTOU)
+  - Processed-video TOCTOU in `pipeline/run.ts`
+
+## Phase 3.0 (DONE): Direct audio input
+- `POST /audio` uploads local audio (stored under `audio/_uploads`, metadata in `output/_uploads`).
+- `POST /runs` accepts `audioId` to transcribe uploaded audio.
+- CLI: `--audio` + `--audioTitle` (local file input).
+- `runs.yaml` supports `audioPath` + `audioTitle`.
+- Upload size limit: `Y2T_MAX_UPLOAD_MB` (default 1024).
+- Output goes under `output/uploads/*` and `audio/uploads/*`.
+- Upload handler waits for file stream close and applies title field even if it arrives after file.
+
+## Claude vs Implementation (Phase 3.0)
+- Claude suggested `/runs/upload` with pipeline reuse; we implemented `/audio` + `POST /runs` with `audioId` (same flow, different endpoint naming).
+- Pipeline reuse: kept single `runPipeline` with `RunInput` union; audio path skips yt-dlp/comments only.
+- Storage layout: staging under `_uploads`, final outputs under `uploads` (matches Claude).
+- Tests: added upload + audioId run + schema tests (matches Claude expectation).
 
 ## Testing / Sanity Pass
 - `npm test`
@@ -67,12 +294,203 @@ Verified not an issue (current code):
 - `.env` must include `ASSEMBLYAI_API_KEY` when `sttProvider=assemblyai`.
 - `.env` must include `OPENAI_API_KEY` or `Y2T_OPENAI_API_KEY` when `sttProvider=openai_whisper`.
 - Optional: `Y2T_MAX_AUDIO_MB` (cap before splitting) + `Y2T_SPLIT_OVERLAP_SECONDS` (overlap between chunks).
-- `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local dev only).
+- Optional: `Y2T_MAX_UPLOAD_MB` (max upload size for `POST /audio`).
+- `Y2T_API_KEY` is required for the HTTP API server (set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` and `Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND` for local dev only).
 - `GET /health?deep=true` requires `X-API-Key` unless `Y2T_HEALTH_DEEP_PUBLIC=true`.
-- If the API is behind a trusted proxy/load balancer, set `Y2T_TRUST_PROXY=true`.
+- If the API is behind a trusted proxy/load balancer, set `Y2T_TRUST_PROXY=true` and `Y2T_TRUST_PROXY_IPS`.
+- `Y2T_API_KEY_MIN_BYTES` enforces a minimum key length (default 32).
 - `Y2T_SSE_MAX_CLIENTS` caps concurrent SSE connections (default 1000, `0` disables).
+- `Y2T_SSE_MAX_CLIENTS_PER_IP` caps SSE connections per IP (default 50).
+- `Y2T_SSE_MAX_LIFETIME_SECONDS` closes long-lived SSE streams (default 0 disables).
+- `Y2T_MAX_EVENT_BYTES` caps SSE payload size (default 65536).
+- `Y2T_UPLOAD_TIMEOUT_MS` bounds upload stream lifetime (default 120000).
+- `Y2T_MAX_CONCURRENT_RUNS_PER_KEY` caps concurrent queued/running runs per API key (default 0 disables).
+- `Y2T_RUN_ALLOW_ANY_URL=true` allows non-YouTube run URLs (not recommended).
+- `Y2T_EXEC_MAX_BYTES` caps external command output capture (default 50MB).
+- `Y2T_HEALTH_INCLUDE_PATHS=true` exposes deep health filesystem paths.
 - `Y2T_API_KEY_MAX_BYTES` caps `X-API-Key` size; read/health rate limits and request timeout are configurable (see README).
 - Security note: `callbackUrl` webhooks allow any http(s) URL unless `Y2T_WEBHOOK_ALLOWED_DOMAINS` is set; keep API private or enable the allowlist.
+
+## Feature Mining: ShellSpeechToText (2026-01-03)
+
+Analyzed sibling project at `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText` for reusable patterns.
+
+### Project Overview
+- Batch audio transcription processor using Deepgram Nova-3
+- CLI-only (no API/Web), ~4,600 lines TypeScript
+- Focus: reliability, monitoring, multi-account load balancing
+
+### Potentially Useful Features (priority order)
+
+**P1 - Load Balancer with Multiple API Keys** (HIGH VALUE)
+- File: `../Shell/ShellSpeechToText/src/services/deepgram-load-balancer.service.ts`
+- Pattern: Round-robin across multiple API accounts with automatic failover
+- Features:
+  - Tracks error count per account (disables after 3 consecutive errors)
+  - Credit exhaustion detection
+  - Auto-reset when account recovers
+- Y2T application: Support `Y2T_ASSEMBLYAI_API_KEYS=key1,key2,key3` for load distribution
+- Effort: Medium | Value: High (resilience, avoid rate limits)
+
+**P2 - Deepgram as Third STT Provider** (HIGH VALUE)
+- Files:
+  - `../Shell/ShellSpeechToText/src/services/deepgram.service.ts` (core transcription)
+  - `../Shell/ShellSpeechToText/src/services/deepgram-billing.service.ts` (balance check)
+- Features:
+  - Nova-3 model with speaker diarization
+  - Language detection or hint-based
+  - Simpler API than AssemblyAI
+- Y2T application: Add `sttProvider: deepgram` option (factory pattern already supports this)
+- Effort: Medium | Value: High (more provider options)
+
+**P3 - Error Categorization System** (MEDIUM VALUE)
+- File: `../Shell/ShellSpeechToText/src/utils/errors.ts`
+- Pattern:
+  ```typescript
+  enum ErrorCategory { NETWORK, API, FILE, USER, SECURITY, SYSTEM }
+  ```
+- Features:
+  - Analyzes error message to classify category
+  - Determines if error is retryable
+  - User-friendly messages per category
+- Y2T application: Replace ad-hoc error handling with structured classification
+- Effort: Low | Value: Medium (smarter retries, better UX)
+
+**P4 - ML-based Processing Time Estimation** (MEDIUM VALUE)
+- Files:
+  - `../Shell/ShellSpeechToText/src/services/stats.service.ts` (ML estimation)
+  - `../Shell/ShellSpeechToText/src/data/processing-stats.json` (historical data)
+- Pattern:
+  - Categorize files by size (voice <500KB, short <5MB, medium <15MB, long <40MB, very_long 40MB+)
+  - Store actual processing times per category
+  - Predict ETA using historical averages
+- Y2T application: Add ETA field to run progress events
+- Effort: Medium | Value: Medium (better progress UX)
+
+**P5 - AI Text Cleaning Post-Process** (LOW VALUE)
+- File: `../Shell/ShellSpeechToText/src/services/text-cleaner.service.ts`
+- Pattern: Send transcription to GPT-4o or Claude for cleanup
+- Features:
+  - Corrects punctuation, spelling
+  - Custom prompt from file
+  - Dual-model comparison
+- Y2T application: Optional pipeline stage `cleanWithAI: true`
+- Effort: High | Value: Low (adds cost, niche use case)
+
+**P6 - Telegram Bot Monitoring** (LOW VALUE)
+- Files:
+  - `../Shell/ShellSpeechToText/src/services/monitoring-bot.service.ts`
+  - `../Shell/ShellSpeechToText/src/services/telegram-notifications.service.ts`
+- Features: `/status`, `/balance`, `/retry` commands, error notifications
+- Y2T application: Already have webhooks + SSE, this is redundant
+- Effort: Medium | Value: Low (nice-to-have)
+
+### Features We Already Have Better
+- **File watching**: Our watchlist/scheduler is more powerful than their chokidar watcher
+- **Cleanup**: Our retention.ts already handles this
+- **API/Web**: They have none; we have full REST API + Next.js UI
+- **Tests**: They have none; we have 110 tests
+
+### Technical Differences
+| Aspect | ShellSpeechToText | Youtube2Text |
+|--------|-------------------|--------------|
+| STT Provider | Deepgram Nova-3 | AssemblyAI + OpenAI Whisper |
+| Input sources | Local files only | YouTube + local files |
+| Interface | CLI only | CLI + REST API + Web UI |
+| Concurrency | 20 parallel default | Configurable per API key |
+| Tests | None | 110 tests |
+| Audio splitting | 80MB threshold | Configurable Y2T_MAX_AUDIO_MB |
+
+### Additional Patterns Found (Round 2 Analysis)
+
+**From ShellSpeechToText - missed in first pass:**
+
+| Pattern | File:Lines | Description | Y2T Value |
+|---------|------------|-------------|-----------|
+| Atomic file writes | `stats.service.ts:110-118` | Write to temp, atomic rename | HIGH - prevents corruption |
+| Unicode progress bars | `progress.ts:95-106` | Partial blocks (half, quarter) | LOW - cosmetic |
+| Hybrid ETA | `progress.ts:114-149` | Blend statistical + rate-based | MEDIUM - better UX |
+| FFmpeg local+PATH | `audio-splitter.service.ts:244-264` | Check ./bin/ then system | LOW - we use deps.ts |
+| File watcher debounce | `file-watcher.ts:116-128` | Timer map per file | LOW - we use scheduler |
+| Exponential backoff | `load-balancer.service.ts:151` | `1000 * attempts` ms | MEDIUM - simpler than ours |
+| Filename sanitize | `audio-splitter.service.ts:137` | Regex `[^a-zA-Z0-9_-]` | LOW - we use slugify |
+| AbortController timeout | `deepgram-billing.service.ts:62` | 15s fetch timeout | MEDIUM - we lack this |
+| Markdown escaping | `monitoring-bot.service.ts:104` | Escape special chars | LOW - Telegram specific |
+| Model param detection | `text-cleaner.service.ts:175-186` | gpt-5/o1/o3 use different params | MEDIUM - future proofing |
+
+### Implementation Notes for Future LLM
+
+**If implementing P1 (load balancer):**
+1. Read `deepgram-load-balancer.service.ts` for the pattern
+2. Create `src/transcription/loadBalancer.ts`
+3. Modify factory to accept array of keys
+4. Add health tracking per key
+5. Update .env.example and README
+
+**If implementing P2 (Deepgram provider):**
+1. Read `deepgram.service.ts` for API usage
+2. Create `src/transcription/deepgram/index.ts` following OpenAI pattern
+3. Add to factory and registry
+4. Add `DEEPGRAM_API_KEY` to config schema
+
+**If implementing atomic file writes:**
+1. Read `stats.service.ts:110-118` for pattern
+2. Apply to `persistence.ts` and `settings.ts`
+3. Pattern: write temp file -> fs.rename() (atomic on same filesystem)
+
+**If implementing AbortController timeout:**
+1. Read `deepgram-billing.service.ts:62-63`
+2. Apply to `assemblyai/http.ts` fetch calls
+3. Pattern: `signal: AbortSignal.timeout(15000)`
+
+## Roadmap: Feature Mining Adoption (proposed)
+
+Goal: adopt the strongest ideas from `ShellSpeechToText` without copying code, preserving Y2T interfaces and modularity.
+
+### Phase A - Low-risk hardening (do first)
+1) Atomic file writes (HIGH)
+   - Target: `src/api/persistence.ts`, `src/config/settings.ts`
+   - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\stats.service.ts`
+   - Approach: write to temp file + rename (same filesystem) for run/events/settings writes.
+   - Tests: add unit test that writes twice and ensures file is valid JSON.
+
+2) AbortController timeouts for external API calls (MEDIUM)
+   - Target: `src/transcription/assemblyai/http.ts`, `src/transcription/openai/index.ts` (and any webhook fetch if needed)
+   - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\deepgram-billing.service.ts`
+   - New env: `Y2T_PROVIDER_TIMEOUT_MS` (default 15000)
+   - Tests: ensure timeout returns a controlled error message.
+
+### Phase B - Provider resiliency (core value)
+3) Multi-key load balancer (HIGH)
+   - Target: new `src/transcription/loadBalancer.ts` + extend provider registry
+   - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\deepgram-load-balancer.service.ts`
+   - Add env: `Y2T_ASSEMBLYAI_API_KEYS=key1,key2` (optional), keep `ASSEMBLYAI_API_KEY` for single-key.
+   - Behavior: round-robin, disable key after N consecutive errors, auto-reset after cooldown.
+   - Tests: deterministic selection order, failover on error count threshold.
+
+### Phase C - Provider expansion (optional but high value)
+4) Deepgram provider (HIGH, after load balancer stable)
+   - Target: `src/transcription/deepgram/index.ts`, register in factory/registry.
+   - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\deepgram.service.ts`
+   - Env: `DEEPGRAM_API_KEY` (or `Y2T_DEEPGRAM_API_KEY`), model setting.
+   - Tests: capability listing, basic request mapping (mocked).
+
+### Phase D - UX/observability improvements
+5) Error categorization (MEDIUM)
+   - Target: new `src/utils/errors.ts` or expand `transcription/errors.ts`
+   - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\utils\\errors.ts`
+   - Outcome: standardized retryable vs terminal errors + user-facing messages.
+
+6) ETA + hybrid estimation (MEDIUM)
+   - Target: `src/pipeline/events.ts` (new `run:eta` or fields on `video:*`)
+   - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\stats.service.ts`
+   - Outcome: optional ETA (CLI + UI), based on file size categories and historical averages.
+
+### Low priority (optional)
+7) AI text cleaning post-process (LOW)
+   - Target: optional pipeline stage after transcription.
+8) Telegram bot monitoring (LOW)
+   - Redundant with SSE + webhooks; only if required later.
 
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)

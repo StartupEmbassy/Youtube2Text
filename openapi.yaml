@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Youtube2Text API
-  version: 0.30.0
+  version: 0.31.2
   description: |
     Minimal local HTTP API for Youtube2Text.
     Notes:
@@ -182,6 +182,58 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /audio:
+    post:
+      operationId: uploadAudio
+      summary: Upload a local audio file
+      description: |
+        Uploads a local audio file and returns an `audioId` to use with `POST /runs`.
+        The server stores uploads under `audio/_uploads` and metadata under `output/_uploads`.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                  description: Optional title for the audio run.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioUploadResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Payload too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "408":
+          description: Request timed out
           content:
             application/json:
               schema:
@@ -473,7 +525,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RunCreateRequest"
+              $ref: "#/components/schemas/RunPlanRequest"
       responses:
         "200":
           description: OK
@@ -1166,9 +1218,11 @@ components:
 
     RunCreateRequest:
       type: object
-      required: [url]
       properties:
         url: { type: string }
+        audioId:
+          type: string
+          description: Audio ID returned by `POST /audio`.
         force: { type: [boolean, "null"] }
         maxNewVideos:
           type: [integer, "null"]
@@ -1191,6 +1245,46 @@ components:
         config:
           type: object
           additionalProperties: true
+      oneOf:
+        - required: [url]
+        - required: [audioId]
+
+    RunPlanRequest:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string }
+        force: { type: [boolean, "null"] }
+        maxNewVideos:
+          type: [integer, "null"]
+          description: |
+            Limit this run to at most N NEW (unprocessed) videos.
+            Applied AFTER skipping already-processed videos so repeated runs can backfill incrementally.
+        afterDate:
+          type: [string, "null"]
+          description: Only include videos after YYYY-MM-DD (best-effort; based on yt-dlp upload_date).
+        config:
+          type: object
+          additionalProperties: true
+
+    AudioUploadMeta:
+      type: object
+      required: [audioId, title, originalFilename, bytes, ext, createdAt]
+      properties:
+        audioId: { type: string }
+        title: { type: string }
+        originalFilename: { type: string }
+        contentType: { type: string }
+        bytes: { type: integer }
+        ext: { type: string }
+        createdAt: { type: string }
+
+    AudioUploadResponse:
+      type: object
+      required: [audio]
+      properties:
+        audio:
+          $ref: "#/components/schemas/AudioUploadMeta"
 
     RunCreateLinks:
       type: object
@@ -1328,19 +1422,28 @@ components:
 
     VideoMeta:
       type: object
-      required: [videoId]
+      required: [videoId, title, url, channelId, filenameStyle, audioFormat, createdAt]
       properties:
         videoId: { type: string }
         title: { type: string }
+        url: { type: string }
+        uploadDate: { type: string }
+        description: { type: string }
         channelId: { type: string }
         channelTitle: { type: string }
-        channelUrl: { type: string }
-        videoUrl: { type: string }
-        description: { type: string }
-        publishedAt: { type: string }
+        source:
+          type: string
+          enum: [youtube, upload]
+        audioId: { type: string }
+        originalFilename: { type: string }
+        filenameStyle:
+          type: string
+          enum: [id, id_title, title_id]
+        audioFormat: { type: string }
         languageCode: { type: string }
-        languageDetection: { type: string }
+        languageDetection: { type: boolean }
         languageConfidence: { type: number }
+        createdAt: { type: string }
 
     VideoInfo:
       type: object

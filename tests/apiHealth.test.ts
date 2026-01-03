@@ -61,7 +61,7 @@ test("GET /health?deep=true returns deep health structure", async () => {
 
   try {
     const res = await fetch(`http://127.0.0.1:${port}/health?deep=true`, {
-      headers: { "x-api-key": "test" },
+      headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
     });
     assert.equal(res.status, 200);
     const body = await res.json();
@@ -71,7 +71,7 @@ test("GET /health?deep=true returns deep health structure", async () => {
     assert.ok(body.deps.ffmpeg);
     assert.ok(body.deps.disk);
     assert.ok(body.deps.persist);
-    assert.equal(body.deps.persist.dir, join(dir, "_runs"));
+    assert.equal(body.deps.persist.dir, "redacted");
     assert.equal(typeof body.deps.persist.writable, "boolean");
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));

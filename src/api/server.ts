@@ -10,7 +10,7 @@ import { badRequest, json, notFound, payloadTooLarge, readJsonBody, BodyTooLarge
 import { getLastEventId, initSse, writeSseEvent } from "./sse.js";
 import { FileSystemStorageAdapter, saveChannelMetaJson } from "../storage/index.js";
 import { makeChannelDirName } from "../storage/naming.js";
-import { requireApiKey } from "./auth.js";
+import { requireApiKey, validateExpectedApiKey } from "./auth.js";
 import { getClientIp } from "./ip.js";
 import {
   createRateLimiter,
@@ -42,6 +42,7 @@ import {
 } from "./validation.js";
 import { normalizeAssemblyAiLanguageCode } from "../youtube/language.js";
 import { listProviderCapabilities } from "../transcription/index.js";
+import { AudioUploadError, handleAudioUpload, readAudioUpload } from "./uploads.js";
 
 type ServerOptions = {
   port: number;
@@ -165,7 +166,15 @@ function isSafeBaseName(name: string): boolean {
 function contentTypeForAudioPath(path: string): string {
   if (path.endsWith(".mp3")) return "audio/mpeg";
   if (path.endsWith(".wav")) return "audio/wav";
+  if (path.endsWith(".m4a")) return "audio/mp4";
+  if (path.endsWith(".ogg")) return "audio/ogg";
+  if (path.endsWith(".flac")) return "audio/flac";
   return "application/octet-stream";
+}
+
+function allowAnyRunUrl(): boolean {
+  const raw = (process.env.Y2T_RUN_ALLOW_ANY_URL ?? "").trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes";
 }
 
 async function streamFile(res: ServerResponse, path: string, contentType: string) {
@@ -184,9 +193,21 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const allowInsecureNoApiKey =
     typeof process.env.Y2T_ALLOW_INSECURE_NO_API_KEY === "string" &&
     process.env.Y2T_ALLOW_INSECURE_NO_API_KEY.trim().toLowerCase() === "true";
-  if (!apiKeyIsConfigured() && !allowInsecureNoApiKey) {
+  const allowInsecureConfirmed =
+    process.env.Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM === "I_UNDERSTAND";
+  if (!apiKeyIsConfigured() && !(allowInsecureNoApiKey && allowInsecureConfirmed)) {
     throw new Error(
-      "Y2T_API_KEY is required to start the HTTP API server. Set Y2T_API_KEY (recommended) or set Y2T_ALLOW_INSECURE_NO_API_KEY=true for local development only."
+      "Y2T_API_KEY is required to start the HTTP API server. Set Y2T_API_KEY (recommended) or set Y2T_ALLOW_INSECURE_NO_API_KEY=true and Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND for local development only."
+    );
+  }
+  if (apiKeyIsConfigured()) {
+    const validation = validateExpectedApiKey();
+    if (!validation.ok) {
+      throw new Error(validation.error);
+    }
+  } else if (allowInsecureNoApiKey && !allowInsecureConfirmed) {
+    throw new Error(
+      "Y2T_ALLOW_INSECURE_NO_API_KEY requires Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND"
     );
   }
 
@@ -203,9 +224,11 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
     Number.isFinite(runTimeoutMinutes) && runTimeoutMinutes > 0
       ? Math.trunc(runTimeoutMinutes * 60 * 1000)
       : undefined;
+  const maxEventBytes = Math.max(1024, parseEnvInt(process.env.Y2T_MAX_EVENT_BYTES, 65536));
 
   const manager = new RunManager(config, {
     maxBufferedEventsPerRun: opts.maxBufferedEventsPerRun,
+    maxEventBytes,
     persistRuns: opts.persistRuns,
     persistDir: opts.persistDir,
     runTimeoutMs,
@@ -234,14 +257,31 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const readRateLimiter = createRateLimiter(getReadRateLimitConfigFromEnv());
   const healthRateLimiter = createRateLimiter(getHealthRateLimitConfigFromEnv());
   const sseMaxClients = Math.max(0, parseEnvInt(process.env.Y2T_SSE_MAX_CLIENTS, 1000));
+  const sseMaxClientsPerIp = Math.max(0, parseEnvInt(process.env.Y2T_SSE_MAX_CLIENTS_PER_IP, 50));
+  const sseMaxLifetimeMs = Math.max(0, parseEnvInt(process.env.Y2T_SSE_MAX_LIFETIME_SECONDS, 0)) * 1000;
   let sseClients = 0;
+  const sseClientsByIp = new Map<string, number>();
   const requestTimeoutMs = Math.max(0, parseEnvInt(process.env.Y2T_REQUEST_TIMEOUT_MS, 30_000));
+  const maxUploadMb = Math.max(1, parseEnvInt(process.env.Y2T_MAX_UPLOAD_MB, 1024));
+  const maxUploadBytes = maxUploadMb * 1024 * 1024;
+  const uploadTimeoutMs = Math.max(1_000, parseEnvInt(process.env.Y2T_UPLOAD_TIMEOUT_MS, 120_000));
+  const uploadAllowedExts = ["mp3", "wav", "m4a", "ogg", "flac"];
+  const maxConcurrentRunsPerKey = Math.max(
+    0,
+    parseEnvInt(process.env.Y2T_MAX_CONCURRENT_RUNS_PER_KEY, 0)
+  );
 
   const isWriteMethod = (method: string | undefined) =>
     method === "POST" || method === "PATCH" || method === "DELETE";
 
   const hashApiKey = (apiKey: string): string =>
     createHash("sha256").update(apiKey).digest("hex").slice(0, 24);
+
+  const apiKeyHashFromReq = (req: IncomingMessage): string | undefined => {
+    const apiKey = typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined;
+    if (apiKey && apiKey.trim().length > 0) return hashApiKey(apiKey.trim());
+    return undefined;
+  };
 
   const rateLimitKey = (req: IncomingMessage): string => {
     const apiKey = typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined;
@@ -252,21 +292,67 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
   const healthRateLimitKey = (req: IncomingMessage): string => `ip:${getClientIp(req)}`;
 
   const registerSseClient = (req: IncomingMessage, res: ServerResponse): boolean => {
+    const clientIp = getClientIp(req);
     if (sseMaxClients > 0 && sseClients >= sseMaxClients) {
       json(res, 429, { error: "rate_limited", message: "Too many SSE clients" });
       return false;
     }
+    if (sseMaxClientsPerIp > 0) {
+      const perIp = sseClientsByIp.get(clientIp) ?? 0;
+      if (perIp >= sseMaxClientsPerIp) {
+        json(res, 429, { error: "rate_limited", message: "Too many SSE clients for IP" });
+        return false;
+      }
+      sseClientsByIp.set(clientIp, perIp + 1);
+    }
     sseClients += 1;
     let cleaned = false;
+    let lifetimeTimer: NodeJS.Timeout | undefined;
     const cleanup = () => {
       if (cleaned) return;
       cleaned = true;
       sseClients = Math.max(0, sseClients - 1);
+      if (sseMaxClientsPerIp > 0) {
+        const perIp = sseClientsByIp.get(clientIp) ?? 0;
+        if (perIp <= 1) sseClientsByIp.delete(clientIp);
+        else sseClientsByIp.set(clientIp, perIp - 1);
+      }
+      if (lifetimeTimer) clearTimeout(lifetimeTimer);
     };
     req.on("close", cleanup);
     res.on("close", cleanup);
     res.on("error", cleanup);
+    if (sseMaxLifetimeMs > 0) {
+      lifetimeTimer = setTimeout(() => {
+        try {
+          res.end();
+        } finally {
+          cleanup();
+        }
+      }, sseMaxLifetimeMs);
+      lifetimeTimer.unref?.();
+    }
     return true;
+  };
+
+  const runOwners = new Map<string, string>();
+  manager.subscribeGlobal((buffered) => {
+    const run = buffered.event.run;
+    if (!run) return;
+    if (run.status !== "queued" && run.status !== "running") {
+      runOwners.delete(run.runId);
+    }
+  });
+
+  const countActiveRunsForKey = (keyHash: string): number => {
+    let count = 0;
+    for (const [runId, hash] of runOwners.entries()) {
+      if (hash !== keyHash) continue;
+      const run = manager.getRun(runId);
+      if (!run) continue;
+      if (run.status === "queued" || run.status === "running") count += 1;
+    }
+    return count;
   };
 
   async function getEffectiveConfig(): Promise<AppConfig> {
@@ -451,6 +537,50 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         return;
       }
 
+      if (req.method === "POST" && seg.length === 1 && seg[0] === "audio") {
+        try {
+          const result = await handleAudioUpload(req, {
+            audioDir: config.audioDir,
+            outputDir: config.outputDir,
+            maxBytes: maxUploadBytes,
+            allowedExts: uploadAllowedExts,
+            timeoutMs: uploadTimeoutMs,
+          });
+          json(res, 201, { audio: result.meta });
+        } catch (error) {
+          if (error instanceof AudioUploadError) {
+            if (error.code === "too_large") {
+              payloadTooLarge(res, error.message);
+              return;
+            }
+            if (error.code === "invalid_content_type") {
+              badRequest(res, "Expected multipart/form-data");
+              return;
+            }
+            if (error.code === "unsupported_extension") {
+              badRequest(res, error.message);
+              return;
+            }
+            if (error.code === "missing_file") {
+              badRequest(res, error.message);
+              return;
+            }
+            if (error.code === "too_many_files") {
+              badRequest(res, "Only one audio file is allowed");
+              return;
+            }
+            if (error.code === "timeout") {
+              json(res, 408, { error: "request_timeout", message: "Upload timed out" });
+              return;
+            }
+            json(res, 500, { error: "upload_failed", message: error.message });
+            return;
+          }
+          throw error;
+        }
+        return;
+      }
+
       if (req.method === "PATCH" && seg.length === 1 && seg[0] === "settings") {
         const read = await readJsonBodySafe(req, res);
         if (!read.ok) return;
@@ -592,6 +722,16 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           return;
         }
         const { url, force, maxNewVideos, afterDate, config: configOverrides } = parsed.data;
+        if (!allowAnyRunUrl()) {
+          const kind = classifyYoutubeUrl(url).kind;
+          if (kind === "unknown") {
+            badRequest(
+              res,
+              "url must be a YouTube URL (set Y2T_RUN_ALLOW_ANY_URL=true to override)"
+            );
+            return;
+          }
+        }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
         const normalizedOverrides = normalizeConfigOverrides(sanitizedOverrides);
         if (normalizedOverrides.errors.length > 0) {
@@ -754,12 +894,31 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         }
         const {
           url,
+          audioId,
           force,
           maxNewVideos,
           afterDate,
           callbackUrl,
           config: configOverrides,
         } = parsed.data;
+        if (url && !allowAnyRunUrl()) {
+          const kind = classifyYoutubeUrl(url).kind;
+          if (kind === "unknown") {
+            badRequest(
+              res,
+              "url must be a YouTube URL (set Y2T_RUN_ALLOW_ANY_URL=true to override)"
+            );
+            return;
+          }
+        }
+        const ownerKeyHash = apiKeyHashFromReq(req);
+        if (maxConcurrentRunsPerKey > 0 && ownerKeyHash) {
+          const active = countActiveRunsForKey(ownerKeyHash);
+          if (active >= maxConcurrentRunsPerKey) {
+            json(res, 429, { error: "rate_limited", message: "Too many concurrent runs for API key" });
+            return;
+          }
+        }
         const sanitizedOverrides = sanitizeConfigOverrides(configOverrides);
         const normalizedOverrides = normalizeConfigOverrides(sanitizedOverrides);
         if (normalizedOverrides.errors.length > 0) {
@@ -789,15 +948,53 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
         const settingsForRun = sanitizeNonSecretSettings((await readSettingsFile(config.outputDir))?.settings);
         const runConfigOverrides = { ...settingsForRun, ...requestOverrides };
 
+        if (audioId) {
+          const uploaded = await readAudioUpload(config.audioDir, config.outputDir, audioId);
+          if (!uploaded) {
+            badRequest(res, "Unknown audioId (upload it first via POST /audio)");
+            return;
+          }
+          const record = manager.createRun({
+            audioId,
+            audioPath: uploaded.audioPath,
+            audioTitle: uploaded.meta.title,
+            audioOriginalFilename: uploaded.meta.originalFilename,
+            force,
+            callbackUrl,
+            config: runConfigOverrides,
+          });
+          if (ownerKeyHash) runOwners.set(record.runId, ownerKeyHash);
+          manager.startRun(record.runId, {
+            audioId,
+            audioPath: uploaded.audioPath,
+            audioTitle: uploaded.meta.title,
+            audioOriginalFilename: uploaded.meta.originalFilename,
+            force,
+            callbackUrl,
+            config: runConfigOverrides,
+          });
+          json(res, 201, {
+            run: record,
+            links: {
+              run: `/runs/${record.runId}`,
+              events: `/runs/${record.runId}/events`,
+              artifacts: `/runs/${record.runId}/artifacts`,
+              cancel: `/runs/${record.runId}/cancel`,
+            },
+          });
+          return;
+        }
+
         if (!force) {
-          const videoId = tryExtractVideoIdFromUrl(url);
-          if (videoId) {
+          const videoId = url ? tryExtractVideoIdFromUrl(url) : undefined;
+          if (url && videoId) {
             const plan = await planRunFn(url, mergedConfig, { force: false });
             if (plan.totalVideos === 1 && plan.toProcess === 0) {
               const record = manager.createCachedRun(
                 { url, force: false, callbackUrl, config: runConfigOverrides },
                 plan
               );
+              if (ownerKeyHash) runOwners.set(record.runId, ownerKeyHash);
 
               // Best-effort: update channel thumbnail if missing (fire-and-forget)
               void (async () => {
@@ -845,7 +1042,13 @@ export async function startApiServer(config: AppConfig, opts: ServerOptions) {
           }
         }
 
+        if (!url) {
+          badRequest(res, "Invalid run payload");
+          return;
+        }
+
         const record = manager.createRun({ url, force, callbackUrl, config: runConfigOverrides });
+        if (ownerKeyHash) runOwners.set(record.runId, ownerKeyHash);
         manager.startRun(record.runId, { url, force, callbackUrl, config: runConfigOverrides });
         json(res, 201, {
           run: record,

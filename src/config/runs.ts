@@ -3,12 +3,22 @@ import { resolve } from "node:path";
 import YAML from "yaml";
 import { z } from "zod";
 
-const runSchema = z.object({
-  url: z.string().url(),
+const safePathString = z
+  .string()
+  .min(1)
+  .refine((value) => !/[\0\r\n]/.test(value), {
+    message: "path must not include null bytes or newlines",
+  });
+
+const runSchema = z
+  .object({
+  url: z.string().url().optional(),
+  audioPath: safePathString.optional(),
+  audioTitle: z.string().optional(),
   maxNewVideos: z.number().int().positive().optional(),
   after: z.string().optional(),
-  outDir: z.string().optional(),
-  audioDir: z.string().optional(),
+  outDir: safePathString.optional(),
+  audioDir: safePathString.optional(),
   sttProvider: z.enum(["assemblyai", "openai_whisper"]).optional(),
   openaiWhisperModel: z.string().optional(),
   maxAudioMB: z.number().int().positive().optional(),
@@ -24,8 +34,14 @@ const runSchema = z.object({
   commentsEnabled: z.boolean().optional(),
   commentsMax: z.number().int().positive().optional(),
   force: z.boolean().optional(),
-  ytDlpPath: z.string().optional(),
-});
+  ytDlpPath: safePathString.optional(),
+  })
+  .refine((value) => value.url || value.audioPath, {
+    message: "runs entry must include url or audioPath",
+  })
+  .refine((value) => !(value.url && value.audioPath), {
+    message: "Provide either url or audioPath, not both",
+  });
 
 const runsFileSchema = z.union([
   z.object({ runs: z.array(runSchema).min(1) }),
@@ -44,7 +60,7 @@ export function loadRunsFile(
   }
   if (!existsSync(fullPath)) return undefined;
   const raw = readFileSync(fullPath, "utf8");
-  const parsed = YAML.parse(raw);
+  const parsed = YAML.parse(raw, { schema: "core" });
   const validated = runsFileSchema.parse(parsed);
   return Array.isArray(validated) ? validated : validated.runs;
 }

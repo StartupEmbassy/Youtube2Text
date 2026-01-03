@@ -48,7 +48,7 @@ test("POST /runs/plan rejects oversized JSON body with 413", async () => {
       };
       const res = await fetch(`http://127.0.0.1:${port}/runs/plan`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": "test" },
+        headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
         body: JSON.stringify(payload),
       });
       assert.equal(res.status, 413);

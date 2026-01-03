@@ -3,6 +3,8 @@ import { normalizeAssemblyAiLanguageCode } from "../youtube/language.js";
 
 const optionalString = () =>
   z.preprocess((value) => (value === null ? undefined : value), z.string().optional());
+const optionalUrl = () =>
+  z.preprocess((value) => (value === null ? undefined : value), z.string().url().optional());
 const optionalBoolean = () =>
   z.preprocess((value) => (value === null ? undefined : value), z.boolean().optional());
 
@@ -100,6 +102,20 @@ const optionalEnumOrNull = <T extends [string, ...string[]]>(values: T) =>
     z.union([z.enum(values), z.literal(null)]).optional()
   );
 
+const safeConfigRecord = () =>
+  z
+    .record(z.unknown())
+    .superRefine((value, ctx) => {
+      for (const key of ["__proto__", "constructor", "prototype"]) {
+        if (Object.prototype.hasOwnProperty.call(value, key)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `config must not include ${key}`,
+          });
+        }
+      }
+    });
+
 const optionalLanguageCodeOrNull = () =>
   z.preprocess(
     (value) => (value === undefined ? undefined : value),
@@ -150,7 +166,7 @@ export const settingsPatchSchema = z.object({
 });
 
 export const watchlistCreateSchema = z.object({
-  channelUrl: z.string().min(1),
+  channelUrl: z.string().url(),
   intervalMinutes: optionalClampedInt(1, 10080),
   enabled: optionalBoolean(),
 });
@@ -161,21 +177,29 @@ export const watchlistUpdateSchema = z.object({
 });
 
 export const runPlanSchema = z.object({
-  url: z.string().min(1),
+  url: z.string().url(),
   force: optionalBoolean(),
   maxNewVideos: optionalClampedInt(1, 5000),
   afterDate: optionalIsoDateOrEmpty(),
-  config: z.record(z.unknown()).optional(),
+  config: safeConfigRecord().optional(),
 });
 
-export const runCreateSchema = z.object({
-  url: z.string().min(1),
+export const runCreateSchema = z
+  .object({
+  url: z.string().url().optional(),
+  audioId: z.string().min(1).optional(),
   force: optionalBoolean(),
   maxNewVideos: optionalClampedInt(1, 5000),
   afterDate: optionalIsoDateOrEmpty(),
-  callbackUrl: optionalString(),
-  config: z.record(z.unknown()).optional(),
-});
+  callbackUrl: optionalUrl(),
+  config: safeConfigRecord().optional(),
+  })
+  .refine((value) => value.url || value.audioId, {
+    message: "Either url or audioId is required",
+  })
+  .refine((value) => !(value.url && value.audioId), {
+    message: "Provide either url or audioId, not both",
+  });
 
 export type SettingsPatchInput = z.infer<typeof settingsPatchSchema>;
 export type WatchlistCreateInput = z.infer<typeof watchlistCreateSchema>;

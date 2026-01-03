@@ -7,6 +7,7 @@ Most users should start with `README.md`. If you are integrating this into anoth
 ## What you can do
 
 - Run the CLI to transcribe a channel/playlist/video URL into local artifacts.
+- Run the CLI or API to transcribe a local audio file.
 - Run the local HTTP API runner to start runs and stream progress via SSE.
 - Use the Next.js admin UI (minimal) as a local control panel over the API.
 - Deploy API+Web via Docker Compose (still CLI-compatible; CLI is not removed).
@@ -39,6 +40,12 @@ npm run dev -- --maxNewVideos 10 https://www.youtube.com/@SomeChannel
 
 Outputs go to `output/` and `audio/`.
 
+Optional: transcribe a local audio file (skip yt-dlp):
+
+```powershell
+npm run dev -- --audio "C:\path\to\local-audio.mp3" --audioTitle "Local audio"
+```
+
 Note: the Library page shows channel avatars when available. These are best-effort from yt-dlp metadata (stored in `output/<channelDir>/_channel.json`). If a channel folder was created before avatars existed (or before v0.9.2), rerun that channel (or any video from it) once to populate the thumbnail URL.
 
 ## Quickstart (API + Web in dev)
@@ -67,14 +74,14 @@ Open:
 
 ```powershell
 $env:ASSEMBLYAI_API_KEY="your_key_here"
-$env:Y2T_API_KEY="your_admin_key_here"   # required unless Y2T_ALLOW_INSECURE_NO_API_KEY=true
+$env:Y2T_API_KEY="your_admin_key_here"   # required unless Y2T_ALLOW_INSECURE_NO_API_KEY=true + confirm
 docker compose up --build
 ```
 
 ## Auth (important)
 
 - The API refuses to start unless `Y2T_API_KEY` is set.
-- For local development only, set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to run without auth.
+- For local development only, set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` and `Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND` to run without auth.
 - When `Y2T_API_KEY` is set, clients must send `X-API-Key` to the API (except `GET /health`; deep health requires a key unless `Y2T_HEALTH_DEEP_PUBLIC=true`).
 
 The web UI does not expose the key to the browser; it proxies API calls via `/api/*`.
@@ -137,6 +144,7 @@ Web UI:
 
 See `INTEGRATION.md` for:
 - planning runs with `POST /runs/plan`
+- uploading local audio with `POST /audio`
 - webhooks via `callbackUrl`
 - artifact download patterns
 - an n8n flow template

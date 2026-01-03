@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { basename } from "node:path";
 import { TranscriptionProvider, type ProviderCapabilities } from "../provider.js";
 import { TranscriptJson, TranscriptionOptions } from "../types.js";
+import { sanitizeProviderErrorText } from "../errors.js";
 
 const DEFAULT_MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
@@ -86,8 +87,9 @@ export class OpenAiWhisperProvider implements TranscriptionProvider {
 
     if (!res.ok) {
       const text = await res.text();
+      const safe = sanitizeProviderErrorText(text, [this.apiKey]);
       throw new Error(
-        `OpenAI Whisper API error (${res.status}): ${text || res.statusText}`
+        `OpenAI Whisper API error (${res.status}): ${safe || res.statusText}`
       );
     }
 

@@ -25,6 +25,7 @@ Quick links:
 - Optional per-video metadata sidecar `.meta.json` for browsing/indexing.
 - Fault handling with retries/backoff and per-video error logs.
 - Automatic audio splitting when provider size limits are exceeded (overlap trimmed).
+- Direct local audio input (skip yt-dlp download stage) via CLI or API.
 - Library UX: channel avatars are best-effort from yt-dlp metadata (stored in `output/<channelDir>/_channel.json`). If a channel folder was created before avatars existed (or before v0.9.2), rerun that channel (or any video from it) once to populate the thumbnail URL.
 
 ## Architecture (High Level)
@@ -118,6 +119,7 @@ Y2T_ASSEMBLYAI_MIN_BALANCE_MINUTES=60
 Y2T_COMMENTS_ENABLED=false
 Y2T_COMMENTS_MAX=
 Y2T_CATALOG_MAX_AGE_HOURS=168
+Y2T_MAX_UPLOAD_MB=1024
 ```
 
 Notes:
@@ -147,6 +149,8 @@ Options:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `--audio` | path | unset | Transcribe a local audio file instead of YouTube. |
+| `--audioTitle` | string | unset | Title to use for a local audio run. |
 | `--maxNewVideos` | number | unset | Process at most N NEW (unprocessed) videos (limit is applied after skipping already-processed videos). |
 | `--after` | date | unset | Only process videos after YYYY-MM-DD. |
 | `--outDir` | path | `output` | Output root directory. |
@@ -167,6 +171,8 @@ Options:
 | `--comments` | boolean | false | Fetch comments via yt-dlp and save `.comments.json`. |
 | `--commentsMax` | number | unset | Limit comments per video when fetching. |
 | `--json-events` | boolean | false | Emit JSONL pipeline events to stdout (logs go to stderr). |
+
+Note: The CLI accepts only YouTube URLs by default. Override (not recommended): set `Y2T_RUN_ALLOW_ANY_URL=true`.
 
 ### Incremental backfills (`maxNewVideos`)
 
@@ -202,7 +208,7 @@ Persistence (default enabled):
 
 Auth (required for server/Docker):
 - `Y2T_API_KEY` is required to run the HTTP API server (clients must send `X-API-Key: ...`, except `GET /health`).
-  - For local development only, you can set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` to start the API server without auth.
+  - For local development only, you can set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` **and** `Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND` to start the API server without auth.
 - Example:
   - `curl -H "X-API-Key: $Y2T_API_KEY" http://127.0.0.1:8787/runs`
 
@@ -224,6 +230,7 @@ Rate limiting (read endpoints):
 Deep health throttle:
 - `Y2T_RATE_LIMIT_HEALTH_MAX` (default `30`) and `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (default `60000`).
 - `Y2T_HEALTH_DEEP_PUBLIC` (default `false`) to allow unauthenticated `GET /health?deep=true`.
+- `Y2T_HEALTH_INCLUDE_PATHS` (default false) to include filesystem paths in deep health output.
 
 Run timeout safety net:
 - `Y2T_RUN_TIMEOUT_MINUTES` (default `240`, set `0` to disable) marks a run as `error` if it stays `running` too long.
@@ -242,17 +249,26 @@ CORS (recommended for server deployments):
 Request body size limit:
 - `Y2T_MAX_BODY_BYTES` (default 1,000,000). Requests above this limit return 413.
 
+Audio upload limit:
+- `Y2T_MAX_UPLOAD_MB` (default 1024). Uploads above this limit return 413.
+
 Auth failure rate limiting (brute-force protection):
 - `Y2T_AUTH_FAIL_MAX` (default 30) and `Y2T_AUTH_FAIL_WINDOW_MS` (default 60000).
-- If the API runs behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` to rate-limit by `X-Forwarded-For`/`X-Real-IP`.
+- If the API runs behind a trusted reverse proxy, set `Y2T_TRUST_PROXY=true` and `Y2T_TRUST_PROXY_IPS=<proxy_ip[,proxy_ip]>` to rate-limit by `X-Forwarded-For`/`X-Real-IP`.
 - `Y2T_API_KEY_MAX_BYTES` (default 256) caps the `X-API-Key` header size.
+- `Y2T_API_KEY_MIN_BYTES` (default 32) enforces a minimum API key length.
 
 SSE connection limit:
 - `Y2T_SSE_MAX_CLIENTS` (default 1000, set `0` to disable) caps concurrent SSE clients to avoid FD exhaustion.
+- `Y2T_SSE_MAX_CLIENTS_PER_IP` (default 50) caps SSE clients per source IP.
+- `Y2T_SSE_MAX_LIFETIME_SECONDS` (default 0 disables) closes long-lived SSE streams to prevent resource leaks.
 - `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (default `5000`) - Maximum events buffered per run for SSE replay.
+- `Y2T_MAX_EVENT_BYTES` (default 65536) clamps oversized SSE events.
 
 Request timeout:
 - `Y2T_REQUEST_TIMEOUT_MS` (default 30000, set `0` to disable) bounds non-SSE request lifetime.
+- `Y2T_UPLOAD_TIMEOUT_MS` (default 120000) bounds multipart upload lifetime.
+- `Y2T_EXEC_MAX_BYTES` (default 50MB) caps stdout+stderr captured from external commands.
 
 Retention / cleanup (ops hardening):
 - Configure via env:
@@ -306,6 +322,8 @@ STT provider selection:
 - `Y2T_SPLIT_OVERLAP_SECONDS` sets overlap between chunks (default 2s).
 
 Run limiting:
+- `Y2T_MAX_CONCURRENT_RUNS_PER_KEY` (default 0 disables) caps concurrent queued/running runs per API key.
+- By default, `POST /runs` and `POST /runs/plan` accept YouTube URLs only. Set `Y2T_RUN_ALLOW_ANY_URL=true` to allow non-YouTube URLs (not recommended).
 - `maxNewVideos` has the same semantics as the CLI: the limit is applied after skipping already-processed videos (incremental backfills). With `force=true`, it becomes "reprocess up to N videos".
 
 Endpoints:
@@ -314,12 +332,14 @@ Endpoints:
 - `GET /providers` (provider capabilities: max upload size, diarization support)
 - `GET /metrics` (Prometheus text format)
 - `POST /maintenance/cleanup` (retention cleanup for `output/_runs/*` + old audio cache)
+- `POST /audio` (upload local audio, returns `audioId`)
 - `GET /settings`, `PATCH /settings` (persist non-secret defaults to `output/_settings.json`)
 - `GET /watchlist`, `POST /watchlist`, `PATCH /watchlist/:id`, `DELETE /watchlist/:id` (followed channels list)
 - `GET /scheduler/status`, `POST /scheduler/start|stop|trigger` (Phase 2.3, opt-in)
 - `GET /events` (SSE global stream for run updates)
 - `POST /runs/plan` with JSON body `{ "url": "...", "force": false, "maxNewVideos": 10, "afterDate": "2024-01-01" }` (enumerate + skip counts, no transcription)
 - `POST /runs` with JSON body `{ "url": "...", "force": false, "maxNewVideos": 10, "afterDate": "2024-01-01", "callbackUrl": "https://..." }` (cache-first for single-video URLs)
+- `POST /runs` with JSON body `{ "audioId": "...", "callbackUrl": "https://..." }` (transcribe an uploaded audio file)
 - `GET /runs`
 - `GET /runs/:id`
 - `POST /runs/:id/cancel`
@@ -426,7 +446,7 @@ docker compose up --build
 
 ### runs.yaml (optional)
 
-If you run the CLI **without** providing a URL, and a `runs.yaml` (or `runs.yml`) file exists in the project root, Youtube2Text will execute each run in sequence. Each run `url` can be a channel, playlist, or individual video.
+If you run the CLI **without** providing a URL, and a `runs.yaml` (or `runs.yml`) file exists in the project root, Youtube2Text will execute each run in sequence. Each run can use either `url` (YouTube channel/playlist/video) or `audioPath` (local file).
 
 YAML must use spaces (no tabs). You can use either:
 
@@ -458,6 +478,13 @@ runs:
     audioDir: "audio_alt"
     csvEnabled: true
     force: false
+
+  - audioPath: "C:\\path\\to\\local-audio.mp3"
+    audioTitle: "Local audio sample"
+    outDir: "output_alt"
+    audioDir: "audio_alt"
+    sttProvider: openai_whisper
+    openaiWhisperModel: whisper-1
 ```
 
 Fields in `runs.yaml` override defaults from `config.yaml`/`.env` for that specific run.
@@ -483,6 +510,12 @@ Raw audio is stored under:
 audio/<channel_title_slug>__<channel_id>/<title_slug>__<video_id>.<ext>  # default title_id
 ```
 
+Uploaded local audio is copied into a dedicated channel folder:
+
+```
+audio/uploads/<title_slug>__<audio_id>.<ext>
+output/uploads/<title_slug>__<audio_id>.* (transcripts + meta)
+```
 Failures are recorded per channel in:
 
 ```
@@ -509,7 +542,6 @@ Polling and retry configuration (optional):
 - Alternative `TranscriptionProvider` implementations.
 - Semantic post-processing: summarization, topic clustering.
 - Ops hardening for hosted use (timeouts/healthcheck/rate limiting as needed).
-- Optional direct audio file input (skip yt-dlp download stage) for automation use cases.
 - Optional multi-tenant cloud platform (Phase 3+).
 
 ## Testing

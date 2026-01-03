@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { ensureDir, fileExists, writeJson } from "../utils/fs.js";
 import { enumerateVideos } from "./enumerate.js";
@@ -40,6 +41,15 @@ function nowIso(): string {
 
 function catalogPath(outputDir: string, channelId: string): string {
   return join(outputDir, "_catalog", `${channelId}.json`);
+}
+
+const SAFE_CHANNEL_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
+
+function safeCatalogId(channelId: string): string {
+  const trimmed = channelId.trim();
+  if (SAFE_CHANNEL_ID_RE.test(trimmed)) return trimmed;
+  const hash = createHash("sha256").update(trimmed).digest("hex").slice(0, 12);
+  return `channel_${hash}`;
 }
 
 async function readCatalog(path: string): Promise<ChannelCatalog | undefined> {
@@ -135,7 +145,8 @@ export async function getListingWithCatalogCache(
   // Step 1: identify channelId cheaply (playlist-end 1).
   const head = await enumerateChannelHead(inputUrl, deps, 1, enumerate);
   const channelId = head.channelId;
-  const path = catalogPath(outputDir, channelId);
+  const catalogId = safeCatalogId(channelId);
+  const path = catalogPath(outputDir, catalogId);
 
   // Step 2: no cache -> do full enumeration and persist.
   if (!(await fileExists(path))) {

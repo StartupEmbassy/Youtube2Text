@@ -46,14 +46,14 @@ test("POST /runs/plan clamps maxNewVideos and validates afterDate", async () => 
   try {
     const bad = await fetch(`http://127.0.0.1:${port}/runs/plan`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": "test" },
+      headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
       body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc", afterDate: "2024-99-99" }),
     });
     assert.equal(bad.status, 400);
 
     const ok = await fetch(`http://127.0.0.1:${port}/runs/plan`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": "test" },
+      headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
       body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc", maxNewVideos: 99999, afterDate: "2024-01-01" }),
     });
     assert.equal(ok.status, 200);
@@ -100,7 +100,7 @@ test("POST /runs/plan treats null optional inputs as unset", async () => {
   try {
     const res = await fetch(`http://127.0.0.1:${port}/runs/plan`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": "test" },
+      headers: { "content-type": "application/json", "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
       body: JSON.stringify({ url: "https://www.youtube.com/watch?v=abc", maxNewVideos: null, afterDate: null }),
     });
     assert.equal(res.status, 200);

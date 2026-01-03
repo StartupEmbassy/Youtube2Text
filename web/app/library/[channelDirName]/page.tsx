@@ -30,7 +30,7 @@ export default async function ChannelPage({
   const renderVideo = (v: VideoInfo) => {
     const meta = v.meta;
     const desc = meta?.description?.trim();
-    const videoUrl = meta?.videoUrl;
+    const videoUrl = meta?.url;
     return (
       <div key={v.basename} className="card">
         <div className="thumbRow">

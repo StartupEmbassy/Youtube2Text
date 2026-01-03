@@ -9,6 +9,7 @@ import {
   fetchVideoMetadata,
   fetchChannelMetadata,
 } from "../youtube/index.js";
+import type { YoutubeListing } from "../youtube/index.js";
 import { getListingWithCatalogCache } from "../youtube/catalogCache.js";
 import { createTranscriptionProvider } from "../transcription/index.js";
 import { formatTxt, formatCsv, formatMd, formatJsonl } from "../formatters/index.js";
@@ -36,6 +37,8 @@ import { YtDlpError } from "../youtube/ytDlpErrors.js";
 import { splitAudioByLimit } from "../utils/audio.js";
 import { mergeChunkTranscripts } from "../transcription/merge.js";
 import { promises as fs } from "node:fs";
+import { dirname, basename as pathBasename, extname } from "node:path";
+import { makeChannelDirName } from "../storage/naming.js";
 
 type AssemblyAiAccountResponse = Record<string, unknown> & {
   credit_balance?: number;
@@ -44,9 +47,26 @@ type AssemblyAiAccountResponse = Record<string, unknown> & {
   audio_seconds_remaining?: number;
 };
 
+export type AudioRunInput = {
+  kind: "audio";
+  audioId: string;
+  audioPath: string;
+  title?: string;
+  originalFilename?: string;
+};
+
+export type RunInput = string | AudioRunInput;
+
 async function isAudioTooLarge(path: string, maxBytes: number): Promise<boolean> {
   const stats = await fs.stat(path);
   return stats.size > maxBytes;
+}
+
+async function ensureAudioPath(sourcePath: string, destPath: string): Promise<string> {
+  if (sourcePath === destPath) return destPath;
+  await fs.mkdir(dirname(destPath), { recursive: true });
+  await fs.copyFile(sourcePath, destPath);
+  return destPath;
 }
 
 function getCreditsMinutesRemaining(
@@ -68,11 +88,16 @@ function getCreditsMinutesRemaining(
 }
 
 export async function runPipeline(
-  inputUrl: string,
+  input: RunInput,
   config: AppConfig,
   options: { force: boolean; emitter?: PipelineEventEmitter; abortSignal?: AbortSignal }
 ) {
-  const ytDlpCommand = await validateYtDlpInstalled(config.ytDlpPath);
+  const isAudioInput = typeof input !== "string";
+  const audioInput = isAudioInput ? input : undefined;
+  const inputUrl = isAudioInput ? `audio:${input.audioId}` : input;
+  const ytDlpCommand = audioInput
+    ? undefined
+    : await validateYtDlpInstalled(config.ytDlpPath);
   let stopAll = false;
   let cancelRequested = false;
   const emitter = options.emitter;
@@ -152,15 +177,47 @@ export async function runPipeline(
   }
 
   const ytDlpExtraArgs: string[] = [];
-  const listing = await getListingWithCatalogCache(inputUrl, config.outputDir, {
-    ytDlpCommand,
-    ytDlpExtraArgs,
-  }, {
-    maxAgeHours: config.catalogMaxAgeHours,
-  });
+  const listing: YoutubeListing = audioInput
+    ? {
+        channelId: "uploads",
+        channelTitle: "Uploads",
+        videos: [
+          {
+            id: audioInput.audioId,
+            title:
+              audioInput.title ??
+              pathBasename(audioInput.audioPath, extname(audioInput.audioPath)) ??
+              "upload",
+            url: inputUrl,
+            uploadDate: new Date().toISOString().slice(0, 10),
+          },
+        ],
+      }
+    : await getListingWithCatalogCache(
+        inputUrl,
+        config.outputDir,
+        {
+          ytDlpCommand: ytDlpCommand!,
+          ytDlpExtraArgs,
+        },
+        {
+          maxAgeHours: config.catalogMaxAgeHours,
+        }
+      );
   const candidateVideos = listing.videos.filter((v) =>
     isAfterDate(v.uploadDate, config.afterDate)
   );
+
+  const audioExt = audioInput
+    ? (() => {
+        const raw = extname(audioInput.audioPath);
+        return raw ? raw.slice(1).toLowerCase() : config.audioFormat;
+      })()
+    : undefined;
+  const channelDirNameOverride = audioInput ? "uploads" : undefined;
+  const channelDirName =
+    channelDirNameOverride ??
+    makeChannelDirName(listing.channelId, listing.channelTitle);
 
   const candidateJobs = candidateVideos.map((video) => ({
     video,
@@ -174,7 +231,11 @@ export async function runPipeline(
         audioDir: config.audioDir,
         audioFormat: config.audioFormat,
       },
-      { filenameStyle: config.filenameStyle }
+      {
+        filenameStyle: config.filenameStyle,
+        channelDirName: channelDirNameOverride,
+        audioExt,
+      }
     ),
   }));
 
@@ -214,7 +275,11 @@ export async function runPipeline(
         audioDir: config.audioDir,
         audioFormat: config.audioFormat,
       },
-      { filenameStyle: config.filenameStyle }
+      {
+        filenameStyle: config.filenameStyle,
+        channelDirName: channelDirNameOverride,
+        audioExt,
+      }
     ),
   }));
 
@@ -237,6 +302,7 @@ export async function runPipeline(
     inputUrl,
     channelId: listing.channelId,
     channelTitle: listing.channelTitle,
+    channelDirName,
     totalVideos,
     alreadyProcessed: 0,
     remaining: totalVideos,
@@ -250,29 +316,38 @@ export async function runPipeline(
     const channelMetaPath = videoJobs[0]?.paths.channelMetaPath;
     if (channelMetaPath) {
       let channelThumbnailUrl: string | undefined;
-      const channelUrl = `https://www.youtube.com/channel/${listing.channelId}`;
-      const channelMeta =
-        (await fetchChannelMetadata(channelUrl, ytDlpCommand, ytDlpExtraArgs)) ??
-        undefined;
-      channelThumbnailUrl = safeChannelThumbnailUrl(channelMeta);
+      let channelUrl: string | undefined;
 
-      if (!channelThumbnailUrl) {
-      const firstVideoUrl = selectedVideos[0]?.url;
-        if (firstVideoUrl) {
-          const videoMeta = await fetchVideoMetadata(firstVideoUrl, ytDlpCommand, ytDlpExtraArgs);
-          const uploaderUrl = [videoMeta?.uploader_url, videoMeta?.channel_url].find(
-            (value) => typeof value === "string" && value.trim().length > 0
-          );
-          if (uploaderUrl) {
-            const chanMeta = await fetchChannelMetadata(
-              uploaderUrl,
-              ytDlpCommand,
+      if (!audioInput) {
+        channelUrl = `https://www.youtube.com/channel/${listing.channelId}`;
+        const channelMeta =
+          (await fetchChannelMetadata(channelUrl, ytDlpCommand!, ytDlpExtraArgs)) ??
+          undefined;
+        channelThumbnailUrl = safeChannelThumbnailUrl(channelMeta);
+
+        if (!channelThumbnailUrl) {
+          const firstVideoUrl = selectedVideos[0]?.url;
+          if (firstVideoUrl) {
+            const videoMeta = await fetchVideoMetadata(
+              firstVideoUrl,
+              ytDlpCommand!,
               ytDlpExtraArgs
             );
-            channelThumbnailUrl = safeChannelThumbnailUrl(chanMeta);
+            const uploaderUrl = [videoMeta?.uploader_url, videoMeta?.channel_url].find(
+              (value) => typeof value === "string" && value.trim().length > 0
+            );
+            if (uploaderUrl) {
+              const chanMeta = await fetchChannelMetadata(
+                uploaderUrl,
+                ytDlpCommand!,
+                ytDlpExtraArgs
+              );
+              channelThumbnailUrl = safeChannelThumbnailUrl(chanMeta);
+            }
           }
         }
       }
+
       await saveChannelMetaJson(channelMetaPath, {
         channelId: listing.channelId,
         channelTitle: listing.channelTitle,
@@ -408,14 +483,16 @@ export async function runPipeline(
 
             stageForError = "download";
             emitStage("download", video.id, index, totalVideos);
-            const audioPath = await downloadAudio(
-              video.url,
-              paths.audioPath,
-              config.audioFormat,
-              config.downloadRetries,
-              ytDlpCommand,
-              ytDlpExtraArgs
-            );
+            const audioPath = audioInput
+              ? await ensureAudioPath(audioInput.audioPath, paths.audioPath)
+              : await downloadAudio(
+                  video.url,
+                  paths.audioPath,
+                  config.audioFormat,
+                  config.downloadRetries,
+                  ytDlpCommand!,
+                  ytDlpExtraArgs
+                );
             if (isCancelled()) {
               markSkip("cancelled");
               stopAll = true;
@@ -429,12 +506,18 @@ export async function runPipeline(
                     detected: true,
                     source: "manual" as const,
                   }
-                : await detectLanguageCode(
-                    video.url,
-                    ytDlpCommand,
-                    ytDlpExtraArgs,
-                    config.languageCode
-                  );
+                : audioInput
+                  ? {
+                      languageCode: config.languageCode,
+                      detected: false,
+                      source: "none" as const,
+                    }
+                  : await detectLanguageCode(
+                      video.url,
+                      ytDlpCommand!,
+                      ytDlpExtraArgs,
+                      config.languageCode
+                    );
 
             const useProviderAutoLanguageDetection =
               config.languageDetection !== "manual" && !language.detected;
@@ -492,11 +575,12 @@ export async function runPipeline(
               });
             }
 
-            const description =
-              video.description ??
-              (await fetchVideoDescription(video.url, ytDlpCommand, ytDlpExtraArgs));
+            const description = audioInput
+              ? video.description
+              : video.description ??
+                (await fetchVideoDescription(video.url, ytDlpCommand!, ytDlpExtraArgs));
 
-            if (config.commentsEnabled) {
+            if (config.commentsEnabled && !audioInput) {
               try {
                 if (
                   options.force ||
@@ -537,8 +621,11 @@ export async function runPipeline(
               description,
               channelId: listing.channelId,
               channelTitle: listing.channelTitle,
+              source: audioInput ? "upload" : "youtube",
+              audioId: audioInput ? audioInput.audioId : undefined,
+              originalFilename: audioInput ? audioInput.originalFilename : undefined,
               filenameStyle: config.filenameStyle,
-              audioFormat: config.audioFormat,
+              audioFormat: audioInput && audioExt ? audioExt : config.audioFormat,
               languageCode:
                 typeof transcript.language_code === "string"
                   ? transcript.language_code

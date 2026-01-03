@@ -7,6 +7,14 @@ function infoToStderr(): boolean {
   return process.env.Y2T_JSON_EVENTS === "1";
 }
 
+function sanitizeLogText(value: string): string {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/\n/g, "\\n")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+}
+
 function color(code: string, text: string): string {
   if (NO_COLOR) return text;
   return `\x1b[${code}m${text}\x1b[0m`;
@@ -38,15 +46,15 @@ const STAGE_STYLES: Record<string, StageStyle> = {
 
 export function logInfo(message: string) {
   const out = infoToStderr() ? process.stderr : process.stdout;
-  out.write(`${cyan("[info]")} ${message}\n`);
+  out.write(`${cyan("[info]")} ${sanitizeLogText(message)}\n`);
 }
 
 export function logWarn(message: string) {
-  process.stderr.write(`${yellow("[warn]")} ${message}\n`);
+  process.stderr.write(`${yellow("[warn]")} ${sanitizeLogText(message)}\n`);
 }
 
 export function logError(message: string) {
-  process.stderr.write(`${red("[error]")} ${message}\n`);
+  process.stderr.write(`${red("[error]")} ${sanitizeLogText(message)}\n`);
 }
 
 export function logStep(stage: string, message: string) {
@@ -57,5 +65,5 @@ export function logStep(stage: string, message: string) {
     : `[${key}]`;
   const prefix = style ? style.colorize(prefixText) : dim(prefixText);
   const out = infoToStderr() ? process.stderr : process.stdout;
-  out.write(`${prefix} ${message}\n`);
+  out.write(`${prefix} ${sanitizeLogText(message)}\n`);
 }

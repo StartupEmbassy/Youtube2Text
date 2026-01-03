@@ -10,7 +10,7 @@ type PartialConfig = Partial<Record<keyof AppConfig, unknown>>;
 function loadYamlConfig(path: string): PartialConfig {
   if (!existsSync(path)) return {};
   const raw = readFileSync(path, "utf8");
-  return YAML.parse(raw) ?? {};
+  return YAML.parse(raw, { schema: "core" }) ?? {};
 }
 
 function loadEnvConfig(): PartialConfig {

@@ -15,6 +15,18 @@ export type RunPersistence = {
   eventsJsonlPath(runId: string): string;
 };
 
+const RUN_ID_RE = /^[0-9a-fA-F-]{36}$/;
+
+function isSafeRunId(runId: string): boolean {
+  return RUN_ID_RE.test(runId) && !runId.includes("..");
+}
+
+function assertSafeRunId(runId: string): void {
+  if (!isSafeRunId(runId)) {
+    throw new Error(`Invalid runId: ${runId}`);
+  }
+}
+
 export function createRunPersistence(rootDir: string): RunPersistence {
   return {
     rootDir,
@@ -29,11 +41,13 @@ export async function ensureDir(path: string) {
 }
 
 export async function writeRunRecord(p: RunPersistence, record: RunRecord) {
+  assertSafeRunId(record.runId);
   await ensureDir(p.runDir(record.runId));
   await fs.writeFile(p.runJsonPath(record.runId), JSON.stringify(record, null, 2), "utf8");
 }
 
 export async function appendEvent(p: RunPersistence, runId: string, line: PersistedEventLine) {
+  assertSafeRunId(runId);
   await ensureDir(p.runDir(runId));
   await fs.appendFile(p.eventsJsonlPath(runId), JSON.stringify(line) + "\n", "utf8");
 }
@@ -45,6 +59,7 @@ export async function loadPersistedRuns(p: RunPersistence): Promise<RunRecord[]>
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       const runId = entry.name;
+      if (!isSafeRunId(runId)) continue;
       try {
         const raw = await fs.readFile(p.runJsonPath(runId), "utf8");
         runs.push(JSON.parse(raw) as RunRecord);
@@ -63,6 +78,7 @@ export async function loadPersistedEventsTail(
   runId: string,
   maxLines: number
 ): Promise<PersistedEventLine[]> {
+  assertSafeRunId(runId);
   try {
     const raw = await fs.readFile(p.eventsJsonlPath(runId), "utf8");
     const lines = raw
@@ -83,4 +99,3 @@ export async function loadPersistedEventsTail(
     return [];
   }
 }
-

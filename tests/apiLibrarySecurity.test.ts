@@ -30,7 +30,7 @@ test("GET /library/channels rejects path-traversal channelDirName", async () => 
 
   try {
     const res = await fetch(`http://127.0.0.1:${port}/library/channels/..%2F..` , {
-      headers: { "x-api-key": "test" },
+      headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
     });
     assert.equal(res.status, 400);
   } finally {

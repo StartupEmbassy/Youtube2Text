@@ -6,8 +6,18 @@ export function sanitizeConfigOverrides(
 ): Partial<AppConfig> {
   if (!overrides) return {};
   const copy: Record<string, unknown> = { ...overrides };
-  delete copy.assemblyAiApiKey;
-  delete copy.openaiApiKey;
+  for (const key of [
+    "__proto__",
+    "prototype",
+    "constructor",
+    "assemblyAiApiKey",
+    "openaiApiKey",
+    "ytDlpPath",
+  ]) {
+    if (Object.prototype.hasOwnProperty.call(copy, key)) {
+      delete (copy as Record<string, unknown>)[key];
+    }
+  }
   const parsed = configSchemaBase.partial().safeParse(copy);
   return parsed.success ? parsed.data : {};
 }

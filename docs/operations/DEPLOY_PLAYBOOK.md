@@ -32,21 +32,32 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 - Webhook hosts are resolved and blocked if they resolve to private/loopback IPs (DNS rebinding protection)
   - Production guidance: always set `Y2T_WEBHOOK_ALLOWED_DOMAINS` to an explicit allowlist.
 - `Y2T_MAX_BODY_BYTES` (request body limit, default 1,000,000)
+- `Y2T_MAX_UPLOAD_MB` (upload size limit for `POST /audio`, default 1024)
+- `Y2T_UPLOAD_TIMEOUT_MS` (upload timeout for `POST /audio`, default 120000)
 - `Y2T_AUTH_FAIL_MAX` + `Y2T_AUTH_FAIL_WINDOW_MS` (rate limit auth failures)
 - Defaults: `Y2T_AUTH_FAIL_MAX=30`, `Y2T_AUTH_FAIL_WINDOW_MS=60000`
 - `Y2T_TRUST_PROXY=true` (if running behind a trusted reverse proxy; uses `X-Forwarded-For`/`X-Real-IP`)
   - Do not enable unless traffic actually comes through a trusted proxy/load balancer.
+- `Y2T_TRUST_PROXY_IPS` (proxy allowlist when `Y2T_TRUST_PROXY=true`)
 - `Y2T_API_KEY_MAX_BYTES` (cap `X-API-Key` header length; default 256)
+- `Y2T_API_KEY_MIN_BYTES` (minimum API key length; default 32)
 - `Y2T_RATE_LIMIT_WRITE_MAX` + `Y2T_RATE_LIMIT_WINDOW_MS` (rate limit write endpoints; defaults 60 / 60000ms)
 - `Y2T_RATE_LIMIT_READ_MAX` + `Y2T_RATE_LIMIT_READ_WINDOW_MS` (rate limit read endpoints; defaults 300 / 60000ms)
 - `Y2T_RATE_LIMIT_HEALTH_MAX` + `Y2T_RATE_LIMIT_HEALTH_WINDOW_MS` (throttle deep health checks; defaults 30 / 60000ms)
 - `Y2T_HEALTH_DEEP_PUBLIC=false` (set true to allow unauthenticated deep health checks)
+- `Y2T_HEALTH_INCLUDE_PATHS=false` (redact filesystem paths in deep health output)
 - `Y2T_SSE_MAX_CLIENTS` (cap concurrent SSE connections; default 1000, `0` disables)
+- `Y2T_SSE_MAX_CLIENTS_PER_IP` (cap SSE clients per IP; default 50)
+- `Y2T_SSE_MAX_LIFETIME_SECONDS` (close long-lived SSE streams; default 0 disables)
 - `Y2T_REQUEST_TIMEOUT_MS` (global request timeout for non-SSE requests)
 - Default: `Y2T_REQUEST_TIMEOUT_MS=30000`
 - `Y2T_RUN_TIMEOUT_MINUTES` (safety net for stuck runs)
 - Default: `Y2T_RUN_TIMEOUT_MINUTES=240`
 - `Y2T_MAX_BUFFERED_EVENTS_PER_RUN` (SSE replay buffer size; default 5000)
+- `Y2T_MAX_EVENT_BYTES` (SSE event payload cap; default 65536)
+- `Y2T_MAX_CONCURRENT_RUNS_PER_KEY` (cap concurrent runs per API key; default 0 disables)
+- `Y2T_RUN_ALLOW_ANY_URL` (allow non-YouTube URLs for runs; default false)
+- `Y2T_EXEC_MAX_BYTES` (cap stdout/stderr captured from external commands; default 50MB)
 - `Y2T_API_PERSIST_DIR` (override persisted runs dir; default `output/_runs/`)
 - `Y2T_SHUTDOWN_TIMEOUT_SECONDS` (graceful shutdown wait; default 60)
 - `Y2T_WATCHLIST_ALLOW_ANY_URL` (allow non-channel/playlist watchlist URLs; default false)
@@ -58,7 +69,7 @@ It does not replace the CLI: the CLI remains fully operational and can be run se
 docker-compose defaults:
 - The compose file now uses `${VAR:-default}` for all optional env vars to match code defaults.
 
-If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` for local development only).
+If `Y2T_API_KEY` is missing, the API server will refuse to start (unless you explicitly set `Y2T_ALLOW_INSECURE_NO_API_KEY=true` **and** `Y2T_ALLOW_INSECURE_NO_API_KEY_CONFIRM=I_UNDERSTAND` for local development only).
 If you expose the API port publicly in that state, anyone can call it.
 
 ## Optional ops knobs (Phase 2.2)

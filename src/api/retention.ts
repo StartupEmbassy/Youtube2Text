@@ -35,7 +35,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function listDirs(path: string): Promise<string[]> {
   const entries = await fs.readdir(path, { withFileTypes: true });
-  return entries.filter((e) => e.isDirectory()).map((e) => join(path, e.name));
+  return entries
+    .filter((e) => e.isDirectory() && !e.isSymbolicLink())
+    .map((e) => join(path, e.name));
 }
 
 async function listFilesRecursive(path: string): Promise<string[]> {
@@ -43,6 +45,9 @@ async function listFilesRecursive(path: string): Promise<string[]> {
   const out: string[] = [];
   for (const e of entries) {
     const p = join(path, e.name);
+    if (e.isSymbolicLink()) {
+      continue;
+    }
     if (e.isDirectory()) {
       out.push(...(await listFilesRecursive(p)));
     } else if (e.isFile()) {

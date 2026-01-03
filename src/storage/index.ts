@@ -41,6 +41,9 @@ export type VideoMeta = {
   description?: string;
   channelId: string;
   channelTitle?: string;
+  source?: "youtube" | "upload";
+  audioId?: string;
+  originalFilename?: string;
   filenameStyle: AppConfig["filenameStyle"];
   audioFormat: string;
   languageCode?: string;
@@ -62,11 +65,13 @@ export function getOutputPaths(
   videoId: string,
   videoTitle: string,
   dirs: { outputDir: string; audioDir: string; audioFormat: string },
-  options?: { filenameStyle?: AppConfig["filenameStyle"] }
+  options?: { filenameStyle?: AppConfig["filenameStyle"]; channelDirName?: string; audioExt?: string }
 ): OutputPaths {
   const style = options?.filenameStyle ?? "title_id";
-  const channelDirName = makeChannelDirName(channelId, channelTitle);
+  const channelDirName =
+    options?.channelDirName ?? makeChannelDirName(channelId, channelTitle);
   const baseName = makeVideoBaseName(videoId, videoTitle, style);
+  const audioExt = options?.audioExt ?? dirs.audioFormat;
   return {
     jsonPath: join(dirs.outputDir, channelDirName, `${baseName}.json`),
     txtPath: join(dirs.outputDir, channelDirName, `${baseName}.txt`),
@@ -84,7 +89,7 @@ export function getOutputPaths(
     audioPath: join(
       dirs.audioDir,
       channelDirName,
-      `${baseName}.${dirs.audioFormat}`
+      `${baseName}.${audioExt}`
     ),
   };
 }

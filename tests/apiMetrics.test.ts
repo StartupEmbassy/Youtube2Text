@@ -46,7 +46,7 @@ test("API server refuses to start without Y2T_API_KEY (secure by default)", asyn
 
 test("GET /metrics requires X-API-Key when Y2T_API_KEY is set", async () => {
   const prev = process.env.Y2T_API_KEY;
-  process.env.Y2T_API_KEY = "secret";
+  process.env.Y2T_API_KEY = "test-api-key-aaaaaaaaaaaaaaaaaaaaaa";
 
   const dir = mkdtempSync(join(tmpdir(), "y2t-metrics-auth-"));
   const config = configSchema.parse({
@@ -70,7 +70,7 @@ test("GET /metrics requires X-API-Key when Y2T_API_KEY is set", async () => {
     assert.equal(res.status, 401);
 
     const ok = await fetch(`http://127.0.0.1:${port}/metrics`, {
-      headers: { "x-api-key": "secret" },
+      headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
     });
     assert.equal(ok.status, 200);
     assert.match(ok.headers.get("content-type") ?? "", /^text\/plain/);

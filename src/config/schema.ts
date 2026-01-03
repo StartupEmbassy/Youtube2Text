@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const safePathString = z
+  .string()
+  .min(1)
+  .refine((value) => !/[\0\r\n]/.test(value), {
+    message: "path must not include null bytes or newlines",
+  });
+
 const configObjectSchema = z.object({
   sttProvider: z.enum(["assemblyai", "openai_whisper"]).default("assemblyai"),
   assemblyAiApiKey: z.string().min(1).optional(),
@@ -30,7 +37,7 @@ const configObjectSchema = z.object({
   // Channel catalog cache TTL for exact planning. When exceeded, we force a full refresh.
   // Set <= 0 to disable TTL (cache never expires).
   catalogMaxAgeHours: z.number().int().default(168),
-  ytDlpPath: z.string().optional(),
+  ytDlpPath: safePathString.optional(),
 });
 
 export const configSchema = configObjectSchema.superRefine((cfg, ctx) => {

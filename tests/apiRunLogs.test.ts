@@ -63,7 +63,7 @@ test("GET /runs/:id/logs returns tail events as JSON", async () => {
     assert.equal(res.status, 401);
 
     const authed = await fetch(`http://127.0.0.1:${port}/runs/${runId}/logs?tail=10`, {
-      headers: { "x-api-key": "test" },
+      headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" },
     });
     assert.equal(authed.status, 200);
 

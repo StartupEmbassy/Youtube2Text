@@ -83,6 +83,8 @@ Cover what exists today (current API):
   - `POST /maintenance/cleanup`
 - Metrics:
   - `GET /metrics`
+- Audio uploads:
+  - `POST /audio`
 
 Future endpoints we likely want (admin-local):
  - `POST /runs/:id/retry`

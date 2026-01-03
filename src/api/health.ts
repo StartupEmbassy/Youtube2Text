@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { join, parse as parsePath } from "node:path";
+import { randomUUID } from "node:crypto";
 import type { AppConfig } from "../config/schema.js";
 import { execCommand } from "../utils/exec.js";
 import { validateYtDlpInstalled } from "../utils/deps.js";
@@ -45,14 +46,17 @@ async function diskFreeBytesForPath(path: string): Promise<number | undefined> {
   if (!root) return undefined;
 
   if (process.platform === "win32") {
-    const drive = root.replace(/\\+$/, "").replace(/:$/, "");
-    const script = `(Get-PSDrive -Name '${drive}').Free`;
+    const driveMatch = /^([A-Za-z]):/.exec(root);
+    const drive = driveMatch ? driveMatch[1] : undefined;
+    if (!drive) return undefined;
+    const script = "param($drive) (Get-PSDrive -Name $drive).Free";
     const result = await execCommand("powershell", [
       "-NoProfile",
       "-ExecutionPolicy",
       "Bypass",
       "-Command",
       script,
+      drive,
     ]);
     if (result.exitCode !== 0) return undefined;
     const raw = (result.stdout || "").trim();
@@ -73,7 +77,7 @@ async function diskFreeBytesForPath(path: string): Promise<number | undefined> {
 async function ensureWritableDir(dir: string): Promise<{ writable: boolean; error?: string }> {
   try {
     await fs.mkdir(dir, { recursive: true });
-    const probe = join(dir, `.healthcheck_${Date.now()}_${Math.random().toString(16).slice(2)}.tmp`);
+    const probe = join(dir, `.healthcheck_${randomUUID()}.tmp`);
     await fs.writeFile(probe, "ok", "utf8");
     await fs.unlink(probe);
     return { writable: true };
@@ -97,6 +101,9 @@ export async function getDeepHealth(
   config: AppConfig,
   opts: { persistRuns: boolean; persistDir?: string }
 ): Promise<HealthResponse> {
+  const includePaths =
+    typeof process.env.Y2T_HEALTH_INCLUDE_PATHS === "string" &&
+    process.env.Y2T_HEALTH_INCLUDE_PATHS.trim().toLowerCase() === "true";
   let yt: { ok: boolean; version?: string; error?: string };
   try {
     const ytDlpPath = await validateYtDlpInstalled(config.ytDlpPath);
@@ -120,8 +127,7 @@ export async function getDeepHealth(
     diskError = err instanceof Error ? err.message : String(err);
   }
 
-  const persistDir =
-    opts.persistDir ?? join(config.outputDir, "_runs");
+  const persistDir = opts.persistDir ?? join(config.outputDir, "_runs");
   const persist = opts.persistRuns
     ? await ensureWritableDir(persistDir)
     : { writable: false };
@@ -137,7 +143,7 @@ export async function getDeepHealth(
     },
     persist: {
       ok: !opts.persistRuns || persist.writable,
-      dir: persistDir,
+      dir: includePaths ? persistDir : "redacted",
       writable: opts.persistRuns ? persist.writable : false,
       error: persist.error,
     },

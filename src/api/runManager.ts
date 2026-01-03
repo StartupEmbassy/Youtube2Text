@@ -53,7 +53,11 @@ export type GlobalEvent =
     };
 
 export type RunCreateRequest = {
-  url: string;
+  url?: string;
+  audioId?: string;
+  audioPath?: string;
+  audioTitle?: string;
+  audioOriginalFilename?: string;
   force?: boolean;
   callbackUrl?: string;
   config?: Partial<AppConfig>;
@@ -61,6 +65,7 @@ export type RunCreateRequest = {
 
 export type RunManagerOptions = {
   maxBufferedEventsPerRun: number;
+  maxEventBytes?: number;
   persistRuns: boolean;
   persistDir?: string;
   runTimeoutMs?: number;
@@ -91,7 +96,8 @@ export class RunManager {
     private options: RunManagerOptions
   ) {
     this.globalBuffer = new EventBuffer<GlobalEvent>(
-      Math.max(200, options.maxBufferedEventsPerRun)
+      Math.max(200, options.maxBufferedEventsPerRun),
+      options.maxEventBytes
     );
     if (options.persistRuns) {
       const dir = options.persistDir ?? join(baseConfig.outputDir, "_runs");
@@ -107,7 +113,10 @@ export class RunManager {
     const persisted = await loadPersistedRuns(this.persistence);
     for (const record of persisted) {
       this.runs.set(record.runId, record);
-      const buffer = new EventBuffer<PipelineEvent>(this.options.maxBufferedEventsPerRun);
+      const buffer = new EventBuffer<PipelineEvent>(
+        this.options.maxBufferedEventsPerRun,
+        this.options.maxEventBytes
+      );
       const events = await loadPersistedEventsTail(
         this.persistence,
         record.runId,
@@ -130,16 +139,26 @@ export class RunManager {
 
   createRun(req: RunCreateRequest): RunRecord {
     const runId = randomUUID();
+    const inputUrl = req.url ?? (req.audioId ? `audio:${req.audioId}` : "");
+    if (!inputUrl) {
+      throw new Error("Run must include url or audioId");
+    }
     const record: RunRecord = {
       runId,
       status: "queued",
-      inputUrl: req.url,
+      inputUrl,
       force: Boolean(req.force),
       createdAt: new Date().toISOString(),
       callbackUrl: req.callbackUrl,
     };
     this.runs.set(runId, record);
-    this.buffers.set(runId, new EventBuffer<PipelineEvent>(this.options.maxBufferedEventsPerRun));
+    this.buffers.set(
+      runId,
+      new EventBuffer<PipelineEvent>(
+        this.options.maxBufferedEventsPerRun,
+        this.options.maxEventBytes
+      )
+    );
     this.listeners.set(runId, new Set());
     this.persistRun(record);
     this.emitGlobal({ type: "run:created", run: record, timestamp: new Date().toISOString() });
@@ -289,7 +308,18 @@ export class RunManager {
     this.persistRun(run);
     this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
 
-    const p = this.runPipelineFn(req.url, config, {
+    const pipelineInput =
+      req.audioId && req.audioPath
+        ? {
+            kind: "audio" as const,
+            audioId: req.audioId,
+            audioPath: req.audioPath,
+            title: req.audioTitle,
+            originalFilename: req.audioOriginalFilename,
+          }
+        : (req.url as string);
+
+    const p = this.runPipelineFn(pipelineInput, config, {
       force: Boolean(req.force),
       emitter,
       abortSignal: controller.signal,
@@ -382,7 +412,8 @@ export class RunManager {
       if (event.type === "run:start") {
         run.channelId = event.channelId;
         run.channelTitle = event.channelTitle;
-        run.channelDirName = makeChannelDirName(event.channelId, event.channelTitle);
+        run.channelDirName =
+          event.channelDirName ?? makeChannelDirName(event.channelId, event.channelTitle);
         this.persistRun(run);
         this.emitGlobal({ type: "run:updated", run, timestamp: new Date().toISOString() });
       }

@@ -35,7 +35,7 @@ async function withServer<T>(fn: (baseUrl: string) => Promise<T>): Promise<T> {
 
 test("GET /providers returns provider capabilities", async () => {
   await withServer(async (baseUrl) => {
-    const res = await fetch(`${baseUrl}/providers`, { headers: { "x-api-key": "test" } });
+    const res = await fetch(`${baseUrl}/providers`, { headers: { "x-api-key": "test-api-key-aaaaaaaaaaaaaaaaaaaaaa" } });
     assert.equal(res.status, 200);
     const body = (await res.json()) as any;
     assert.ok(Array.isArray(body.providers));

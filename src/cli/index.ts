@@ -4,9 +4,11 @@ import { loadConfig, loadRunsFile } from "../config/index.js";
 import { logError } from "../utils/logger.js";
 import { runPipeline } from "../pipeline/run.js";
 import { JsonLinesEventEmitter } from "../pipeline/jsonlEmitter.js";
-import { readFileSync } from "node:fs";
+import { classifyYoutubeUrl } from "../youtube/url.js";
+import { readFileSync, promises as fs } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, basename as pathBasename, extname, resolve as pathResolve } from "node:path";
+import { randomUUID } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +22,8 @@ program
   .name("youtube2text")
   .version(pkg.version)
   .argument("[url]", "YouTube channel, playlist, or video URL")
+  .option("--audio <path>", "Transcribe a local audio file instead of YouTube")
+  .option("--audioTitle <title>", "Title to use for a local audio run")
   .option(
     "--maxNewVideos <n>",
     "Maximum NEW (unprocessed) videos to process",
@@ -73,6 +77,37 @@ program
 
 type CliOptions = ReturnType<typeof program.opts>;
 
+function assertSafePathInput(value: string, label: string): void {
+  if (/[\0\r\n]/.test(value)) {
+    throw new Error(`${label} contains invalid characters`);
+  }
+}
+
+async function resolveFilePath(value: string, label: string): Promise<string> {
+  assertSafePathInput(value, label);
+  const resolved = pathResolve(value);
+  const stat = await fs.stat(resolved).catch(() => undefined);
+  if (!stat || !stat.isFile()) {
+    throw new Error(`${label} must be an existing file`);
+  }
+  return resolved;
+}
+
+async function resolveDirPath(value: string, label: string): Promise<string> {
+  assertSafePathInput(value, label);
+  const resolved = pathResolve(value);
+  const stat = await fs.stat(resolved).catch(() => undefined);
+  if (stat && !stat.isDirectory()) {
+    throw new Error(`${label} must be a directory`);
+  }
+  return resolved;
+}
+
+function allowAnyUrl(): boolean {
+  const raw = (process.env.Y2T_RUN_ALLOW_ANY_URL ?? "").trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes";
+}
+
 async function main() {
   const inputUrl = program.args[0] as string | undefined;
   const baseConfig = loadConfig();
@@ -80,11 +115,83 @@ async function main() {
   const emitter = opts.jsonEvents ? new JsonLinesEventEmitter() : undefined;
   if (opts.jsonEvents) process.env.Y2T_JSON_EVENTS = "1";
 
-  if (inputUrl) {
+  if (opts.audio) {
+    const audioPath = await resolveFilePath(opts.audio, "--audio");
     const config = {
       ...baseConfig,
-      outputDir: opts.outDir ?? baseConfig.outputDir,
-      audioDir: opts.audioDir ?? baseConfig.audioDir,
+      outputDir: opts.outDir ? await resolveDirPath(opts.outDir, "--outDir") : baseConfig.outputDir,
+      audioDir: opts.audioDir ? await resolveDirPath(opts.audioDir, "--audioDir") : baseConfig.audioDir,
+      filenameStyle:
+        (opts.filenameStyle as
+          | "id"
+          | "id_title"
+          | "title_id") ?? baseConfig.filenameStyle,
+      audioFormat:
+        (opts.audioFormat as "mp3" | "wav") ?? baseConfig.audioFormat,
+      sttProvider:
+        (opts.sttProvider as "assemblyai" | "openai_whisper") ??
+        baseConfig.sttProvider,
+      openaiWhisperModel: opts.openaiWhisperModel ?? baseConfig.openaiWhisperModel,
+      maxAudioMB: opts.maxAudioMB ?? baseConfig.maxAudioMB,
+      splitOverlapSeconds: opts.splitOverlapSeconds ?? baseConfig.splitOverlapSeconds,
+      languageDetection:
+        (opts.languageDetection as "auto" | "manual") ??
+        (opts.language ? "manual" : baseConfig.languageDetection),
+      languageCode: opts.language ?? baseConfig.languageCode,
+      concurrency: opts.concurrency ?? baseConfig.concurrency,
+      maxNewVideos: opts.maxNewVideos ?? baseConfig.maxNewVideos,
+      afterDate: opts.after ?? baseConfig.afterDate,
+      csvEnabled: opts.csv ?? baseConfig.csvEnabled,
+      ytDlpPath: opts.ytDlpPath ?? baseConfig.ytDlpPath,
+      assemblyAiCreditsCheck:
+        (opts.assemblyAiCreditsCheck as
+          | "warn"
+          | "abort"
+          | "none") ?? baseConfig.assemblyAiCreditsCheck,
+      assemblyAiMinBalanceMinutes:
+        opts.assemblyAiMinBalanceMinutes ??
+        baseConfig.assemblyAiMinBalanceMinutes,
+      commentsEnabled: opts.comments ?? baseConfig.commentsEnabled,
+      commentsMax: opts.commentsMax ?? baseConfig.commentsMax,
+    };
+
+    const audioId = `local-${randomUUID()}`;
+    const originalFilename = pathBasename(audioPath);
+    const title =
+      opts.audioTitle ??
+      pathBasename(audioPath, extname(audioPath)) ??
+      originalFilename;
+
+    await runPipeline(
+      {
+        kind: "audio",
+        audioId,
+        audioPath,
+        title,
+        originalFilename,
+      },
+      config,
+      {
+        force: Boolean(opts.force),
+        emitter,
+      }
+    );
+    return;
+  }
+
+  if (inputUrl) {
+    if (!allowAnyUrl()) {
+      const { kind } = classifyYoutubeUrl(inputUrl);
+      if (kind === "unknown") {
+        throw new Error(
+          "Only YouTube URLs are supported (set Y2T_RUN_ALLOW_ANY_URL=true to override)."
+        );
+      }
+    }
+    const config = {
+      ...baseConfig,
+      outputDir: opts.outDir ? await resolveDirPath(opts.outDir, "--outDir") : baseConfig.outputDir,
+      audioDir: opts.audioDir ? await resolveDirPath(opts.audioDir, "--audioDir") : baseConfig.audioDir,
       filenameStyle:
         (opts.filenameStyle as
           | "id"
@@ -135,8 +242,8 @@ async function main() {
   for (const run of runs) {
     const config = {
       ...baseConfig,
-      outputDir: run.outDir ?? baseConfig.outputDir,
-      audioDir: run.audioDir ?? baseConfig.audioDir,
+      outputDir: run.outDir ? await resolveDirPath(run.outDir, "runs.outDir") : baseConfig.outputDir,
+      audioDir: run.audioDir ? await resolveDirPath(run.audioDir, "runs.audioDir") : baseConfig.audioDir,
       filenameStyle: run.filenameStyle ?? baseConfig.filenameStyle,
       audioFormat: run.audioFormat ?? baseConfig.audioFormat,
       sttProvider: run.sttProvider ?? baseConfig.sttProvider,
@@ -160,6 +267,43 @@ async function main() {
       commentsMax: run.commentsMax ?? baseConfig.commentsMax,
     };
 
+    if (run.audioPath) {
+      const audioPath = await resolveFilePath(run.audioPath, "runs.audioPath");
+      const audioId = `local-${randomUUID()}`;
+      const originalFilename = pathBasename(audioPath);
+      const title =
+        run.audioTitle ??
+        pathBasename(audioPath, extname(audioPath)) ??
+        originalFilename;
+      await runPipeline(
+        {
+          kind: "audio",
+          audioId,
+          audioPath,
+          title,
+          originalFilename,
+        },
+        config,
+        {
+          force: Boolean(run.force),
+          emitter,
+        }
+      );
+      continue;
+    }
+
+    if (!run.url) {
+      throw new Error("runs.yaml entry must include url or audioPath");
+    }
+
+    if (!allowAnyUrl()) {
+      const { kind } = classifyYoutubeUrl(run.url);
+      if (kind === "unknown") {
+        throw new Error(
+          "runs.yaml entry must be a YouTube URL (set Y2T_RUN_ALLOW_ANY_URL=true to override)"
+        );
+      }
+    }
     await runPipeline(run.url, config, {
       force: Boolean(run.force),
       emitter,
