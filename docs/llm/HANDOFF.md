@@ -6,13 +6,13 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.32.1 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.33.0 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
 
-## Latest Checks (0.32.1)
-- Tests: `npm test` 112/112 pass
+## Latest Checks (0.33.0)
+- Tests: `npm test` 115/115 pass
 - Build: `npm run build`, `npm --prefix web run build` OK
 - API contract: `npm run api:contract:check` OK
 
@@ -463,13 +463,13 @@ Goal: adopt the strongest ideas from `ShellSpeechToText` without copying code, p
    - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\deepgram-billing.service.ts`
    - New env: `Y2T_PROVIDER_TIMEOUT_MS` (default 120000)
 
-### Phase B - Provider resiliency (core value)
-3) Multi-key load balancer (HIGH)
-   - Target: new `src/transcription/loadBalancer.ts` + extend provider registry
+### Phase B - Provider resiliency (DONE)
+3) Multi-key load balancer (HIGH) - DONE
+   - Target: `src/transcription/loadBalancer.ts`, `src/transcription/factory.ts`
    - Pattern reference: `C:\\Users\\cdela\\OneDrive\\coding\\Shell\\ShellSpeechToText\\src\\services\\deepgram-load-balancer.service.ts`
-   - Add env: `Y2T_ASSEMBLYAI_API_KEYS=key1,key2` (optional), keep `ASSEMBLYAI_API_KEY` for single-key.
+   - Env: `Y2T_ASSEMBLYAI_API_KEYS=key1,key2` (optional), `Y2T_ASSEMBLYAI_KEY_FAILURES`, `Y2T_ASSEMBLYAI_KEY_COOLDOWN_MS`
    - Behavior: round-robin, disable key after N consecutive errors, auto-reset after cooldown.
-   - Tests: deterministic selection order, failover on error count threshold.
+   - Tests: `tests/loadBalancer.test.ts`
 
 ### Phase C - Provider expansion (optional but high value)
 4) Deepgram provider (HIGH, after load balancer stable)

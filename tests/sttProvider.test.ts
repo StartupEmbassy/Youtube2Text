@@ -35,3 +35,12 @@ test("provider name matches configured sttProvider", () => {
   const whisperProvider = createTranscriptionProvider(whisperCfg);
   assert.equal(whisperProvider.name, "openai_whisper");
 });
+
+test("sttProvider=assemblyai accepts multi-key config", () => {
+  const config = configSchema.parse({
+    sttProvider: "assemblyai",
+    assemblyAiApiKeys: ["key-one", "key-two"],
+  });
+  const provider = createTranscriptionProvider(config);
+  assert.equal(provider.name, "assemblyai");
+});

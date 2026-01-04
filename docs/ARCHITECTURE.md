@@ -290,8 +290,8 @@ Phase A - Low-risk hardening (DONE):
 2) AbortController timeouts for external API calls (provider fetches). (DONE)
    - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\deepgram-billing.service.ts`
 
-Phase B - Provider resiliency:
-3) Multi-key load balancer for STT providers (round-robin + failover).
+Phase B - Provider resiliency (DONE):
+3) Multi-key load balancer for STT providers (round-robin + failover). (DONE)
    - Reference: `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToText\src\services\deepgram-load-balancer.service.ts`
 
 Phase C - Provider expansion (optional):

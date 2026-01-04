@@ -98,6 +98,7 @@ Example environment variables:
 
 ```
 ASSEMBLYAI_API_KEY=your_key_here
+Y2T_ASSEMBLYAI_API_KEYS=key1,key2
 OPENAI_API_KEY=your_openai_key_here
 Y2T_OPENAI_API_KEY=
 Y2T_OUTPUT_DIR=output
@@ -120,6 +121,8 @@ Y2T_COMMENTS_ENABLED=false
 Y2T_COMMENTS_MAX=
 Y2T_CATALOG_MAX_AGE_HOURS=168
 Y2T_MAX_UPLOAD_MB=1024
+Y2T_ASSEMBLYAI_KEY_FAILURES=2
+Y2T_ASSEMBLYAI_KEY_COOLDOWN_MS=60000
 ```
 
 Notes:
@@ -128,6 +131,7 @@ Notes:
 - `Y2T_STT_PROVIDER` selects the speech-to-text backend (`assemblyai` or `openai_whisper`).
 - `Y2T_OPENAI_WHISPER_MODEL` sets the OpenAI Whisper model (default `whisper-1`).
 - `OPENAI_API_KEY` / `Y2T_OPENAI_API_KEY` provide OpenAI credentials.
+- `Y2T_ASSEMBLYAI_API_KEYS` enables multi-key failover for AssemblyAI (comma-separated).
 - `Y2T_MAX_AUDIO_MB` sets a per-file audio size cap before splitting (provider limit applies if lower).
 - `Y2T_SPLIT_OVERLAP_SECONDS` sets overlap between chunks (default 2s).
 - API/settings inputs are normalized server-side: numeric fields are clamped to safe bounds, `afterDate` must be YYYY-MM-DD, and manual `languageCode` must be a supported AssemblyAI code (OpenAI Whisper accepts primary codes).

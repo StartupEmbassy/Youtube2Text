@@ -31,8 +31,23 @@ function loadEnvConfig(): PartialConfig {
     const n = Number(raw);
     return Number.isFinite(n) ? n : undefined;
   };
+  const parseCsvList = (raw: string | undefined): string[] | undefined => {
+    if (raw === undefined) return undefined;
+    const values = raw
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+    return values.length > 0 ? values : undefined;
+  };
   return {
     assemblyAiApiKey: env.ASSEMBLYAI_API_KEY,
+    assemblyAiApiKeys: parseCsvList(getEnv("Y2T_ASSEMBLYAI_API_KEYS", "ASSEMBLYAI_API_KEYS")),
+    assemblyAiKeyFailureThreshold: parseOptionalNumber(
+      getEnv("Y2T_ASSEMBLYAI_KEY_FAILURES", "ASSEMBLYAI_KEY_FAILURES")
+    ),
+    assemblyAiKeyCooldownMs: parseOptionalNumber(
+      getEnv("Y2T_ASSEMBLYAI_KEY_COOLDOWN_MS", "ASSEMBLYAI_KEY_COOLDOWN_MS")
+    ),
     openaiApiKey: getEnv("Y2T_OPENAI_API_KEY", "OPENAI_API_KEY"),
     sttProvider: getEnv("Y2T_STT_PROVIDER", "STT_PROVIDER"),
     openaiWhisperModel: getEnv("Y2T_OPENAI_WHISPER_MODEL", "OPENAI_WHISPER_MODEL"),

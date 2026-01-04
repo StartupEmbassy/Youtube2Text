@@ -10,6 +10,9 @@ const safePathString = z
 const configObjectSchema = z.object({
   sttProvider: z.enum(["assemblyai", "openai_whisper"]).default("assemblyai"),
   assemblyAiApiKey: z.string().min(1).optional(),
+  assemblyAiApiKeys: z.array(z.string().min(1)).optional(),
+  assemblyAiKeyFailureThreshold: z.number().int().positive().default(2),
+  assemblyAiKeyCooldownMs: z.number().int().positive().default(60000),
   openaiApiKey: z.string().min(1).optional(),
   openaiWhisperModel: z.string().min(1).default("whisper-1"),
   maxAudioMB: z.number().int().positive().optional(),
@@ -43,11 +46,13 @@ const configObjectSchema = z.object({
 
 export const configSchema = configObjectSchema.superRefine((cfg, ctx) => {
   if (cfg.sttProvider === "assemblyai" && !cfg.assemblyAiApiKey) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "assemblyAiApiKey is required when sttProvider=assemblyai",
-      path: ["assemblyAiApiKey"],
-    });
+    if (!cfg.assemblyAiApiKeys || cfg.assemblyAiApiKeys.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "assemblyAiApiKey or assemblyAiApiKeys is required when sttProvider=assemblyai",
+        path: ["assemblyAiApiKey"],
+      });
+    }
   }
   if (cfg.sttProvider === "openai_whisper" && !cfg.openaiApiKey) {
     ctx.addIssue({

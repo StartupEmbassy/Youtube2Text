@@ -4,6 +4,8 @@
 outputDir: output
 audioDir: audio
 sttProvider: assemblyai
+assemblyAiKeyFailureThreshold: 2
+assemblyAiKeyCooldownMs: 60000
 openaiWhisperModel: whisper-1   # only used when sttProvider=openai_whisper
 maxAudioMB:
 splitOverlapSeconds: 2
