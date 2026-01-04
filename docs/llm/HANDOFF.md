@@ -6,12 +6,12 @@ Older long-form notes were moved to `docs/llm/HANDOFF_ARCHIVE.md`.
 All content should be ASCII-only to avoid Windows encoding issues.
 
 ## Current Status
-- Version: 0.32.0 (versions must stay synced: `package.json` + `openapi.yaml`)
+- Version: 0.32.1 (versions must stay synced: `package.json` + `openapi.yaml`)
 - CLI: stable; primary workflow (must not break)
 - API: stable; OpenAPI at `openapi.yaml`; generated frontend types at `web/lib/apiTypes.gen.ts`
 - Web: Next.js admin UI (Runs/Library/Watchlist/Settings)
 
-## Latest Checks (0.32.0)
+## Latest Checks (0.32.1)
 - Tests: `npm test` 112/112 pass
 - Build: `npm run build`, `npm --prefix web run build` OK
 - API contract: `npm run api:contract:check` OK
@@ -494,6 +494,49 @@ Goal: adopt the strongest ideas from `ShellSpeechToText` without copying code, p
    - Target: optional pipeline stage after transcription.
 8) Telegram bot monitoring (LOW)
    - Redundant with SSE + webhooks; only if required later.
+
+## Code Review Notes (v0.32.0 audit by Claude Opus 4.5)
+
+**Audit date:** 2026-01-04
+
+**Overall:** Phase A implementation is solid (9/10). All P0/P1/P2 security items fixed correctly.
+
+### Minor issues (non-blocking)
+
+1. **Duplicated `fetchWithTimeout` utility** - RESOLVED
+   - Extracted to `src/utils/fetch.ts` and reused in both providers.
+
+2. **Missing timeout tests**
+   - `tests/atomicWrites.test.ts` covers atomic writes
+   - No tests verify provider timeout actually aborts requests
+   - Low priority since AbortController is standard Node.js API
+
+### Verified correct
+
+| Security fix | File:Line | Status |
+|--------------|-----------|--------|
+| PowerShell injection | `health.ts:52-60` | OK - uses param() + array args |
+| runId path traversal | `persistence.ts:19-29` | OK - UUID regex + no `..` |
+| Symlink in retention | `retention.ts:39,48-50` | OK - isSymbolicLink filter |
+| SSE per-IP limit | `server.ts:260` | OK - Y2T_SSE_MAX_CLIENTS_PER_IP |
+| Timing attack length | `auth.ts:71-77` | OK - timingSafeEqual for length |
+| Insecure mode confirm | `auth.ts:26-28` | OK - double confirmation |
+| Min API key length | `auth.ts:96-103` | OK - Y2T_API_KEY_MIN_BYTES |
+| EventBuffer size | `eventBuffer.ts:10-31` | OK - maxEventBytes + truncate |
+| CSV formula injection | `csv.ts:3-9` | OK - neutralizeFormula() |
+| Log sanitization | `logger.ts:10-16` | OK - sanitizeLogText() |
+| Exec max buffer | `exec.ts:16-23` | OK - Y2T_EXEC_MAX_BYTES |
+| Health path redaction | `health.ts:104-106,146` | OK - Y2T_HEALTH_INCLUDE_PATHS |
+| Atomic file writes | `fs.ts:30-67` | OK - temp + rename pattern |
+| Provider timeouts | `assemblyai/http.ts`, `openai/index.ts` | OK - AbortController |
+
+### Paradigm compliance
+
+- Functional style: YES (no unnecessary classes)
+- Zod validation: YES (schema.ts updated)
+- NonSecretSettings: YES (providerTimeoutMs added)
+- Test framework: YES (node:test)
+- Error handling: Consistent
 
 ## Where To Read More
 - `docs/llm/HISTORY.md` (append-only change log)

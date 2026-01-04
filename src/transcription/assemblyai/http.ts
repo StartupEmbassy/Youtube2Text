@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { InsufficientCreditsError, sanitizeProviderErrorText } from "../errors.js";
+import { fetchWithTimeout, isAbortError } from "../../utils/fetch.js";
 
 const API_BASE = "https://api.assemblyai.com/v2";
 
@@ -80,25 +81,4 @@ export async function uploadFile(
     throw new Error(`Upload failed ${response.status}: ${safe}`);
   }
   return (await response.json()) as { upload_url: string };
-}
-
-function isAbortError(error: unknown): boolean {
-  return !!error && typeof error === "object" && (error as Error).name === "AbortError";
-}
-
-async function fetchWithTimeout(
-  url: string,
-  init: RequestInit,
-  timeoutMs?: number
-): Promise<Response> {
-  if (!timeoutMs || timeoutMs <= 0) {
-    return await fetch(url, init);
-  }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
 }

@@ -3,6 +3,7 @@ import { basename } from "node:path";
 import { TranscriptionProvider, type ProviderCapabilities } from "../provider.js";
 import { TranscriptJson, TranscriptionOptions } from "../types.js";
 import { sanitizeProviderErrorText } from "../errors.js";
+import { fetchWithTimeout, isAbortError } from "../../utils/fetch.js";
 
 const DEFAULT_MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
@@ -119,26 +120,5 @@ export class OpenAiWhisperProvider implements TranscriptionProvider {
       language_code: data.language ?? normalizeOpenAiLanguage(opts.languageCode),
       provider: "openai_whisper",
     };
-  }
-}
-
-function isAbortError(error: unknown): boolean {
-  return !!error && typeof error === "object" && (error as Error).name === "AbortError";
-}
-
-async function fetchWithTimeout(
-  url: string,
-  init: RequestInit,
-  timeoutMs?: number
-): Promise<Response> {
-  if (!timeoutMs || timeoutMs <= 0) {
-    return await fetch(url, init);
-  }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
   }
 }
