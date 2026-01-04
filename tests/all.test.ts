@@ -9,6 +9,7 @@ import "./ytDlpErrors.test.js";
 import "./configEnvAliases.test.js";
 import "./sttProvider.test.js";
 import "./loadBalancer.test.js";
+import "./utilsFetch.test.js";
 import "./catalogCache.test.js";
 import "./catalogCacheTtl.test.js";
 import "./urlNormalization.test.js";
