@@ -16,6 +16,11 @@ All content should be ASCII-only to avoid Windows encoding issues.
 - Build: `npm run build`, `npm --prefix web run build` OK
 - API contract: `npm run api:contract:check` OK
 
+## Documentation Alignment Fixes (0.33.0)
+- Added `assemblyAiApiKeys` to `config.yaml.example`.
+- Removed obsolete "P1 load balancer" implementation notes.
+- Documented multi-key AssemblyAI in `INTEGRATION.md`.
+
 ## Phase 2.8.2 (DONE): Server-side clamps/validation
 - Added server-side validation/clamping for settings, runs, and watchlist inputs.
 - Invalid `afterDate` or manual `languageCode` returns 400; numeric fields clamp to safe bounds.
@@ -424,13 +429,6 @@ Analyzed sibling project at `C:\Users\cdela\OneDrive\coding\Shell\ShellSpeechToT
 | Model param detection | `text-cleaner.service.ts:175-186` | gpt-5/o1/o3 use different params | MEDIUM - future proofing |
 
 ### Implementation Notes for Future LLM
-
-**If implementing P1 (load balancer):**
-1. Read `deepgram-load-balancer.service.ts` for the pattern
-2. Create `src/transcription/loadBalancer.ts`
-3. Modify factory to accept array of keys
-4. Add health tracking per key
-5. Update .env.example and README
 
 **If implementing P2 (Deepgram provider):**
 1. Read `deepgram.service.ts` for API usage

@@ -4,6 +4,7 @@
 outputDir: output
 audioDir: audio
 sttProvider: assemblyai
+assemblyAiApiKeys: []         # Optional: use multiple AssemblyAI keys
 assemblyAiKeyFailureThreshold: 2
 assemblyAiKeyCooldownMs: 60000
 openaiWhisperModel: whisper-1   # only used when sttProvider=openai_whisper
